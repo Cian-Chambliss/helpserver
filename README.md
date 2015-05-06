@@ -51,6 +51,7 @@ table of contents file that from a directory structure and contained html files.
 			provider: "elasticsearch"
 		}
 	};
+	var help = Help(config);
 
 	help.generate(function (err, result) {
 		if (err)
@@ -70,6 +71,8 @@ Populate a locally running elastic search instance with plaintext from all the f
 			provider: "elasticsearch"
 		}
 	};
+	var help = Help(config);
+	
     help.buildindex(function (err, result) {
 	 	if(err)
 			console.log( err );
@@ -88,6 +91,8 @@ Once an index exists, perform a query (fulltext search with greater weight given
 			provider: "elasticsearch"
 		}
 	};
+	var help = Help(config);
+	
 	help.search('for_each',function(err,result) {
 		if(err) {
 			console.log(err);
