@@ -1,0 +1,19 @@
+{
+  "name": "helpserver",
+  "version": "1.0.0",
+  "description": "Help system support object",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "github.com\\helpserver"
+  },
+  "keywords": [
+    "help",
+    "search"
+  ],
+  "author": "cian@alphasoftware.com",
+  "license": "MIT"
+}
