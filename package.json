@@ -1,7 +1,7 @@
 {
   "name": "helpserver",
   "version": "1.0.0",
-  "description": "Help system support object",
+  "description": "Help system support object for static html.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
