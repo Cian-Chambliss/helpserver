@@ -8,12 +8,18 @@
   },
   "repository": {
     "type": "git",
-    "url": "github.com\\helpserver"
+    "url": "github.com/Cian-Chambliss/helpserver"
   },
   "keywords": [
     "help",
     "search"
   ],
-  "author": "cian@alphasoftware.com",
+  "author": "Cian Chambliss <cian@alphasoftware.com>",
+  "dependencies": {
+     "async" : ">0.0.0",
+     "elasticsearch" : ">0.0.0",
+     "html-to-text" : ">0.0.0",
+     "progress" : ">0.0.0"
+  },
   "license": "MIT"
 }
