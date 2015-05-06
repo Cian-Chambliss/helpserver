@@ -1,6 +1,6 @@
 {
   "name": "helpserver",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Help system support object for static html.",
   "main": "index.js",
   "scripts": {
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "github.com/Cian-Chambliss/helpserver"
+    "url": "https://github.com/Cian-Chambliss/helpserver"
   },
   "keywords": [
     "help",
