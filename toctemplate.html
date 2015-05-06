@@ -64,7 +64,6 @@ tocEle.addEventListener("click", function(e) {
 		} else if( e.target.nodeName == "DIV" ) {
 			if( e.target.id ) {
 				window.top.document.getElementById("help").src = "/help/"+e.target.id;
-				window.top.document.getElementById("md").src = "/md?page="+e.target.id.replace('.html','.md');
 			}
 			if( lastSelection != null )
 				lastSelection.className = "";
