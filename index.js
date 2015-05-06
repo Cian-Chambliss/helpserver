@@ -28,7 +28,7 @@ module.exports = function (config) {
     
     if (!config.hasOwnProperty('escapes')) {
       config.escapes = [
-        { from: ".html", to: "" }
+          { from: ".html", to: "" }
         , { from: ".md", to: "" }
         , { from: "__STAR__", to: "*" }
         , { from: "__QUESTION__", to: "?" }
