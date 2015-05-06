@@ -7,28 +7,28 @@ module.exports = function (config) {
       throw new Error('configuration must be passed that includes at least the source & generated folders { source : <sourcefolder > , generated : <generatedfilefolder> ... }');
     }
     if (config.hasOwnProperty('search')) {
-      if(!config.search.hasOwnProperty('provider')) {
+      if (!config.search.hasOwnProperty('provider')) {
         throw new Error('Configuration search must define a provider ... }');
       }
       //-------------- Handle parameter checking/defaults for supported search providers...
-      if( config.search.provider === 'elasticsearch' ) {
-        if(!config.search.hasOwnProperty('index')) {
+      if (config.search.provider === 'elasticsearch') {
+        if (!config.search.hasOwnProperty('index')) {
           config.search.index = 'helpserver';
         }
-        if(!config.search.hasOwnProperty('type')) {
+        if (!config.search.hasOwnProperty('type')) {
           config.search.type = 'helppage';
         }
-        if(!config.search.hasOwnProperty('host')) {
+        if (!config.search.hasOwnProperty('host')) {
           config.search.host = 'localhost:9200';
         }
       } else {
-         throw new Error('Configuration provider not supported ... }');
+        throw new Error('Configuration provider not supported ... }');
       }
-    }    
-    
+    }
+
     if (!config.hasOwnProperty('escapes')) {
       config.escapes = [
-          { from: ".html", to: "" }
+        { from: ".html", to: "" }
         , { from: ".md", to: "" }
         , { from: "__STAR__", to: "*" }
         , { from: "__QUESTION__", to: "?" }
@@ -54,7 +54,7 @@ module.exports = function (config) {
     }
     if (!config.hasOwnProperty('flatfile')) {
       config.flatfile = "list.json";
-    }   
+    }
     var terminatePath = function (path) {
       var lastChar = path.substring(path.length - 1);
       if (lastChar !== '\\' && lastChar !== '/')
@@ -63,7 +63,40 @@ module.exports = function (config) {
     }
     config.source = terminatePath(config.source);
     config.generated = terminatePath(config.generated);
-  } 
+  }
+  
+  // status determines if index server is running (if specified) as well as existence of required files...
+  HelpServerUtil.prototype.status = function (callback) {
+    var stats = { htmlTreeExists: false, jsonTreeExists: false, indexServiceRunning: false , indexExists : false , indexCount : 0 };
+    var fs = require('fs');
+    fs.exists(config.generated + config.htmlfile, function (htmlExists) {
+      stats.htmlTreeExists = htmlExists;
+      fs.exists(config.generated + config.structurefile, function (jsonExists) {
+        stats.jsonTreeExists = jsonExists;
+        if (config.search) {
+          var elasticsearch = require('elasticsearch');
+          var client = new elasticsearch.Client({ host: config.search.host });
+          client.ping({ requestTimeout: 10000 }, function (error) {
+            if (!error) {
+              stats.indexServiceRunning = true;
+              client.count({
+                index: config.search.index
+              }, function (error, response) {
+                  if( !error && response.count ) {
+                      stats.indexCount = response.count;
+                  }
+                  callback(stats);
+              });
+            } else {
+              callback(stats);  
+            }
+            
+          });
+        }
+      });
+    });
+  }
+ 
   
   // Generate table of contents and optionally populate the search engine with plaintext version of the data
   HelpServerUtil.prototype.generate = function (callback) {
@@ -106,18 +139,18 @@ module.exports = function (config) {
     if (callback && typeof (callback) === 'function') {
       callback(null, true);
     }
-    var rebuildContent = function() {
-        var buildlist = require('./buildlist');
-        buildlist(config, function(err,result) {
-            if( err ) {
-              callback(err,null);
-            } else if( config.search ) {
-              var updateindex = require('./updateindex');
-              updateindex(config, callback);
-            } else {
-              callback(null,{ updated : true });
-            }
-        });
+    var rebuildContent = function () {
+      var buildlist = require('./buildlist');
+      buildlist(config, function (err, result) {
+        if (err) {
+          callback(err, null);
+        } else if (config.search) {
+          var updateindex = require('./updateindex');
+          updateindex(config, callback);
+        } else {
+          callback(null, { updated: true });
+        }
+      });
     };
     // optional step 1 - update the content using git...
     rebuildContent();
@@ -133,8 +166,8 @@ module.exports = function (config) {
     } else if (!config.hasOwnProperty('search')) {
       callback(new Error('Search were settings not specified'), []);
     } else {
-			var elasticquery = require("./elasticquery");
-			elasticquery(config,pattern,callback);
+      var elasticquery = require("./elasticquery");
+      elasticquery(config, pattern, callback);
     }
   }
 
