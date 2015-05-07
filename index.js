@@ -3,6 +3,7 @@
  */
 module.exports = function (config) {
   var fs = require('fs');
+  var modulePath = 'node_modules/helpserver/';
   function HelpServerUtil() {
     if (!config || !config.hasOwnProperty('source') || !config.hasOwnProperty('generated')) {
       throw new Error('configuration must be passed that includes at least the source & generated folders { source : <sourcefolder > , generated : <generatedfilefolder> ... }');
@@ -45,7 +46,7 @@ module.exports = function (config) {
       ];
     }
     if (!config.hasOwnProperty('templatefile')) {
-      config.templatefile = "node_modules/helpserver/toctemplate.html";
+      config.templatefile = modulePath+"toctemplate.html";
     }
     if (!config.hasOwnProperty('structurefile')) {
       config.structurefile = "tree.json";
@@ -102,27 +103,60 @@ module.exports = function (config) {
     var extensionPos = page.lastIndexOf('.');
     if (extensionPos > 0)
       extension = page.substring(extensionPos + 1).toLowerCase();
+    var relativePath =  unescape(page.substring(1));
     if (!extension) {
       // TBD - generate Table of contents...
       callback(new Error('Page not found!'), null);
     } else if (extension == "html" || extension == "htm") {
-      fs.readFile(config.source + unescape(page.substring(1)), "utf8", function (err, data) {
+      fs.readFile(config.source + relativePath, "utf8", function (err, data) {
         if (err) {
           callback(err, null);
         } else {
           callback(null, data, "html");
         }
       });
-    } else if (extension == "css") {
-      fs.readFile(config.source + unescape(page.substring(1)), "utf8", function (err, data) {
-        if (err) {
-          callback(err, null);
-        } else {
-          callback(null, data, "css");
-        }
-      });
+    } else if (extension == "css") {      
+      var helpServerFile =  relativePath.lastIndexOf("helpserver-");
+      if( helpServerFile > -1 ) {
+        fs.readFile(modulePath + 'assets/' + relativePath.substr(helpServerFile), "utf8", function (err, data) {
+          if (err) {            
+            console.log(modulePath+'assets/' + relativePath.substr(helpServerFile));
+            callback(err, null);
+          } else {
+            callback(null, data, "css");
+          }
+        });
+      } else {      
+        fs.readFile(config.source + relativePath, "utf8", function (err, data) {
+          if (err) {
+            callback(err, null);
+          } else {
+            callback(null, data, "css");
+          }
+        });
+      }
+    } else if (extension == "js") {
+      var helpServerFile =  relativePath.lastIndexOf("helpserver-");
+      if( helpServerFile > -1 ) {
+        fs.readFile(modulePath + 'assets/' + relativePath.substr(helpServerFile), "utf8", function (err, data) {
+          if (err) {
+            console.log(modulePath+'assets/' + relativePath.substr(helpServerFile));
+            callback(err, null);
+          } else {
+            callback(null, data, "js");
+          }
+        });
+      } else {
+        fs.readFile(config.source + relativePath, "utf8", function (err, data) {
+          if (err) {
+            callback(err, null);
+          } else {
+            callback(null, data, "js");
+          }
+        });
+      }      
     } else {
-      fs.readFile(config.source + unescape(page.substring(1)), function (err, data) {
+      fs.readFile(config.source + relativePath, function (err, data) {
         if (err) {
           callback(err, null);
         } else {
@@ -135,6 +169,7 @@ module.exports = function (config) {
 
   // Get the table of contents
   HelpServerUtil.prototype.gettree = function (page, callback) {
+    console.log(config.generated + config.htmlfile);
     fs.readFile(config.generated + config.htmlfile, 'utf8', function (err, data) {
       callback(err, data);
     });
