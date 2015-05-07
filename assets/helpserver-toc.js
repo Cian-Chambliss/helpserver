@@ -33,7 +33,7 @@ function tocLoaded() {
 				return false;
 			} else if (e.target.nodeName == "DIV") {
 				if (e.target.id) {
-					window.parent.checkNavigation(e.target.id, 'toc');
+					window.parent.helpServer.checkNavigation(e.target.id, 'toc');
 				}
 				if (lastSelection != null)
 					lastSelection.className = "";
