@@ -1,6 +1,6 @@
 {
   "name": "helpserver",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Help system support object for static html.",
   "main": "index.js",
   "scripts": {

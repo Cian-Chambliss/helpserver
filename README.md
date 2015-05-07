@@ -7,6 +7,45 @@ populate and query against an elasticsearch index to perform full text search of
 ## Installation
 
   npm install helpserver
+  
+## API
+
+The help server includes the methods
+
+	.status(function(stats) {})
+	
+To get the status, including whats been generated, and if the index provider is running  (in the case of using search, you will 
+want elasticsearch to be started before you start using the search related api calls).	
+
+    .generate(callback(err,result) {});
+	
+To generate the help table of contents
+
+
+    .buildindex(callback(err,result) {});
+	
+To populate the search index with plaintext content of the help pages
+
+    .refresh(callback(err,result) {});
+	
+To regenerate the help table and incrementally update only those pages that changed 
+
+    .search = function (pattern, callback(err,data) {})
+To search the index for a pattern.
+  
+	
+    .get(page,callback(err,data,type) { });
+
+To retrieve a help page	or resource.
+
+    .gettree(page,callback(err,data) { });
+	
+To retrieve the html tree (generated ul).
+
+	.gettreejson(page,callback(err,data) { });
+	
+To retrieve the json tree ( text and paths ).
+	
 
 ## Usage
 
@@ -103,4 +142,8 @@ Once an index exists, perform a query (fulltext search with greater weight given
 
 ## Release History
 
+* 1.0.4 Added get/gettree/gettreejson to api
+* 1.0.3 Added stats
+* 1.0.2 Fixed Git link
+* 1.0.1 Added README
 * 1.0.0 Initial release
