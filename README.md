@@ -26,17 +26,17 @@ The helpserver class requires some initialization parameters, which include
    * If no escapes are defined, the default replacements are 
      - ".html" : "" 
      - ".md" : "" 
-     - "__STAR__" : "*" 
-     - "__QUESTION__" : "?" 
-     - "__SLASH__" : "/" 
-     - "__BACKSLASH__" : "\\" 
-     - "__NAMESPACE__" : "::" 
-     - "__COLON__" : ":" 
-     - "__ELLIPSES__" : "..." 
-     - "__HASH__" : "#" 
-     - "__GT__" : ">" 
-     - "__LT__" : "<" 
-     - "__PIPE__" : "|"
+     - "\_\_STAR\_\_" : "*" 
+     - "\_\_QUESTION\_\_" : "?" 
+     - "\_\_SLASH\_\_" : "/" 
+     - "\_\_BACKSLASH\_\_" : "\\" 
+     - "\_\_NAMESPACE\_\_" : "::" 
+     - "\_\_COLON\_\_" : ":" 
+     - "\_\_ELLIPSES\_\_" : "..." 
+     - "\_\_HASH\_\_" : "#" 
+     - "\_\_GT\_\_" : ">" 
+     - "\_\_LT\_\_" : "<" 
+     - "\_\_PIPE\_\_" : "|"
    * Example a file called "__STAR__for_each.html" show up as "*for_each" in the generated table of contents file.
  
 Generating a table of contents from a folder structure.  In the following example, we want to create a 

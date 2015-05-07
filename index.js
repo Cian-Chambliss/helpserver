@@ -2,6 +2,7 @@
  * Entry point to helpserver utilities 
  */
 module.exports = function (config) {
+  var fs = require('fs');
   function HelpServerUtil() {
     if (!config || !config.hasOwnProperty('source') || !config.hasOwnProperty('generated')) {
       throw new Error('configuration must be passed that includes at least the source & generated folders { source : <sourcefolder > , generated : <generatedfilefolder> ... }');
@@ -67,8 +68,7 @@ module.exports = function (config) {
   
   // status determines if index server is running (if specified) as well as existence of required files...
   HelpServerUtil.prototype.status = function (callback) {
-    var stats = { htmlTreeExists: false, jsonTreeExists: false, indexServiceRunning: false , indexExists : false , indexCount : 0 };
-    var fs = require('fs');
+    var stats = { htmlTreeExists: false, jsonTreeExists: false, indexServiceRunning: false, indexExists: false, indexCount: 0 };
     fs.exists(config.generated + config.htmlfile, function (htmlExists) {
       stats.htmlTreeExists = htmlExists;
       fs.exists(config.generated + config.structurefile, function (jsonExists) {
@@ -82,21 +82,71 @@ module.exports = function (config) {
               client.count({
                 index: config.search.index
               }, function (error, response) {
-                  if( !error && response.count ) {
-                      stats.indexCount = response.count;
+                  if (!error && response.count) {
+                    stats.indexCount = response.count;
                   }
                   callback(stats);
-              });
+                });
             } else {
-              callback(stats);  
+              callback(stats);
             }
-            
           });
         }
       });
     });
   }
- 
+  
+  // Get a help page or resource (image css). or help resource
+  HelpServerUtil.prototype.get = function (page, callback) {
+    var extension = null;
+    var extensionPos = page.lastIndexOf('.');
+    if (extensionPos > 0)
+      extension = page.substring(extensionPos + 1).toLowerCase();
+    if (!extension) {
+      // TBD - generate Table of contents...
+      callback(new Error('Page not found!'), null);
+    } else if (extension == "html" || extension == "htm") {
+      fs.readFile(config.source + unescape(page.substring(1)), "utf8", function (err, data) {
+        if (err) {
+          callback(err, null);
+        } else {
+          callback(null, data, "html");
+        }
+      });
+    } else if (extension == "css") {
+      fs.readFile(config.source + unescape(page.substring(1)), "utf8", function (err, data) {
+        if (err) {
+          callback(err, null);
+        } else {
+          callback(null, data, "css");
+        }
+      });
+    } else {
+      fs.readFile(config.source + unescape(page.substring(1)), function (err, data) {
+        if (err) {
+          callback(err, null);
+        } else {
+          callback(null, data, "extension");
+        }
+      }
+        );
+    }
+  }
+
+  // Get the table of contents
+  HelpServerUtil.prototype.gettree = function (page, callback) {
+    fs.readFile(config.generated + config.htmlfile, 'utf8', function (err, data) {
+      callback(err, data);
+    });
+  }
+
+
+  // Get the table of contents
+  HelpServerUtil.prototype.gettreejson = function (page, callback) {
+    fs.readFile(config.generated + config.structurefile, 'utf8', function (err, data) {
+      callback(err, data);
+    });
+  }
   
   // Generate table of contents and optionally populate the search engine with plaintext version of the data
   HelpServerUtil.prototype.generate = function (callback) {
