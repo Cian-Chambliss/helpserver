@@ -5,7 +5,7 @@ var helpServer = {
       path = window.location.hash.substring(1);
     var iframeToc = document.getElementById('toc');
     var iframeHelper = document.getElementById('help');
-    if (path != "") {
+    if ( path != "" ) {
       if (iframeToc)
         iframeToc.src = "/toc#" + path;
       if (iframeHelper)
@@ -36,8 +36,11 @@ var helpServer = {
     this.navigateToFragment();
   },
   helpFrameLoad: function () {
-    var path = document.getElementById('help').contentWindow.location.pathname.substr(5);
-    this.checkNavigation(path, 'help');
+    var path = document.getElementById('help').contentWindow.location.pathname;
+    if( path.substring(0,5) == '/help' ) { 
+        path = path.substr(5);        
+        this.checkNavigation(path, 'help');
+    }
   }
 };
 
