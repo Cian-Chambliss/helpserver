@@ -1,6 +1,6 @@
 {
   "name": "helpserver",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Help system support object for static html.",
   "main": "index.js",
   "scripts": {
@@ -18,7 +18,8 @@
   "dependencies": {
      "async" : ">0.0.0",
      "elasticsearch" : ">0.0.0",
-     "html-to-text" : ">0.0.0",
+     "htmlparser2" : ">0.0.0",
+     "string" : ">0.0.0",
      "progress" : ">0.0.0"
   },
   "license": "MIT"
