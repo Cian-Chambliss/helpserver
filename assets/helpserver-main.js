@@ -21,8 +21,8 @@ var helpServer = {
     var iframeToc = document.getElementById('toc');
     var iframeHelper = document.getElementById('help');
     if (from != 'toc' && iframeToc) {
-      if (iframeToc.contentWindow.setSelectedPage) {
-        iframeToc.contentWindow.setSelectedPage(path);
+      if (iframeToc.contentWindow.tableOfContents) {
+        iframeToc.contentWindow.tableOfContents.setSelectedPage(path);
       }
     }
     if (from != 'help' && iframeHelper) {
