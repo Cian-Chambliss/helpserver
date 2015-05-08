@@ -3,7 +3,7 @@
  */
 module.exports = function (config, callback) {
 	var async = require('async');
-	var htmlToText = require('html-to-text');
+	var pageProcessor = require('./pageprocess');
 	var fs = require('fs');
 	var inputFilesList = config.generated + config.flatfile;
 	var plainTextPath = config.generated + "plaintext/";
@@ -12,16 +12,16 @@ module.exports = function (config, callback) {
 	var publishList = [];
 	var callStatus = { converted: 0, errors: 0, errorList: [] };
 	var ProgressBar = require('progress');
-	var replaceAll = function (str, find, replace) {
-		while (str.indexOf(find) >= 0)
-			str = str.replace(find, replace);
-		return str;
-	};
-	if (!config.search) {
+	if (!config.search && !config.metadata && !config.dependencies) {
 		callback(new Error('Cannot create index without search configuration'), null);
 		return;
 	}
-	if (config.search.provider === 'elasticsearch') {
+	if (!config.search) {
+		// just doing dependencies and metatags
+		var publishIndexDriver = function () {
+			callback(null, { updated: true, reindexed: false });
+		}
+	} else if (config.search.provider === 'elasticsearch') {
 		var publishIndexDriver = function () {
 			var elasticpublish = require("./elasticpublish");
 			elasticpublish(config, callback);
@@ -47,55 +47,48 @@ module.exports = function (config, callback) {
 				for (i = 0; i < list.length; ++i)
 					timeSrc[list[i].title] = list[i].mtime;
 
-				for (i = 0; i < changed.length; ++i)
-					publishList.push({ title: changed[i].title, path: changed[i].path });
-
-				fs.writeFile(outputPublish, JSON.stringify(publishList), function (err) {
-					fs.writeFile(outputFilesList, JSON.stringify(timeSrc), function (err) {
-						var bar = null;
-						if (list.length > 0) {
-							bar = new ProgressBar('  building ' + list.length + ' plaintext files [:bar] :percent :etas', {
-								complete: '=',
-								incomplete: ' ',
-								width: 20,
-								total: list.length
-							});
-							async.eachSeries(changed, function (fo, callbackLoop) {
-								bar.tick();
-								htmlToText.fromFile(fo.file, {
-									wordwrap: 150,
-									ignoreImage: true,
-									ignoreHR: true
-								}, function (err, textData) {
-										var ofn = replaceAll(replaceAll(fo.path, '/', '_'), '\\', '_');
-										ofn = ofn.replace(".html", ".txt");
+				fs.writeFile(outputFilesList, JSON.stringify(timeSrc), function (err) {
+					var bar = null;
+					if (list.length > 0) {
+						bar = new ProgressBar('  building ' + list.length + ' plaintext files [:bar] :percent :etas', {
+							complete: '=',
+							incomplete: ' ',
+							width: 20,
+							total: list.length
+						});
+						async.eachSeries(changed, function (fo, callbackLoop) {
+							bar.tick();
+							fs.readFile(fo.file, function (err, data) {
+								if (err) {
+									callStatus.errors++;
+									callStatus.errorList.push({ file: fo.file, error: err });
+									callbackLoop();
+								} else {
+									pageProcessor(config, data, fo, function (err, textfilename) {
 										if (err) {
 											callStatus.errors++;
-											callStatus.errorList.push({ file: ofn, error: err });
+											callStatus.errorList.push({ file: textfilename, error: err });
 										} else {
-											var ofn = fo.path.substr(fo.path.lastIndexOf("/") + 1);
-											ofn = ofn.replace(".html", ".txt");
-											fs.writeFile(plainTextPath + ofn, textData, function (err) {
-												if (err) {
-													callStatus.errors++;
-													callStatus.errorList.push({ file: ofn, error: err });
-												} else {
-													callStatus.converted++;
-												}
-												callbackLoop();
-											});
+											callStatus.converted++;
 										}
+										publishList.push({ title: fo.title, path: fo.path, metadata: fo.metadata });
+										callbackLoop();
 									});
-							}, function () {
+								}
+							});
+						}, function () {
+								fs.writeFile(outputPublish, JSON.stringify(publishList), function (err) {
 									publishIndexDriver(config, callback);
 								});
-						} else {
+							});
+					} else {
+						fs.writeFile(outputPublish, JSON.stringify(publishList), function (err) {
 							publishIndexDriver(config, callback);
-						}
-					});
+						});
+					}
 				});
 			} else {
-				callback(null,{ updated : true , reindexed : false } );
+				callback(null, { updated: true, reindexed: false });
 			}
 		});
 	});

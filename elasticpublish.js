@@ -55,7 +55,8 @@ module.exports = function (config, callback) {
                 body: {
                   title: fo.title,
                   path: fo.path,
-                  content: content
+                  content: content,
+                  metadata: fo.metadata ? fo.metadata : null 
                 }
               }, function (error) {
                   bar.tick();

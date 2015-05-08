@@ -137,7 +137,7 @@ module.exports = function (config, callback) {
             return;          
         }
         var ulPage = makeList(results, true);
-        ulPage = templateData.replace("__placeholder__", ulPage);
+        ulPage = templateData.replace("{{placeholder}}", ulPage);
         fs.writeFile(outputUlFileName, ulPage, function (err) {
           if (err) {
             callback(err,null);

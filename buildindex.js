@@ -3,36 +3,41 @@
  */
 module.exports = function (config, callback) {
 	var async = require('async');
-	var htmlToText = require('html-to-text');
+	var pageProcessor = require('./pageprocess');
 	var fs = require('fs');
 	var inputFilesList = config.generated + config.flatfile;
 	var plainTextPath = config.generated + "plaintext/";
+	var manifestPath = config.generated + "manifest/";
 	var outputFilesList = plainTextPath + "filelist.json";
 	var outputPublish = plainTextPath + "publish.json";
 	var publishList = [];
 	var callStatus = { converted: 0, errors: 0, errorList: [] };
 	var ProgressBar = require('progress');
-	var replaceAll = function (str, find, replace) {
-		while (str.indexOf(find) >= 0)
-			str = str.replace(find, replace);
-		return str;
-	};
-	if( !config.search ) {
-		callback( new Error('Cannot create index without search configuration'), null);
-		return;		
+	if (!config.search && !config.metadata && !config.dependencies) {
+		callback(new Error('Cannot create index without search configuration'), null);
+		return;
 	}
-	if( config.search.provider === 'elasticsearch' ) {
+	if (!config.search) {
+		// just doing dependencies and metatags
+		var publishIndexDriver = function () {
+			callback(null, { updated: true, reindexed: false });
+		}
+	} else if (config.search.provider === 'elasticsearch') {
 		var publishIndexDriver = function () {
 			var elasticpublish = require("./elasticpublish");
-			elasticpublish(config,callback);
+			elasticpublish(config, callback);
 		};
 	} else {
-		callback( new Error('Search provider '+config.search.provider+' is not supported.'), null);		
+		callback(new Error('Search provider ' + config.search.provider + ' is not supported.'), null);
 	}
 	
 	// quicky check to see that plaintext folder exists (since we generate this)
 	if (!fs.existsSync(plainTextPath)) {
 		fs.mkdirSync(plainTextPath);
+	}
+	// quicky check to see that manifest folder exists (since we generate this)
+	if (!fs.existsSync(manifestPath)) {
+		fs.mkdirSync(manifestPath);
 	}
 
 	fs.readFile(inputFilesList, "utf8", function (err, listData) {
@@ -48,55 +53,48 @@ module.exports = function (config, callback) {
 		for (i = 0; i < list.length; ++i)
 			timeSrc[list[i].title] = list[i].mtime;
 
-		for (i = 0; i < list.length; ++i)
-			publishList.push({ title: list[i].title, path: list[i].path });
-
-		fs.writeFile(outputPublish, JSON.stringify(publishList), function (err) {
+		fs.writeFile(outputFilesList, JSON.stringify(timeSrc), function (err) {
 			if (err) {
 				callback(err, null);
 				return;
 			}
-			fs.writeFile(outputFilesList, JSON.stringify(timeSrc), function (err) {
-				if (err) {
-					callback(err, null);
-					return;
-				}
-				var bar = new ProgressBar('  building '+list.length+' plaintext files [:bar] :percent :etas', {
-					complete: '=',
-					incomplete: ' ',
-					width: 20,
-					total: list.length
-				});
-				
-				async.eachSeries(list, function (fo, callbackLoop) {
-					bar.tick();
-					htmlToText.fromFile(fo.file, {
-						wordwrap: 150,
-						ignoreImage: true,
-						ignoreHR: true
-					}, function (err, textData) {
-							var ofn = replaceAll(replaceAll(fo.path, '/', '_'), '\\', '_');
-							ofn = ofn.replace(".html", ".txt");
+			var bar = new ProgressBar('  building ' + list.length + ' plaintext files [:bar] :percent :etas', {
+				complete: '=',
+				incomplete: ' ',
+				width: 20,
+				total: list.length
+			});
+
+			async.eachSeries(list, function (fo, callbackLoop) {
+				bar.tick();
+				fs.readFile(fo.file, function (err, data) {
+					if (err) {
+						callStatus.errors++;
+						callStatus.errorList.push({ file: fo.file, error: err });
+						callbackLoop();
+					} else {
+						pageProcessor(config, data, fo, function (err, textfilename) {
 							if (err) {
 								callStatus.errors++;
-								callStatus.errorList.push({ file: ofn, error: err });
-								callbackLoop();
+								callStatus.errorList.push({ file: textfilename, error: err });
 							} else {
-								fs.writeFile(plainTextPath + ofn, textData, function (err) {
-									if (err) {
-										callStatus.errors++;
-										callStatus.errorList.push({ file: ofn, error: err });
-									} else {
-										callStatus.converted++;
-									}
-									callbackLoop();
-								});
+								callStatus.converted++;
 							}
+							publishList.push({ title: fo.title, path: fo.path, metadata: fo.metadata });
+							callbackLoop();
+
 						});
-				}, function () {
+					}
+				});
+			}, function () {
+					fs.writeFile(outputPublish, JSON.stringify(publishList), function (err) {
+						if (err) {
+							callback(err, null);
+							return;
+						}
 						publishIndexDriver();
 					});
-			});
+				});
 		});
 	});
 }
