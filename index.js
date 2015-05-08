@@ -27,6 +27,19 @@ module.exports = function (config) {
         throw new Error('Configuration provider not supported ... }');
       }
     }
+    if (!config.hasOwnProperty('filter_name')) {
+         config.filter_name = '';
+    }
+    if (config.filter) {
+      if (!config.search) {
+            throw new Error('Filter requires search parameters to be defined ... }');
+      }
+      if (config.filter_name == '') {
+            throw new Error('Filter requires a filter_name to be defined ... }');
+      }
+    } else if (config.filter_name != '') {
+      throw new Error('Filter_name requires a filter to be defined ... }');
+    }
 
     if (!config.hasOwnProperty('escapes')) {
       config.escapes = [
@@ -46,7 +59,7 @@ module.exports = function (config) {
       ];
     }
     if (!config.hasOwnProperty('templatefile')) {
-      config.templatefile = modulePath+"toctemplate.html";
+      config.templatefile = modulePath + "toctemplate.html";
     }
     if (!config.hasOwnProperty('structurefile')) {
       config.structurefile = "tree.json";
@@ -103,7 +116,7 @@ module.exports = function (config) {
     var extensionPos = page.lastIndexOf('.');
     if (extensionPos > 0)
       extension = page.substring(extensionPos + 1).toLowerCase();
-    var relativePath =  unescape(page.substring(1));
+    var relativePath = unescape(page.substring(1));
     if (!extension) {
       // TBD - generate Table of contents...
       callback(new Error('Page not found!'), null);
@@ -115,18 +128,18 @@ module.exports = function (config) {
           callback(null, data, "html");
         }
       });
-    } else if (extension == "css") {      
-      var helpServerFile =  relativePath.lastIndexOf("helpserver-");
-      if( helpServerFile > -1 ) {
+    } else if (extension == "css") {
+      var helpServerFile = relativePath.lastIndexOf("helpserver-");
+      if (helpServerFile > -1) {
         fs.readFile(modulePath + 'assets/' + relativePath.substr(helpServerFile), "utf8", function (err, data) {
-          if (err) {            
-            console.log(modulePath+'assets/' + relativePath.substr(helpServerFile));
+          if (err) {
+            console.log(modulePath + 'assets/' + relativePath.substr(helpServerFile));
             callback(err, null);
           } else {
             callback(null, data, "css");
           }
         });
-      } else {      
+      } else {
         fs.readFile(config.source + relativePath, "utf8", function (err, data) {
           if (err) {
             callback(err, null);
@@ -136,11 +149,11 @@ module.exports = function (config) {
         });
       }
     } else if (extension == "js") {
-      var helpServerFile =  relativePath.lastIndexOf("helpserver-");
-      if( helpServerFile > -1 ) {
+      var helpServerFile = relativePath.lastIndexOf("helpserver-");
+      if (helpServerFile > -1) {
         fs.readFile(modulePath + 'assets/' + relativePath.substr(helpServerFile), "utf8", function (err, data) {
           if (err) {
-            console.log(modulePath+'assets/' + relativePath.substr(helpServerFile));
+            console.log(modulePath + 'assets/' + relativePath.substr(helpServerFile));
             callback(err, null);
           } else {
             callback(null, data, "js");
@@ -154,7 +167,7 @@ module.exports = function (config) {
             callback(null, data, "js");
           }
         });
-      }      
+      }
     } else {
       fs.readFile(config.source + relativePath, function (err, data) {
         if (err) {
@@ -166,11 +179,10 @@ module.exports = function (config) {
         );
     }
   }
-
+  
   // Get the table of contents
   HelpServerUtil.prototype.gettree = function (page, callback) {
-    console.log(config.generated + config.htmlfile);
-    fs.readFile(config.generated + config.htmlfile, 'utf8', function (err, data) {
+    fs.readFile(config.generated + config.filter_name + config.htmlfile, 'utf8', function (err, data) {
       callback(err, data);
     });
   }
@@ -178,11 +190,11 @@ module.exports = function (config) {
 
   // Get the table of contents
   HelpServerUtil.prototype.gettreejson = function (page, callback) {
-    fs.readFile(config.generated + config.structurefile, 'utf8', function (err, data) {
+    fs.readFile(config.generated + config.filter_name + config.structurefile, 'utf8', function (err, data) {
       callback(err, data);
     });
   }
-  
+   
   // Generate table of contents and optionally populate the search engine with plaintext version of the data
   HelpServerUtil.prototype.generate = function (callback) {
     if (!callback) {
@@ -201,60 +213,127 @@ module.exports = function (config) {
     buildlist(config, callback);
   }
   
-  // Generate entire index (generate had to be run) 
-  HelpServerUtil.prototype.buildindex = function (callback) {
+  // After any indices are generated, we should make sure to update the filter
+  HelpServerUtil.prototype.generateFiltered = function (callback) {
     if (!callback) {
       callback = function (err, result) {
         if (err) {
           console.log("Error :" + err);
         } else {
-          console.log("BuildIndex complete!");
+          console.log("Generate complete!");
         }
       }
     }
-    if (typeof (callback) !== 'function') {
-      throw new Error('First parameter must be a callback function');
-    }
-    var buildlist = require('./buildindex');
-    buildlist(config, callback);
-  }
+    if (config.filter) {
+         var elasticquery = require("./elasticquery");
+         elasticquery(config, '', function (err, results) {
+            if (err) {
+               callback(err, null);
+               return;
+            }
+            var ListUtilities = require('./listutilities');
+            var lu = new ListUtilities(config);
+            var tree = lu.treeFromList(results);
+            var treeUL = lu.treeToUL(tree);
+            fs.readFile(config.templatefile, "utf8", function (err, templateData) {
+               if (err) {
+                  callback(err, null);
+                  return;
+               }
+               treeUL = templateData.replace("{{placeholder}}", treeUL);
+
+               fs.writeFile(config.generated + config.filter_name + config.htmlfile, treeUL, function (err) {
+                  if (err) {
+              callback(err, null);
+              return;
+                  }
+                  fs.writeFile(config.generated + config.filter_name + config.structurefile, JSON.stringify(tree), function (err) {
+              if (err) {
+                callback(err, null);
+                return;
+              }
+              callback(null, true);
+                  });
+               });
+            });
+         }, 0, 100000);
+      };
+   }
   
-  // refresh help from repo, and rebuild TOC 
-  HelpServerUtil.prototype.refresh = function (callback) {
-    if (callback && typeof (callback) === 'function') {
+  
+   // Generate entire index (generate had to be run) 
+   HelpServerUtil.prototype.buildindex = function (callback) {
+      var genFiltered = this.generateFiltered;
+      if (!callback) {
+         callback = function (err, result) {
+            if (err) {
+               console.log("Error :" + err);
+            } else {
+               console.log("BuildIndex complete!");
+            }
+         };
+      }
+      if (typeof (callback) !== 'function') {
+      throw new Error('First parameter must be a callback function');
+      }
+      var buildlist = require('./buildindex');
+      if (config.filter) {
+         buildlist(config, function (err, info) {
+            genFiltered(function (err2, result2) {
+               callback(err, info);
+            });
+         });
+      } else {
+         buildlist(config, callback);
+      }
+   }
+  
+   // refresh help from repo, and rebuild TOC 
+   HelpServerUtil.prototype.refresh = function (callback) {
+      var genFiltered = this.generateFiltered;
+      if (callback && typeof (callback) === 'function') {
       callback(null, true);
-    }
-    var rebuildContent = function () {
+      }
+      var rebuildContent = function () {
+      var handler = function (err, result) {
+            if (err) {
+               callback(err, null);
+            } else if (config.search) {
+               var updateindex = require('./updateindex');
+               updateindex(config, callback);
+            } else {
+               callback(null, { updated: true });
+            }
+      };
       var buildlist = require('./buildlist');
       buildlist(config, function (err, result) {
-        if (err) {
-          callback(err, null);
-        } else if (config.search) {
-          var updateindex = require('./updateindex');
-          updateindex(config, callback);
-        } else {
-          callback(null, { updated: true });
-        }
+            if (config.filter) {
+               genFiltered(function (err2, result2) {
+                  handler(err, result);
+               });
+            } else {
+               handler(err, result);
+            }
       });
-    };
-    // optional step 1 - update the content using git...
-    rebuildContent();
-  }
+      };
+      // optional step 1 - update the content using git...
+      rebuildContent();
+   }
 
-  // perform a pattern seach, returns 'path' portion of help
-  HelpServerUtil.prototype.search = function (pattern, callback) {
-    if (!callback || typeof (callback) !== 'function') {
+   // perform a pattern seach, returns 'path' portion of help
+   HelpServerUtil.prototype.search = function (pattern, callback) {
+      if (!callback || typeof (callback) !== 'function') {
       throw new Error('Second parameter must be a callback function');
-    }
-    if (!pattern || typeof (pattern) !== 'string') {
+      }
+      if (!pattern || typeof (pattern) !== 'string') {
       callback(new Error('First parameter must be a string'), []);
-    } else if (!config.hasOwnProperty('search')) {
+      } else if (!config.hasOwnProperty('search')) {
       callback(new Error('Search were settings not specified'), []);
-    } else {
+      } else {
       var elasticquery = require("./elasticquery");
       elasticquery(config, pattern, callback);
-    }
-  }
+      }
+   }
 
-  return new HelpServerUtil();
+   return new HelpServerUtil();
 }
