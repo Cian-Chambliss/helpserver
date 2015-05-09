@@ -2,6 +2,11 @@
  * Entry point to helpserver utilities 
  */
 module.exports = function (config) {
+	var replaceAll = function (str, find, replace) {
+		while (str.indexOf(find) >= 0)
+			str = str.replace(find, replace);
+		return str;
+	};    
   var fs = require('fs');
   var modulePath = 'node_modules/helpserver/';
   function HelpServerUtil() {
@@ -109,7 +114,7 @@ module.exports = function (config) {
       });
     });
   }
-  
+ 
   // Get a help page or resource (image css). or help resource
   HelpServerUtil.prototype.get = function (page, callback) {
     var extension = null;
@@ -291,9 +296,6 @@ module.exports = function (config) {
    // refresh help from repo, and rebuild TOC 
    HelpServerUtil.prototype.refresh = function (callback) {
       var genFiltered = this.generateFiltered;
-      if (callback && typeof (callback) === 'function') {
-      callback(null, true);
-      }
       var rebuildContent = function () {
       var handler = function (err, result) {
             if (err) {
@@ -334,6 +336,79 @@ module.exports = function (config) {
       elasticquery(config, pattern, callback);
       }
    }
+   
+   // Get metadata for am item
+   HelpServerUtil.prototype.getmetadata = function (path, callback) {
+     var manifestFile =  config.generated + "manifest/" + replaceAll(unescape(path),'/','_').replace(".html",".json");
+     fs.readFile(manifestFile,function(err,data) {
+       if( err || !data ) {
+         callback("{}");
+       } else {
+    		  var textData = data;
+    		  if( !textData.indexOf )
+    			    textData = textData.toString('utf8');
+         callback(textData);
+       }
+     })
+   };
+
+   // Set metadata for am item
+   HelpServerUtil.prototype.setmetadata = function (path, metadata, callback) {
+     var refreshData = this.refresh;
+     try {
+       var test = JSON.parse(metadata);
+       if( test ) {
+            var relativePath = unescape(path.substring(1));
+            var fn = config.source + relativePath;
+            fs.readFile(fn,"utf8",function(err,data) {
+                if( err ) {
+                  console.log('setmetadata '+err);
+                  callback(false);                  
+                } else {
+                   var newMetaData = '<!---HELPMETADATA: '+metadata+' --->';
+                   var pos = data.lastIndexOf('<!---HELPMETADATA:');
+                   var newData = data;
+                   if( pos >= 0 ) {
+                      var subStr = data.substring(pos);                       
+                      var endPos = subStr.indexOf('--->');
+                      if( endPos >= 0 ) {
+                        subStr = subStr.substring(0,endPos+4);
+                        newData = data.replace(subStr,newMetaData);
+                      }
+                   } else {
+                     var pos = data.lastIndexOf('</body');
+                     if( pos > 0 ) {
+                         newData = data.substring(0,pos)+"\n"+newMetaData+"\n" +data.substring(pos);
+                     } else {
+                         newData = data + "\n" + newMetaData;
+                     }
+                   }
+                   if( newData != data ) {
+                       fs.writeFile(fn,newData,function() {
+                         if( err ) {
+                            callback(true);
+                         } else {
+                           debugger;
+                           refreshData( function() {
+                             callback(true);
+                           });
+                         }                         
+                       });
+                   } else {
+                     callback(false);
+                   }
+                }
+            });
+       } else {
+            console.log('Error '+path+' metadata empty: '+metadata);
+            callback(false);         
+       }
+     } catch(err) {
+       console.log(err+" data "+metadata);
+       callback(false);
+     }
+   };
+   
 
    return new HelpServerUtil();
 }
