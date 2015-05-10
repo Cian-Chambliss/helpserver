@@ -2,11 +2,11 @@
  * Entry point to helpserver utilities 
  */
 module.exports = function (config) {
-	var replaceAll = function (str, find, replace) {
-		while (str.indexOf(find) >= 0)
-			str = str.replace(find, replace);
-		return str;
-	};    
+  var replaceAll = function (str, find, replace) {
+    while (str.indexOf(find) >= 0)
+      str = str.replace(find, replace);
+    return str;
+  };
   var fs = require('fs');
   var modulePath = 'node_modules/helpserver/';
   function HelpServerUtil() {
@@ -33,14 +33,14 @@ module.exports = function (config) {
       }
     }
     if (!config.hasOwnProperty('filter_name')) {
-         config.filter_name = '';
+      config.filter_name = '';
     }
     if (config.filter) {
       if (!config.search) {
-            throw new Error('Filter requires search parameters to be defined ... }');
+        throw new Error('Filter requires search parameters to be defined ... }');
       }
       if (config.filter_name == '') {
-            throw new Error('Filter requires a filter_name to be defined ... }');
+        throw new Error('Filter requires a filter_name to be defined ... }');
       }
     } else if (config.filter_name != '') {
       throw new Error('Filter_name requires a filter to be defined ... }');
@@ -74,6 +74,9 @@ module.exports = function (config) {
     }
     if (!config.hasOwnProperty('flatfile')) {
       config.flatfile = "list.json";
+    }
+    if (!config.hasOwnProperty('assetpath')) {
+      config.assetpath = __dirname;
     }
     var terminatePath = function (path) {
       var lastChar = path.substring(path.length - 1);
@@ -230,185 +233,311 @@ module.exports = function (config) {
       }
     }
     if (config.filter) {
-         var elasticquery = require("./elasticquery");
-         elasticquery(config, '', function (err, results) {
-            if (err) {
-               callback(err, null);
-               return;
-            }
-            var ListUtilities = require('./listutilities');
-            var lu = new ListUtilities(config);
-            var tree = lu.treeFromList(results);
-            var treeUL = lu.treeToUL(tree);
-            fs.readFile(config.templatefile, "utf8", function (err, templateData) {
-               if (err) {
-                  callback(err, null);
-                  return;
-               }
-               treeUL = templateData.replace("{{placeholder}}", treeUL);
+      var elasticquery = require("./elasticquery");
+      elasticquery(config, '', function (err, results) {
+        if (err) {
+          callback(err, null);
+          return;
+        }
+        var ListUtilities = require('./listutilities');
+        var lu = new ListUtilities(config);
+        var tree = lu.treeFromList(results);
+        var treeUL = lu.treeToUL(tree);
+        fs.readFile(config.templatefile, "utf8", function (err, templateData) {
+          if (err) {
+            callback(err, null);
+            return;
+          }
+          treeUL = templateData.replace("{{placeholder}}", treeUL);
 
-               fs.writeFile(config.generated + config.filter_name + config.htmlfile, treeUL, function (err) {
-                  if (err) {
+          fs.writeFile(config.generated + config.filter_name + config.htmlfile, treeUL, function (err) {
+            if (err) {
               callback(err, null);
               return;
-                  }
-                  fs.writeFile(config.generated + config.filter_name + config.structurefile, JSON.stringify(tree), function (err) {
+            }
+            fs.writeFile(config.generated + config.filter_name + config.structurefile, JSON.stringify(tree), function (err) {
               if (err) {
                 callback(err, null);
                 return;
               }
               callback(null, true);
-                  });
-               });
             });
-         }, 0, 100000);
+          });
+        });
+      }, 0, 100000);
+    };
+  }
+  
+  
+  // Generate entire index (generate had to be run) 
+  HelpServerUtil.prototype.buildindex = function (callback) {
+    var genFiltered = this.generateFiltered;
+    if (!callback) {
+      callback = function (err, result) {
+        if (err) {
+          console.log("Error :" + err);
+        } else {
+          console.log("BuildIndex complete!");
+        }
       };
-   }
-  
-  
-   // Generate entire index (generate had to be run) 
-   HelpServerUtil.prototype.buildindex = function (callback) {
-      var genFiltered = this.generateFiltered;
-      if (!callback) {
-         callback = function (err, result) {
-            if (err) {
-               console.log("Error :" + err);
-            } else {
-               console.log("BuildIndex complete!");
-            }
-         };
-      }
-      if (typeof (callback) !== 'function') {
+    }
+    if (typeof (callback) !== 'function') {
       throw new Error('First parameter must be a callback function');
-      }
-      var buildlist = require('./buildindex');
-      if (config.filter) {
-         buildlist(config, function (err, info) {
-            genFiltered(function (err2, result2) {
-               callback(err, info);
-            });
-         });
-      } else {
-         buildlist(config, callback);
-      }
-   }
+    }
+    var buildlist = require('./buildindex');
+    if (config.filter) {
+      buildlist(config, function (err, info) {
+        genFiltered(function (err2, result2) {
+          callback(err, info);
+        });
+      });
+    } else {
+      buildlist(config, callback);
+    }
+  }
   
-   // refresh help from repo, and rebuild TOC 
-   HelpServerUtil.prototype.refresh = function (callback) {
-      var genFiltered = this.generateFiltered;
-      var rebuildContent = function () {
+  // refresh help from repo, and rebuild TOC 
+  HelpServerUtil.prototype.refresh = function (callback) {
+    var genFiltered = this.generateFiltered;
+    var rebuildContent = function () {
       var handler = function (err, result) {
-            if (err) {
-               callback(err, null);
-            } else if (config.search) {
-               var updateindex = require('./updateindex');
-               updateindex(config, callback);
-            } else {
-               callback(null, { updated: true });
-            }
+        if (err) {
+          callback(err, null);
+        } else if (config.search) {
+          var updateindex = require('./updateindex');
+          updateindex(config, callback);
+        } else {
+          callback(null, { updated: true });
+        }
       };
       var buildlist = require('./buildlist');
       buildlist(config, function (err, result) {
-            if (config.filter) {
-               genFiltered(function (err2, result2) {
-                  handler(err, result);
-               });
-            } else {
-               handler(err, result);
-            }
+        if (config.filter) {
+          genFiltered(function (err2, result2) {
+            handler(err, result);
+          });
+        } else {
+          handler(err, result);
+        }
       });
-      };
-      // optional step 1 - update the content using git...
-      rebuildContent();
-   }
+    };
+    // optional step 1 - update the content using git...
+    rebuildContent();
+  }
 
-   // perform a pattern seach, returns 'path' portion of help
-   HelpServerUtil.prototype.search = function (pattern, callback) {
-      if (!callback || typeof (callback) !== 'function') {
+  // perform a pattern seach, returns 'path' portion of help
+  HelpServerUtil.prototype.search = function (pattern, callback) {
+    if (!callback || typeof (callback) !== 'function') {
       throw new Error('Second parameter must be a callback function');
-      }
-      if (!pattern || typeof (pattern) !== 'string') {
+    }
+    if (!pattern || typeof (pattern) !== 'string') {
       callback(new Error('First parameter must be a string'), []);
-      } else if (!config.hasOwnProperty('search')) {
+    } else if (!config.hasOwnProperty('search')) {
       callback(new Error('Search were settings not specified'), []);
-      } else {
+    } else {
       var elasticquery = require("./elasticquery");
       elasticquery(config, pattern, callback);
-      }
-   }
+    }
+  }
    
-   // Get metadata for am item
-   HelpServerUtil.prototype.getmetadata = function (path, callback) {
-     var manifestFile =  config.generated + "manifest/" + replaceAll(unescape(path),'/','_').replace(".html",".json");
-     fs.readFile(manifestFile,function(err,data) {
-       if( err || !data ) {
-         callback("{}");
-       } else {
+  // Get metadata for am item
+  HelpServerUtil.prototype.getmetadata = function (path, callback) {
+    var manifestFile = config.generated + "manifest/" + replaceAll(unescape(path), '/', '_').replace(".html", ".json");
+    fs.readFile(manifestFile, function (err, data) {
+      if (err || !data) {
+        callback("{}");
+      } else {
     		  var textData = data;
-    		  if( !textData.indexOf )
-    			    textData = textData.toString('utf8');
-         callback(textData);
-       }
-     })
-   };
+    		  if (!textData.indexOf)
+          textData = textData.toString('utf8');
+        callback(textData);
+      }
+    })
+  };
 
-   // Set metadata for am item
-   HelpServerUtil.prototype.setmetadata = function (path, metadata, callback) {
-     var refreshData = this.refresh;
-     try {
-       var test = JSON.parse(metadata);
-       if( test ) {
-            var relativePath = unescape(path.substring(1));
-            var fn = config.source + relativePath;
-            fs.readFile(fn,"utf8",function(err,data) {
-                if( err ) {
-                  console.log('setmetadata '+err);
-                  callback(false);                  
+  // Set metadata for am item
+  HelpServerUtil.prototype.setmetadata = function (path, metadata, callback) {
+    var refreshData = this.refresh;
+    try {
+      var test = JSON.parse(metadata);
+      if (test) {
+        var relativePath = unescape(path.substring(1));
+        var fn = config.source + relativePath;
+        fs.readFile(fn, "utf8", function (err, data) {
+          if (err) {
+            console.log('setmetadata ' + err);
+            callback(false);
+          } else {
+            var newMetaData = '<!---HELPMETADATA: ' + metadata + ' --->';
+            var pos = data.lastIndexOf('<!---HELPMETADATA:');
+            var newData = data;
+            if (pos >= 0) {
+              var subStr = data.substring(pos);
+              var endPos = subStr.indexOf('--->');
+              if (endPos >= 0) {
+                subStr = subStr.substring(0, endPos + 4);
+                newData = data.replace(subStr, newMetaData);
+              }
+            } else {
+              var pos = data.lastIndexOf('</body');
+              if (pos > 0) {
+                newData = data.substring(0, pos) + "\n" + newMetaData + "\n" + data.substring(pos);
+              } else {
+                newData = data + "\n" + newMetaData;
+              }
+            }
+            if (newData != data) {
+              fs.writeFile(fn, newData, function () {
+                if (err) {
+                  callback(true);
                 } else {
-                   var newMetaData = '<!---HELPMETADATA: '+metadata+' --->';
-                   var pos = data.lastIndexOf('<!---HELPMETADATA:');
-                   var newData = data;
-                   if( pos >= 0 ) {
-                      var subStr = data.substring(pos);                       
-                      var endPos = subStr.indexOf('--->');
-                      if( endPos >= 0 ) {
-                        subStr = subStr.substring(0,endPos+4);
-                        newData = data.replace(subStr,newMetaData);
-                      }
-                   } else {
-                     var pos = data.lastIndexOf('</body');
-                     if( pos > 0 ) {
-                         newData = data.substring(0,pos)+"\n"+newMetaData+"\n" +data.substring(pos);
-                     } else {
-                         newData = data + "\n" + newMetaData;
-                     }
-                   }
-                   if( newData != data ) {
-                       fs.writeFile(fn,newData,function() {
-                         if( err ) {
-                            callback(true);
-                         } else {
-                           debugger;
-                           refreshData( function() {
-                             callback(true);
-                           });
-                         }                         
-                       });
-                   } else {
-                     callback(false);
-                   }
+                  debugger;
+                  refreshData(function () {
+                    callback(true);
+                  });
                 }
-            });
-       } else {
-            console.log('Error '+path+' metadata empty: '+metadata);
-            callback(false);         
-       }
-     } catch(err) {
-       console.log(err+" data "+metadata);
-       callback(false);
-     }
-   };
-   
+              });
+            } else {
+              callback(false);
+            }
+          }
+        });
+      } else {
+        console.log('Error ' + path + ' metadata empty: ' + metadata);
+        callback(false);
+      }
+    } catch (err) {
+      console.log(err + " data " + metadata);
+      callback(false);
+    }
+  };
 
-   return new HelpServerUtil();
+  var help = new HelpServerUtil();
+  var assets = {};
+
+  var loadAssetUTF8 = function (name, callback) {
+    if (assets[name]) {
+      callback(null, assets[name]);
+    } else {
+      // First try the asset folder under modules...
+      fs.readFile( config.assetpath + 'assets/' + name, "utf8", function (err, data) {
+        if (err) {
+          // Next try the module asset folder
+          fs.readFile(modulePath + 'assets/' + name, "utf8", function (err, data) {
+            if (err) {
+              callback(err, null);
+            } else {
+              assets[name] = data;
+              callback(null, data);
+            }
+          });
+        } else {
+          assets[name] = data;
+          callback(null, data);
+        }
+      });
+    }
+  };
+
+
+  var expressHandler = {
+    "blank": function (path, req, res) {
+      res.send('&nbsp;');
+    },
+
+    "main": function (path, req, res) {
+      loadAssetUTF8("main.html", function (err, data) {
+        if (err) {
+          res.res.status(404);
+        } else {
+          res.type('html');
+          res.send(data);
+        }
+      });
+    },
+    "search_panel": function (path, req, res) {
+      loadAssetUTF8("search.html", function (err, data) {
+        if (err) {
+          res.res.status(404);
+        } else {
+          res.type('html');
+          res.send(data);
+        }
+      });
+    },
+    "toc": function (path, req, res) {
+      help.gettree(path, function (err, data) {
+        res.type('html');
+        if (err) {
+          res.send('error ' + err);
+        } else {
+          res.send(data);
+        }
+      });
+    },
+    "assets": function (path, req, res) {
+      help.get(path, function (err, data, type) {
+        if (err) {
+          res.send(err);
+        } else {
+          if (type) {
+            res.type(type);
+          }
+          res.send(data);
+        }
+      });
+    },
+
+    "help": function (path, req, res) {
+      help.get(path, function (err, data, type) {
+        if (err) {
+          res.send(err);
+        } else {
+          if (type) {
+            res.type(type);
+          }
+          res.send(data);
+        }
+      });
+    },
+
+    "search": function (path, req, res) {
+      help.search(req.query.pattern, function (err, data) {
+        if (err) {
+          res.send(JSON.stringify([{ 'error': err }]));
+        } else {
+          res.send(JSON.stringify(data));
+        }
+      });
+    },
+
+    "refresh": function (path, req, res) {
+      if (req.method == 'POST') {
+        if (!global.refresh_locked) {
+          global.refresh_locked = true;
+          help.refresh(function (err, result) {
+            global.refresh_locked = false;
+            res.end("complete");
+          });
+        } else {
+          res.end("busy");
+        }
+      } else {
+        res.end("refresh most use 'POST'");
+      }
+    }
+  };
+   
+  // Express generic entry point
+  HelpServerUtil.prototype.expressuse = function (req, res) {
+    var items = req.path.split('/');
+    var handler = expressHandler[items[1]];
+    if (handler) {
+      handler('/'+items.slice(2).join('/'), req, res);
+    } else {
+      res.res.status(404);
+    }
+  };
+
+  return help;
 }

@@ -31,7 +31,7 @@ If a filter is defined, after the index is built, a table of contents that appli
 	
 To regenerate the help table and incrementally update only those pages that changed. 
 
-    .search = function (pattern, callback(err,data) {})
+    .search(pattern, callback(err,data) {})
 To search the index for a pattern.
   
 	
@@ -149,7 +149,12 @@ Once an index exists, perform a query (fulltext search with greater weight given
 ##Example help server
 
 
-An express server with hooks for resolving pages, performing searchs, pulling the table of contents. 
+An express server with hooks for resolving pages, performing searchs, pulling the table of contents.  In the following example, 
+the main page is <host>/main (i.e. "127.0.0.1/main" on your local machine).
+    
+source (/myhelp/helpfiles/) is the root of the static html files stored in a folder structure.
+generated (/myhelp/generated/) is where helpserver puts any generated html content (like the table of contents).  
+    
 
 ```js
 var express = require('express');
@@ -158,9 +163,8 @@ var options = {
   "port": 80,
   "metadata" : true ,
   "dependencies" : true ,
-  "source": "/dev/AlphaHelp/helpfiles/",
-  "generated": "/dev/AlphaHelp/generated/",
-  "templatesLocation": "/dev/AlphaHelp/templates/",
+  "source": "/myhelp/helpfiles/",
+  "generated": "/myhelp/generated/",
   "ignoreItems": [
     "images",
     "Orphans"
@@ -169,139 +173,21 @@ var options = {
     "provider": "elasticsearch"
   }
 };
-var fs = require('fs');
-var mainPageTemplate = 'No main.html template found';
-var searchPageTemplate = 'No search panel found.';
 var Help = require('helpserver');
 var help = Help(options);
 
-// Pull in resources
-fs.readFile(options.templatesLocation+'main.html','utf8' , function(err,data) {
-    if( !err ) {
-        mainPageTemplate = data;
-    }
+app.use("/",function (req, res) {
+    help.expressuse(req, res);
 });
-
-fs.readFile(options.templatesLocation+'search_panel.html','utf8' , function(err,data) {
-    if( !err ) {
-        searchPageTemplate = data;
-    }
-});
-
-app.use("/blank",function(req,res) {
-     res.send('&nbsp;');
-});
-
-app.use("/main",function(req,res) {
-     res.send(mainPageTemplate);
-});
-
-app.use("/search_panel",function(req,res) {
-     res.send(searchPageTemplate);
-});
-
-app.use("/toc",function(req,res) {
-    help.gettree(req.path,function(err,data) {
-        res.type('html');
-        if( err ) {
-            res.send('error '+err);   
-        } else {
-            res.send(data);
-        }
-    });
-});
-
-app.use("/assets/",function(req, res) {
-    console.log('request '+req.path+'\n');
-    help.get(req.path,function(err,data,type) {
-       if( err ) {
-           res.send(err);
-       } else {
-            if( type ) {
-                res.type(type);
-            }
-            res.send(data);           
-       }
-    });
-});
-
-app.use("/help/",function(req, res) {
-    console.log('request '+req.path+'\n');
-    help.get(req.path,function(err,data,type) {
-       if( err ) {
-           res.send(err);
-       } else {
-            if( type ) {
-                res.type(type);
-            }
-            res.send(data);           
-       }
-    });
-});
-
-app.use("/search?" ,function(req, res) {
-    help.search(req.query.pattern,function(err,data) {
-        if( err ) {
-            res.send(JSON.stringify([ { 'error' : err } ]));
-        } else {
-            res.send(JSON.stringify(data));
-        }  
-    })     
-});
-
-app.post("/refresh" ,function(req, res) {
-    if( !global.refresh_locked ) {
-        global.refresh_locked = true;
-        help.refresh( function(err,result ) {
-            global.refresh_locked = false;
-            res.end("complete");
-        });
-    } else {
-        res.end("busy");
-    }
-});
-    
 
 app.listen(options.port);
 console.log('Listening on port '+options.port);
 ```	
 
 
-HTML page for 'main.html'.
-
-```html
-<html>
-	<head>
-		<script src="/assets/helpserver-main.js"></script>
-	</head>
-	<body onload="helpServer.onLoad()" style="margin:0px;padding:0px;" onhashchange="helpServer.onHashChange()">
-		<div style="height:100%;width:34%;float:left;border:none;">
-			<iframe src="/search_panel" id="search" style="height:34%;width:100%;float:top;border:none;"></iframe>
-			<iframe src="/toc" id="toc" style="height:66%;width:100%;float:top;border:none;"></iframe>
-		</div>
-		<iframe src="/blank" id="help" name="help" style="height:100%;width:66%;float:left;border:none;" onload="helpServer.helpFrameLoad();"></iframe>
-	</body>
-
-</html>
-```
-
-HTML page for 'search_panel.html'.
-
-```html
-<html>
-	<head>
-		<script src="/assets/helpserver-search.js"></script>
-	</head>
-	<body>
-		<div style="width:15%;float:left;" >Search</div> <input id="input" style="width:70%;"/><button onclick="searchPanel.doSearch()" style = "width:10%;">Search</button><br>
-		<div style="width:95%;" >Results</div> 
-		<div id="results" />		
-	</body>
-</html>		
-```
-
 ## Release History
 
+* 1.0.6 Created a single top level 'expressuse' method to encasulate all the routing.
 * 1.0.5 Added support for page metadata, filters & a refresh post method.
 * 1.0.4 Added get/gettree/gettreejson to api
 * 1.0.3 Added stats
