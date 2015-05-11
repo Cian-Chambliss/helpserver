@@ -9,7 +9,17 @@ module.exports = function (config, data, page, callbackPage) {
 	};
 	var haveConfigData = false;
 	var ofn = replaceAll(replaceAll(page.path, '/', '_'), '\\', '_');
-	var manifestFile = config.generated + "manifest/" + ofn.replace(".html",".json");	
+	var extensionStart = ofn.lastIndexOf('.');
+	var extension = ofn.substring(extensionStart).toLowerCase();
+	var manifestFile = config.generated + "manifest/" + ofn.substring(0,extensionStart) + ".json";
+	if( extension == '.md' ) {
+		// Convert to html first
+		var marked = require('marked');
+		var textData = data;
+		if( !textData.indexOf )
+			textData = textData.toString('utf8');
+		data = marked(textData);
+	}	
 	if( config.metadata ) {
 		var textData = data;
 		if( !textData.indexOf )

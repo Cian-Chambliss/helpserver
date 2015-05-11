@@ -136,6 +136,15 @@ module.exports = function (config) {
           callback(null, data, "html");
         }
       });
+    } else if (extension == "md") {
+      fs.readFile(config.source + relativePath, "utf8", function (err, data) {
+        if (err) {
+          callback(err, null);
+        } else {
+      		var marked = require('marked');
+          callback(null, marked(data), "html");
+        }
+      });      
     } else if (extension == "css") {
       var helpServerFile = relativePath.lastIndexOf("helpserver-");
       if (helpServerFile > -1) {

@@ -10,7 +10,7 @@ module.exports = function (config, callback) {
   var outputUlFileName = config.generated + config.htmlfile;
   var outputFilesList = config.generated + config.flatfile;
   var flatList = [];
-  var replaceAll = function(str, find, replace) {
+  var replaceAll = function (str, find, replace) {
     while (str.indexOf(find) >= 0)
       str = str.replace(find, replace);
     return str;
@@ -27,7 +27,7 @@ module.exports = function (config, callback) {
     return false;
   }
   var cleanupFileName = function (name) {
-    name = replaceAll(name,"\\", "/");
+    name = replaceAll(name, "\\", "/");
     var start = name.indexOf(folder);
     if (start >= 0) {
       name = "/" + name.substr(start + folder.length);
@@ -38,7 +38,7 @@ module.exports = function (config, callback) {
     var i;
     for (i = 0; i < nameReplacements.length; ++i) {
       if (name.indexOf(nameReplacements[i].from) >= 0) {
-        name = replaceAll(name,nameReplacements[i].from, nameReplacements[i].to);
+        name = replaceAll(name, nameReplacements[i].from, nameReplacements[i].to);
       }
     }
     return name;
@@ -81,17 +81,21 @@ module.exports = function (config, callback) {
               });
             } ());
           } else {
-            if (file.indexOf(".html") > -1) {
-              cleanName = cleanupName(html);
-              duplicateEntry = names.indexOf(cleanName);
-              pagePath = cleanupFileName(file);
-              if (duplicateEntry < 0) {
-                results.push({ html: cleanName, path: pagePath });
-                names.push(cleanName);
-              } else {
-                results[duplicateEntry].path = pagePath;
+            var extensionPos = file.lastIndexOf('.');
+            if (extensionPos > 0) {
+              var extensionName = file.substring(extensionPos).toLowerCase();
+              if (extensionName == ".html" || extensionName == ".md") {
+                cleanName = cleanupName(html);
+                duplicateEntry = names.indexOf(cleanName);
+                pagePath = cleanupFileName(file);
+                if (duplicateEntry < 0) {
+                  results.push({ html: cleanName, path: pagePath });
+                  names.push(cleanName);
+                } else {
+                  results[duplicateEntry].path = pagePath;
+                }
+                flatList.push({ title: cleanName, file: file, path: pagePath, mtime: stat ? stat.mtime : null });
               }
-              flatList.push({ title: cleanName, file: file, path: pagePath, mtime: stat ? stat.mtime : null });
             }
             if (!--pending) done(null, results);
           }
@@ -102,12 +106,12 @@ module.exports = function (config, callback) {
 
   walk(folder, function (err, results) {
     if (err) {
-      callback(err,null);
+      callback(err, null);
       return;
     }
     fs.writeFile(outputFileName, JSON.stringify(results), function (err) {
       if (err) {
-        callback(err,null);
+        callback(err, null);
         return;
       }
       console.log("Generated: " + outputFileName);
@@ -132,25 +136,25 @@ module.exports = function (config, callback) {
         return ulList;
       };
       fs.readFile(inputTemplateFileName, "utf8", function (err, templateData) {
-        if( err ) {
-            callback(err,null);
-            return;          
+        if (err) {
+          callback(err, null);
+          return;
         }
         var ulPage = makeList(results, true);
         ulPage = templateData.replace("{{placeholder}}", ulPage);
         fs.writeFile(outputUlFileName, ulPage, function (err) {
           if (err) {
-            callback(err,null);
+            callback(err, null);
             return;
           }
           console.log("Generated: " + outputUlFileName);
           fs.writeFile(outputFilesList, JSON.stringify(flatList), function (err, templateData) {
             if (err) {
-              callback(err,null);
+              callback(err, null);
               return;
             }
             console.log("Generated: " + outputFilesList);
-            callback(null,true);
+            callback(null, true);
           });
         });
       });
