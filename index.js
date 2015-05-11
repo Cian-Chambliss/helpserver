@@ -344,13 +344,17 @@ module.exports = function (config) {
   HelpServerUtil.prototype.getmetadata = function (path, callback) {
     var manifestFile = config.generated + "manifest/" + replaceAll(unescape(path), '/', '_').replace(".html", ".json");
     fs.readFile(manifestFile, function (err, data) {
-      if (err || !data) {
+      if (err || !data ) {
         callback("{}");
       } else {
     		  var textData = data;
     		  if (!textData.indexOf)
           textData = textData.toString('utf8');
-        callback(textData);
+        var obj = JSON.parse(textData);
+        if( obj.metadata )
+             callback(JSON.stringify( obj.metadata));
+        else
+             callback("{}");
       }
     })
   };
@@ -420,7 +424,7 @@ module.exports = function (config) {
       callback(null, assets[name]);
     } else {
       // First try the asset folder under modules...
-      fs.readFile( config.assetpath + 'assets/' + name, "utf8", function (err, data) {
+      fs.readFile(config.assetpath + 'assets/' + name, "utf8", function (err, data) {
         if (err) {
           // Next try the module asset folder
           fs.readFile(modulePath + 'assets/' + name, "utf8", function (err, data) {
@@ -525,6 +529,22 @@ module.exports = function (config) {
       } else {
         res.end("refresh most use 'POST'");
       }
+    },
+    "metadata": function (path,req, res) {
+      if (req.method == 'POST') {
+        if (res.body) {
+          help.setmetadata(path, JSON.stringify(res.body), function (data) {
+            res.send(JSON.stringify({ result: data }));
+          });
+        } else {
+          res.send(JSON.stringify({ result: false, error: 'Post has no body' }));
+        }
+      } else {
+        help.getmetadata(path, function (data) {
+          res.type('json');
+          res.send(data);
+        })
+      }
     }
   };
    
@@ -533,9 +553,9 @@ module.exports = function (config) {
     var items = req.path.split('/');
     var handler = expressHandler[items[1]];
     if (handler) {
-      handler('/'+items.slice(2).join('/'), req, res);
+      handler('/' + items.slice(2).join('/'), req, res);
     } else {
-      res.res.status(404);
+      res.status(404).send('Not found');
     }
   };
 
