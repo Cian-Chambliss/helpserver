@@ -34,10 +34,10 @@ module.exports = function (config) {
 			var levels = item.path.split('/');
 			var branch = tree;
 			var currentLevel;
-			for (j = 0; j < levels.length - 1; ++j) {				
+			for (j = 0; j < levels.length - 1; ++j) {
 				currentLevel = this.cleanupName(levels[j]);
-				if( currentLevel == '' )
-				    continue;
+				if (currentLevel == '')
+					continue;
 				currentBranch = null;
 				for (k = 0; k < branch.length; ++k) {
 					if (branch[k].title == currentLevel) {
@@ -57,14 +57,43 @@ module.exports = function (config) {
 				}
 			}
 			currentBranch = null;
-			currentLevel = this.cleanupName(levels[levels.length - 1]);
+			if (item.group) {
+				currentLevel = item.group;
+			} else {
+				currentLevel = this.cleanupName(levels[levels.length - 1]);
+			}
+
 			for (k = 0; k < branch.length; ++k) {
 				if (branch[k].title == currentLevel) {
-					currentBranch = branch;
+					currentBranch = branch[k];
 					break;
 				}
 			}
-			if (!currentBranch) {
+			if (item.group) {
+				if (!currentBranch) {
+					currentBranch = { title: item.group, children: [] };
+					branch.push(currentBranch);
+				}
+				branch = currentBranch.children;
+				if (!branch) {
+					currentBranch.children = [];
+					branch = currentBranch.children;
+				}
+
+				currentBranch = null;
+				currentLevel = this.cleanupName(levels[levels.length - 1]);
+				for (k = 0; k < branch.length; ++k) {
+					if (branch[k].title == currentLevel) {
+						currentBranch = branch[k];
+						break;
+					}
+				}
+				if (!currentBranch) {
+					branch.push({ title: currentLevel, path: item.path });
+				} else {
+					currentBranch.path = item.path;
+				}
+			} else if (!currentBranch) {
 				branch.push({ title: currentLevel, path: item.path });
 			} else {
 				currentBranch.path = item.path;

@@ -250,6 +250,13 @@ module.exports = function (config) {
         }
         var ListUtilities = require('./listutilities');
         var lu = new ListUtilities(config);
+        results.sort(function compare(a,b) {
+          if (a.title < b.title)
+             return -1;
+          if (a.title > b.title)
+            return 1;
+          return 0;
+        });
         var tree = lu.treeFromList(results);
         var treeUL = lu.treeToUL(tree);
         fs.readFile(config.templatefile, "utf8", function (err, templateData) {

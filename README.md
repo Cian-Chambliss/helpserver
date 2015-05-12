@@ -187,6 +187,7 @@ console.log('Listening on port '+options.port);
 
 ## Release History
 
+* 1.0.7 Added supporr for .md files.
 * 1.0.6 Created a single top level 'expressuse' method to encasulate all the routing.
 * 1.0.5 Added support for page metadata, filters & a refresh post method.
 * 1.0.4 Added get/gettree/gettreejson to api
