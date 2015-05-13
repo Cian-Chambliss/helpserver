@@ -1,6 +1,8 @@
 var searchPanel = { 
    doSearch: function () {
       var ele = document.getElementById("input");
+      if( window.parent.helpServer )
+         window.parent.helpServer.searchTerm = ele.value;
       if (ele.value != '') {
          var command = "/search?pattern=" + ele.value;
          var xmlhttp = new XMLHttpRequest();

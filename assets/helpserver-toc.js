@@ -21,7 +21,10 @@ var tableOfContents = {
 				dad = dad.parentNode;
 			}
 			this.lastSelection = navTo;
-			navTo.scrollIntoView();
+			if( navTo.scrollIntoViewIfNeeded )
+				navTo.scrollIntoViewIfNeeded();
+			else
+				navTo.scrollIntoView();
 		}
 	},
 	tocLoaded: function () {
@@ -31,13 +34,17 @@ var tableOfContents = {
 				if (e.target.id == "TOC") {
 					return false;
 				} else if (e.target.nodeName == "DIV") {
-					if (e.target.id) {
-						window.parent.helpServer.checkNavigation(e.target.id, 'toc');
+					if( this.lastSelection == e.target ) {
+						window.parent.helpServer.ItemToggle(e.target.id);
+					} else {
+						if (e.target.id) {
+							window.parent.helpServer.checkNavigation(e.target.id, 'toc');
+						}
+						if (this.lastSelection != null)
+							this.lastSelection.className = "";
+						this.lastSelection = e.target;
+						e.target.className = "selected";
 					}
-					if (this.lastSelection != null)
-						this.lastSelection.className = "";
-					this.lastSelection = e.target;
-					e.target.className = "selected";
 				} else if (e.target.nodeName == "LI" && e.target.getAttribute("branch") == "true") {
 					var eleB = e.target.lastElementChild;
 					if (eleB.style.display == "none") {
