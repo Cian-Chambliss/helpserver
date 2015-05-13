@@ -51,50 +51,33 @@ var helpServer = {
       if (this.searchTerm != null) {
         var replaceWithSearchTerm = this.searchTerm;
         var searchEle = document.getElementById('search');
-        if( !searchEle ) {
-            this.searchTerm = null;
+        if (!searchEle) {
+          this.searchTerm = null;
         } else {
-            var searchInput = searchEle.contentDocument.getElementById('input');
-            if( !searchInput || searchInput.value != this.searchTerm ) {
-              this.searchTerm = null;
-            } 
+          var searchInput = searchEle.contentDocument.getElementById('input');
+          if (!searchInput || searchInput.value != this.searchTerm) {
+            this.searchTerm = null;
+          }
         }
-        if( this.originalHelpPath != path ) {
+        if (this.originalHelpPath != path) {
           this.originalHelpPath = path;
           this.originalHelpPage = null;
         }
         if (!this.originalHelpPage) {
           this.originalHelpPage = helpEle.contentDocument.body.innerHTML;
         }
-        replaceWithSearchTerm = replaceWithSearchTerm.toLowerCase();
-        var newPage = this.originalHelpPage;
-        var matchList = [];
-        var matchIndex = 0;
-        while( true ) {
-            var posOfExample = newPage.search(new RegExp(replaceWithSearchTerm, "i"));
-            if( posOfExample < 1 )
-                break;
-            var thisResult = newPage.substr(posOfExample,replaceWithSearchTerm.length);
-            debugger;    
-            matchList.push(thisResult);            
-            var placeHolder = "____HELPSYSTEMREPLACEMENT"+matchIndex+"___";        
-            while (newPage.indexOf(thisResult) >= 0)
-              newPage = newPage.replace(thisResult, placeHolder );
-           ++matchIndex;   
-        } 
+        var rep = '<span style="color:red;background:yellow;" id="spansearch__sequential" >$1</span>';
+        var re = new RegExp('(' + replaceWithSearchTerm + '+(?![^<>]*>))', 'ig');
+        var newPage = this.originalHelpPage.replace(re, rep);
         var index = 0;
-        var i;
-        for( i = 0 ; i < matchList.length ; ++i ) {
-            var placeHolder = "____HELPSYSTEMREPLACEMENT"+i+"___";
-            while (newPage.indexOf(placeHolder) >= 0) {
-              newPage = newPage.replace(placeHolder, "<span id=\"searchterm_"+index+"\" style=\"background:yellow;\" >" + matchList[i] + "</span>");
-              ++index;
-            }
-        }
-        this.searchTermCount = index;
         if (newPage != this.originalHelpPage) {
+          while (newPage.indexOf("spansearch__sequential") >= 0) {
+            newPage = newPage.replace("spansearch__sequential", "spansearch_" + index);            
+            ++index;
+          }
           helpEle.contentDocument.body.innerHTML = newPage;
         }
+        this.searchTermCount = index;
       }
     }
   },
