@@ -94,7 +94,7 @@ var tableOfContents = {
 					var html = '';
 					var i;
 					for (i = 0; i < resultList.length; ++i) {
-						html += "<a href=\"/help/" + resultList[i].path + "\" target=\"help\">" + resultList[i].title + "</a><br>";
+						html += "<a href=\"/main#" + resultList[i].path + "\" target=\"_top\">" + resultList[i].title + "</a><br>";
 					}
 					document.getElementById("searchResults").innerHTML = html;
 					document.body.className = 'searchActive';
