@@ -145,7 +145,7 @@ module.exports = function (config) {
           callback(null, marked(data), "html");
         }
       });      
-    } else if (extension == "css") {
+    } else if (extension == "css" || extension == "svg" ) {
       var helpServerFile = relativePath.lastIndexOf("helpserver-");
       if (helpServerFile > -1) {
         fs.readFile(modulePath + 'assets/' + relativePath.substr(helpServerFile), "utf8", function (err, data) {
@@ -153,15 +153,25 @@ module.exports = function (config) {
             console.log(modulePath + 'assets/' + relativePath.substr(helpServerFile));
             callback(err, null);
           } else {
-            callback(null, data, "css");
+            callback(null, data, extension);
           }
         });
       } else {
         fs.readFile(config.source + relativePath, "utf8", function (err, data) {
           if (err) {
-            callback(err, null);
+            debugger;
+            var endPath = relativePath.indexOf('/');
+            if( endPath >= 0 )
+                 relativePath = relativePath.substring(endPath+1); 
+            fs.readFile(modulePath + 'assets/' + relativePath , "utf8", function (err, data) {
+              if (err) {
+                  callback(err, null);
+              } else {
+                callback(null, data, extension);
+              }
+            });
           } else {
-            callback(null, data, "css");
+            callback(null, data, extension);
           }
         });
       }

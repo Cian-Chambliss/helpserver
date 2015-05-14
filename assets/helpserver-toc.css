@@ -1,5 +1,7 @@
-ul {
+body {
 font: 10pt tahoma, arial;
+}
+ul {
 list-style-type: none;
 margin: 0px;
 padding: 0px;
@@ -61,4 +63,110 @@ background:Highlight;
 border: 1px solid rgba(0,0,0,.25);
 padding: 3px;
 border-radius: 2px;
+}
+
+#TOC {
+margin-top: 36px;
+}
+#searchResults {
+margin-top: 68px;
+display: none;
+}
+
+#header {
+position: fixed;
+top: 0px;
+left: 0px;
+right: 0px;
+height: 32px;
+background: rgba(255,255,255,.75);
+border-bottom: 1px solid ThreeDFace;
+}
+
+#searchInput {
+padding-right: 32px;
+}
+#searchInput input {
+font: 10pt tahoma, arial;
+background: transparent;
+border: none;
+border-right: 1px solid ThreeDFace;
+height: 32px;
+width: 100%;
+padding-left: 6px;
+outline: none;
+}
+
+#header button {
+margin: 0px;
+height: 32px;
+width: 32px;
+background-color: transparent;
+border: none;
+outline: none;
+}
+#header button[disabled] {
+opacity: .5;
+}
+#searchButton {
+float: right;
+background: url(search.svg) center no-repeat;
+}
+#searchClearButton {
+float: right;
+background: url(searchClose.svg) center no-repeat;
+}
+#header #searchClearButton {
+display: none;
+}
+#searchNavFirst {
+position: absolute;
+left: 0px;
+background: url(searchNavFirst.svg) center no-repeat;
+}
+#searchNavPrev {
+position: absolute;
+left: 32px;
+background: url(searchNavPrev.svg) center no-repeat;
+}
+#searchNavNext {
+position: absolute;
+right: 32px;
+background: url(searchNavNext.svg) center no-repeat;
+}
+#searchNavLast {
+position: absolute;
+right: 0px;
+background: url(searchNavLast.svg) center no-repeat;
+}
+
+#header #searchNav {
+display: none;
+}
+.searchActive #header #searchClearButton {
+display: inline-block;
+}
+.searchActive #searchInput {
+padding-right: 64px;
+}
+.searchActive #TOC {
+display: none;
+}
+.searchActive #searchResults {
+display: block;
+}
+
+.searchActive #header {
+height: 64px;
+background: rgba(255,255,255,.9);
+}
+.searchActive #header #searchNav {
+display: block;
+height: 32px;
+border-bottom: 1px solid ThreeDFace;
+text-align: center;
+}
+
+#searchNavCount {
+padding: 7px;
 }

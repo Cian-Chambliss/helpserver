@@ -2,8 +2,15 @@ var helpServer = {
   onItemToggle: null,
   originalHelpPath: null,
   originalHelpPage: null,
-  searchTerm: null,
-  searchTermCount: 0,
+  lastSearchedElement: -1,
+  getSrcPath: function(src) {
+      var oldPath = src;
+      var oldPathIndex = oldPath.indexOf('/help');
+      if( oldPathIndex > 0 ) {
+        oldPath = oldPath.substring(oldPathIndex);
+      }
+      return oldPath;    
+  },
   navigateToFragment: function () {
     var path = "";
     if (window.location.hash)
@@ -11,10 +18,13 @@ var helpServer = {
     var iframeToc = document.getElementById('toc');
     var iframeHelper = document.getElementById('help');
     if (path != "") {
-      if (iframeToc)
-        iframeToc.src = "/toc#" + path;
+      if (iframeToc) {
+         iframeToc.contentWindow.tableOfContents.selectTreeElement(path); 
+      }        
       if (iframeHelper) {
-        iframeHelper.src = "/help" + path;
+        if( this.getSrcPath(iframeHelper.src) !== ("/help" + path) ) {
+            iframeHelper.src = "/help" + path;          
+        }
       }
     }
   },
@@ -32,8 +42,10 @@ var helpServer = {
       }
     }
     if (from != 'help' && iframeHelper) {
-      this.originalHelpPage = null;
-      iframeHelper.src = "/help" + path;
+      if( this.getSrcPath(iframeHelper.src) !== ("/help" + path) ) {
+          this.originalHelpPage = null;
+          iframeHelper.src = "/help" + path;
+      }
     }
   },
   onLoad: function () {
@@ -48,17 +60,14 @@ var helpServer = {
     if (path.substring(0, 5) == '/help') {
       path = path.substr(5);
       this.checkNavigation(path, 'help');
-      if (this.searchTerm != null) {
-        var replaceWithSearchTerm = this.searchTerm;
-        var searchEle = document.getElementById('search');
-        if (!searchEle) {
-          this.searchTerm = null;
-        } else {
-          var searchInput = searchEle.contentDocument.getElementById('input');
-          if (!searchInput || searchInput.value != this.searchTerm) {
-            this.searchTerm = null;
-          }
-        }
+      var tocEle = document.getElementById('toc');
+      if (tocEle
+        && tocEle.contentWindow.tableOfContents
+        && tocEle.contentWindow.tableOfContents.searchMode
+        && tocEle.contentWindow.tableOfContents.searchText
+        && tocEle.contentWindow.tableOfContents.searchText.length > 0
+        ) {
+        var replaceWithSearchTerm = tocEle.contentWindow.tableOfContents.searchText;
         if (this.originalHelpPath != path) {
           this.originalHelpPath = path;
           this.originalHelpPage = null;
@@ -72,18 +81,40 @@ var helpServer = {
         var index = 0;
         if (newPage != this.originalHelpPage) {
           while (newPage.indexOf("spansearch__sequential") >= 0) {
-            newPage = newPage.replace("spansearch__sequential", "spansearch_" + index);            
+            newPage = newPage.replace("spansearch__sequential", "searchterm_" + index);
             ++index;
           }
           helpEle.contentDocument.body.innerHTML = newPage;
         }
-        this.searchTermCount = index;
+        tocEle.contentWindow.tableOfContents.setSearchCount(index);
       }
     }
   },
   ItemToggle: function (id) {
     if (this.onItemToggle) {
       this.onItemToggle(id);
+    }
+  },
+  navigateHelpSearch: function (index) {
+    var iframeHelper = document.getElementById('help');
+    if (iframeHelper) {      
+      var ele = iframeHelper.contentDocument.getElementById('searchterm_' + index);
+      if (ele) {
+        if( this.lastSearchedElement >= 0 ) {
+          var oldEle = iframeHelper.contentDocument.getElementById('searchterm_' + this.lastSearchedElement);
+          if( oldEle ) {
+            oldEle.style.color = "red";
+            oldEle.style.background = "yellow";
+          }
+        }
+        this.lastSearchedElement = index;
+     		if (ele.scrollIntoViewIfNeeded && index == 0 )
+          ele.scrollIntoViewIfNeeded();
+        else
+          ele.scrollIntoView();
+        ele.style.color = "yellow";
+        ele.style.background = "red";
+      }
     }
   }
 };
