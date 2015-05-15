@@ -564,8 +564,15 @@ module.exports = function (config) {
         } else {
           res.end("busy");
         }
-      } else {
-        res.end("refresh most use 'POST'");
+      } else {        
+          loadAssetUTF8("refresh.html", function (err, data) {
+            if (err) {
+              res.res.status(404);
+            } else {
+              res.type('html');
+              res.send(data);
+            }
+          });          
       }
     },
     "metadata": function (path,req, res) {

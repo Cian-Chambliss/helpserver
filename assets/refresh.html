@@ -1,0 +1,24 @@
+<html>
+	<head>
+		<script>
+			var refreshCounter = 0;
+			function refreshHelpTopics() {
+					var xmlhttp = new XMLHttpRequest();
+					xmlhttp.onload = function() {
+					  if (this.status==200)
+					    {
+					    ++refreshCounter;
+					    var ele = document.getElementById("status");
+					    ele.innerHTML = "Refreshed "+refreshCounter+" times";
+						}
+					};
+					xmlhttp.open("POST","/refresh",true);
+					xmlhttp.send('');
+			}
+		</script>
+	</head>
+	<body >
+		<button onclick="refreshHelpTopics()">Refresh Help Topics</button>
+		<div id="status"></div>
+	</body>
+</html>
