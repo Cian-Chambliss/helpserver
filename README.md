@@ -190,6 +190,7 @@ console.log('Listening on port '+options.port);
 
 ## Release History
 
+* 1.0.10 Added 'refresh' page to allow a user to refresh content (should lock this down in the future). 
 * 1.0.9 Added optional git update integration (requires adding a dependency). 
 * 1.0.8 Merged the search and table of contents together + improved styling.  Added support for 'group' metadata to change add or remove structure.
 * 1.0.7 Added support for .md files.
