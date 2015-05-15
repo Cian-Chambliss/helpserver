@@ -1,83 +1,61 @@
-/**
- * Publish the plaintext of the help to elastic search...
- */
-module.exports = function (config, callback) {
-  var async = require('async');
-  var plainTextPath = config.generated + "plaintext/";
-  var inputPublish = plainTextPath + "publish.json";
-  var outputUnpublished = plainTextPath + "unpublished.json";
-  var fs = require('fs');
+module.exports = function (config, pattern, callback, startAt, maximum) {
   var helpSystemIndex = config.search.index;
-  var helpSystemType = config.search.type;
-  var ProgressBar = require('progress');
-  var unpublished = [];
-  var publishStats = { published: 0, errors: 0, errorList: [] };
-  var replaceAll = function (str, find, replace) {
-    while (str.indexOf(find) >= 0)
-      str = str.replace(find, replace);
-    return str;
-  };
-  fs.readFile(inputPublish, "utf8", function (err, listData) {      
-    var list = JSON.parse(listData);    
-    if (list.length > 0) {
-      var elasticsearch = require('elasticsearch');
-      var client = new elasticsearch.Client({
-        host: config.search.host
-      });
-      var bar = new ProgressBar('  publishing ' + list.length + ' elastic search records [:bar] :percent :etas', {
-        complete: '=',
-        incomplete: ' ',
-        width: 20,
-        total: list.length
-      });
-
-      async.eachSeries(list, function (fo, callbackLoop) {
-        var fn = replaceAll(replaceAll(fo.path, '/', '_'), '\\', '_');
-        fn = fn.replace(".html", ".txt");
-        fs.readFile(plainTextPath+fn, "utf8", function (err, content) {
-          if (err) {
-            bar.tick();
-            unpublished.push(fo);
-            publishStats.errors++;
-            publishStats.errorList.push(err);
-            callbackLoop();
-            return false;
-          }
-          client.delete({
-            index: helpSystemIndex,
-            type: helpSystemType,
-            id: fo.path,
-          }, function (error, response) {
-              client.create({
-                index: helpSystemIndex,
-                type: helpSystemType,
-                id: fo.path,
-                body: {
-                  title: fo.title,
-                  path: fo.path,
-                  content: content,
-                  metadata: fo.metadata ? fo.metadata : null 
-                }
-              }, function (error) {
-                  bar.tick();
-                  if (error) {
-                    unpublished.push(fo);
-                    publishStats.errors++;
-                    publishStats.errorList.push(error);
-                    callbackLoop();
-                  } else {
-                    publishStats.published++;
-                    callbackLoop();
-                  }
-                });
-            });
-        });
-      }, function () {
-          // unpublished files get kept around (so that an update will retry any failed writes)
-          fs.writeFile(outputUnpublished, JSON.stringify(unpublished), function (err) {
-            callback(err, { updated : true , reindexed : false , publish : publishStats } );
-          });
-        });
-    }
+  var elasticsearch = require('elasticsearch');
+  var client = new elasticsearch.Client({
+    host: config.search.host
   });
-}  
+  var queryDef = null;
+  if (pattern && pattern != '') {
+    queryDef = {
+      bool: {
+        should: [
+          { match: { title: { query: pattern, operator: "and", boost: 4 } } },
+          { match: { content: { query: pattern, operator: "and", boost: 3 } } },
+          { match: { title: { query: pattern, boost: 2 } } },
+          { match: { content: pattern } }
+        ]
+      }
+    };
+    if (config.filter) {
+      queryDef.bool.must = [{ match: config.filter }];
+    }
+  } else if (config.filter) {
+    queryDef = { match: config.filter };
+  } else {
+    queryDef = { "match_all": {} };
+  }
+  if (!startAt) {
+    startAt = 0;
+  }
+  if (!maximum) {
+    maximum = 10;
+  }
+  client.search({
+    index: helpSystemIndex,
+    body: {
+      from: startAt,
+      size: maximum,
+      query: queryDef,
+      _source: ["title", "path", "metadata"]
+    }
+  }, function (error, response) {
+      if (error) {
+        callback(error, null);
+      } else {
+        var results = [], srcArray = response.hits.hits;
+        var i;
+        for (i = 0; i < srcArray.length; ++i) {
+          var item = srcArray[i]._source;
+          if (item.metadata && item.metadata.group) {
+            if (item.metadata.istopic) {
+              results.push({ title: item.title, path: item.path, group: item.metadata.group, istopic: item.metadata.istopic });
+            } else {
+              results.push({ title: item.title, path: item.path, group: item.metadata.group });
+            }
+          } else
+            results.push({ title: item.title, path: item.path });
+        }
+        callback(null, results);
+      }
+    });
+};
