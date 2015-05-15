@@ -348,7 +348,19 @@ module.exports = function (config) {
       });
     };
     // optional step 1 - update the content using git...
-    rebuildContent();
+    if( config.useGit ) {
+        var updatesource = require('./updatesource');
+        updatesource(config,function(err,result) {
+            if(err) {
+              console.log('Update did not work '+err);
+            } else {
+              console.log('Update succeeded!');
+              rebuildContent();
+            }
+        });
+    } else {
+        rebuildContent();
+    }
   }
 
   // perform a pattern seach, returns 'path' portion of help

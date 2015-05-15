@@ -54,6 +54,9 @@ The helpserver class requires some initialization parameters, which include
 
  - source : (required) the path that will be recursed to create a table of contents & manifest files.
  - generated : (required) the path into which the generated table of contents files will be put.
+ - useGit : (optional) when a refresh is done, a pull (using git) will be done on a previously cloned git repository.
+  * Caveat: to use this feature, you will need to add the dependency { "nodegit" : ">0.0.0" } to the package.json file for the project.  nodegit is not included by default as there are problems installing it on some platforms. 
+ - repoSource : (optional) Path to repository - may be underneath of inside the help source.
  - ignoreItems : (optional) a list of folder names to ignore when recursing the source folder.
  - search : (optional) if search feature is to be used, this becomes required.
    * provider : (required) currently only provider implemented is 'ellasticsearch'
@@ -187,7 +190,9 @@ console.log('Listening on port '+options.port);
 
 ## Release History
 
-* 1.0.7 Added supporr for .md files.
+* 1.0.9 Added optional git update integration (requires adding a dependency). 
+* 1.0.8 Merged the search and table of contents together + improved styling.  Added support for 'group' metadata to change add or remove structure.
+* 1.0.7 Added support for .md files.
 * 1.0.6 Created a single top level 'expressuse' method to encasulate all the routing.
 * 1.0.5 Added support for page metadata, filters & a refresh post method.
 * 1.0.4 Added get/gettree/gettreejson to api
