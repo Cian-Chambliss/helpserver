@@ -7,26 +7,26 @@ module.exports = function (config, pattern, callback, startAt, maximum) {
   var queryDef = null;
   if (pattern && pattern != '') {
     queryDef = {
-         bool: {
-            should: [
-               { match: { title: { query: pattern, operator: "and", boost: 4 } } },
-               { match: { content: { query: pattern, operator: "and", boost: 3 } } },
-               { match: { title: { query: pattern, boost: 2 } } },
-               { match: { content: pattern } }
-            ]
-         }
-      };
-      if (config.filter) {
-         queryDef.bool.must = [{ match: config.filter }];
+      bool: {
+        should: [
+          { match: { title: { query: pattern, operator: "and", boost: 4 } } },
+          { match: { content: { query: pattern, operator: "and", boost: 3 } } },
+          { match: { title: { query: pattern, boost: 2 } } },
+          { match: { content: pattern } }
+        ]
       }
+    };
+    if (config.filter) {
+      queryDef.bool.must = [{ match: config.filter }];
+    }
   } else if (config.filter) {
     queryDef = { match: config.filter };
   } else {
     queryDef = { "match_all": {} };
   }
-   if (!startAt) {
-      startAt = 0;
-   }
+  if (!startAt) {
+    startAt = 0;
+  }
   if (!maximum) {
     maximum = 10;
   }
@@ -36,7 +36,7 @@ module.exports = function (config, pattern, callback, startAt, maximum) {
       from: startAt,
       size: maximum,
       query: queryDef,
-      _source: ["title", "path"]
+      _source: ["title", "path", "metadata"]
     }
   }, function (error, response) {
       if (error) {
@@ -44,8 +44,17 @@ module.exports = function (config, pattern, callback, startAt, maximum) {
       } else {
         var results = [], srcArray = response.hits.hits;
         var i;
-        for (i = 0; i < srcArray.length; ++i)
-          results.push(srcArray[i]._source);
+        for (i = 0; i < srcArray.length; ++i) {
+          var item = srcArray[i]._source;
+          if (item.metadata && item.metadata.group) {
+            if (item.metadata.istopic) {
+              results.push({ title: item.title, path: item.path, group: item.metadata.group, istopic: item.metadata.istopic });
+            } else {
+              results.push({ title: item.title, path: item.path, group: item.metadata.group });
+            }
+          } else
+            results.push({ title: item.title, path: item.path });
+        }
         callback(null, results);
       }
     });
