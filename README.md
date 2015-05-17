@@ -87,6 +87,9 @@ The helpserver class requires some initialization parameters, which include
    * Example - Require the metadata.tags field to be either web or common:  "filter" : { "metdata.tags" : "web,common" }
  - filter_name : (optional) - filter must be defined, this string is used as a prefix to any generated table of contents, json data.
  - isAdmin : (optional) - allows the configuration to do refresh and to set metadata.
+ - useGit: (optional) does a pull from a git repo on 'repoSource' before every 'refresh' call
+ - repoSource: (optional) path to git repo on system.
+
  - configurations : (optional) - different filters / handlers.
    * In the example at the bottom, the help page path is /novice/main  and /expert/main for displaying easy pages, or easy+expert pages,  admin allows refresh and setmetadata calls, which are otherwise not authorized.
       
@@ -173,6 +176,8 @@ var options = {
   "source": "/myhelp/helpfiles/",
   "generated": "/myhelp/generated/",
   "ignoreItems": [ "images" ],
+  "useGit": true,
+  "repoSource": "/myhelp/helpfiles" ,  
   "search": {
     "provider": "elasticsearch"
   } ,
