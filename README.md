@@ -85,7 +85,11 @@ The helpserver class requires some initialization parameters, which include
    * The pattern that helpserver looks for in the HTML files is __&lt;!---HELPMETADATA: { ..JSON... } ---&gt;__ the __JSON__ embedded in the tag gets put in the search database as a field called 'metadata'.   
  - filter : (optional) - if defined, filter_name must also be defined.  This adds a required term to every query, and causes the table of contents to be filtered.
    * Example - Require the metadata.tags field to be either web or common:  "filter" : { "metdata.tags" : "web,common" }
- - filter_name : (optiona) - filter must be defined, this string is used as a prefix to any generated table of contents, json data.     
+ - filter_name : (optional) - filter must be defined, this string is used as a prefix to any generated table of contents, json data.
+ - isAdmin : (optional) - allows the configuration to do refresh and to set metadata.
+ - configurations : (optional) - different filters / handlers.
+   * In the example at the bottom, the help page path is /novice/main  and /expert/main for displaying easy pages, or easy+expert pages,  admin allows refresh and setmetadata calls, which are otherwise not authorized.
+      
  
 Generating a table of contents from a folder structure.  In the following example, we want to create a 
 table of contents file that from a directory structure and contained html files.
@@ -168,13 +172,23 @@ var options = {
   "dependencies" : true ,
   "source": "/myhelp/helpfiles/",
   "generated": "/myhelp/generated/",
-  "ignoreItems": [
-    "images",
-    "Orphans"
-  ],
+  "ignoreItems": [ "images" ],
   "search": {
     "provider": "elasticsearch"
-  }
+  } ,
+  "configurations" : {
+    "novice" : {
+        "filter_name" : "novice" ,
+        "filter" : { "metadata.tags" : "easy" }
+    } ,
+    "expert" : {
+        "filter_name" : "expert" ,
+        "filter" : { "metadata.tags" : "easy,expert" }
+    },
+    "admin" : {
+        "isAdmin" : true
+    }
+  }  
 };
 var Help = require('helpserver');
 var help = Help(options);
@@ -190,6 +204,8 @@ console.log('Listening on port '+options.port);
 
 ## Release History
 
+* 1.0.13 added support for multiple, added nodegit to packages.
+* 1.0.12 the latest elasticpublish.js script was missing 
 * 1.0.11 the latest elasticquery.js script was missing
 * 1.0.10 Added 'refresh' page to allow a user to refresh content (should lock this down in the future). 
 * 1.0.9 Added optional git update integration (requires adding a dependency). 
