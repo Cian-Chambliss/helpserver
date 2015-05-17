@@ -8,8 +8,13 @@ module.exports = function (config) {
     return str;
   };
   var fs = require('fs');
-  var modulePath = 'node_modules/helpserver/';
-  function HelpServerUtil() {
+  var modulePath = 'node_modules/helpserver/';  
+  var configurations = {}; // Child configurations (filters & permissions added to views)
+  var configurationObjects = {}; // Child configuration objects
+  var filters = {};
+  
+  function HelpServerUtil(config) {
+    this.config = config;
     if (!config || !config.hasOwnProperty('source') || !config.hasOwnProperty('generated')) {
       throw new Error('configuration must be passed that includes at least the source & generated folders { source : <sourcefolder > , generated : <generatedfilefolder> ... }');
     }
@@ -85,9 +90,35 @@ module.exports = function (config) {
       return path;
     }
     config.source = terminatePath(config.source);
-    config.generated = terminatePath(config.generated);
-  }
-  
+    config.generated = terminatePath(config.generated);   
+    // Setup Configurations
+    if( config.configurations ) {
+      for(var configName in config.configurations ) {
+          var configDef = config.configurations[ configName ];
+          configurations[ configName ] = {
+            source : configDef.source ? configDef.source : config.source ,
+            generated :  configDef.generated ? configDef.generated : config.generated ,
+            search : configDef.search ? configDef.search : config.search ,
+            filter_name : configDef.filter_name ? configDef.filter_name : config.filter_name ,
+            filter :  configDef.filter ? configDef.filter : config.filter ,
+            escapes : configDef.escapes ? configDef.escapes : config.escapes ,
+            templatefile : configDef.templatefile ? configDef.templatefile : config.templatefile ,
+            structurefile : configDef.structurefile ? configDef.structurefile : config.structurefile ,
+            htmlfile : configDef.htmlfile ? configDef.htmlfile : config.htmlfile ,
+            flatfile :  configDef.flatfile ? configDef.flatfile : config.flatfile ,
+            assetpath : configDef.assetpath ? configDef.assetpath : config.assetpath ,
+            useGit : configDef.useGit ? configDef.useGit : config.useGit ,
+            repoSource : configDef.repoSource ? configDef.repoSource : config.repoSource ,
+            isAdmin : configDef.isAdmin ? configDef.isAdmin : config.isAdmin 
+          };
+          // Collect all the filters - first occurence of every type (this is for building refresh lists)...
+          if( configDef.filter_name && configDef.filter ) {
+              filters[configDef.filter_name] = configurations[ configName ];
+          }
+      }
+    }
+  }  
+ 
   // status determines if index server is running (if specified) as well as existence of required files...
   HelpServerUtil.prototype.status = function (callback) {
     var stats = { htmlTreeExists: false, jsonTreeExists: false, indexServiceRunning: false, indexExists: false, indexCount: 0 };
@@ -141,11 +172,11 @@ module.exports = function (config) {
         if (err) {
           callback(err, null);
         } else {
-      		var marked = require('marked');
+          var marked = require('marked');
           callback(null, marked(data), "html");
         }
-      });      
-    } else if (extension == "css" || extension == "svg" ) {
+      });
+    } else if (extension == "css" || extension == "svg") {
       var helpServerFile = relativePath.lastIndexOf("helpserver-");
       if (helpServerFile > -1) {
         fs.readFile(modulePath + 'assets/' + relativePath.substr(helpServerFile), "utf8", function (err, data) {
@@ -161,11 +192,11 @@ module.exports = function (config) {
           if (err) {
             debugger;
             var endPath = relativePath.indexOf('/');
-            if( endPath >= 0 )
-                 relativePath = relativePath.substring(endPath+1); 
-            fs.readFile(modulePath + 'assets/' + relativePath , "utf8", function (err, data) {
+            if (endPath >= 0)
+              relativePath = relativePath.substring(endPath + 1);
+            fs.readFile(modulePath + 'assets/' + relativePath, "utf8", function (err, data) {
               if (err) {
-                  callback(err, null);
+                callback(err, null);
               } else {
                 callback(null, data, extension);
               }
@@ -209,7 +240,7 @@ module.exports = function (config) {
   
   // Get the table of contents
   HelpServerUtil.prototype.gettree = function (page, callback) {
-    fs.readFile(config.generated + config.filter_name + config.htmlfile, 'utf8', function (err, data) {
+    fs.readFile(this.config.generated + this.config.filter_name + this.config.htmlfile, 'utf8', function (err, data) {
       callback(err, data);
     });
   }
@@ -217,7 +248,7 @@ module.exports = function (config) {
 
   // Get the table of contents
   HelpServerUtil.prototype.gettreejson = function (page, callback) {
-    fs.readFile(config.generated + config.filter_name + config.structurefile, 'utf8', function (err, data) {
+    fs.readFile(this.config.generated + this.config.filter_name + this.config.structurefile, 'utf8', function (err, data) {
       callback(err, data);
     });
   }
@@ -260,9 +291,9 @@ module.exports = function (config) {
         }
         var ListUtilities = require('./listutilities');
         var lu = new ListUtilities(config);
-        results.sort(function compare(a,b) {
+        results.sort(function compare(a, b) {
           if (a.title < b.title)
-             return -1;
+            return -1;
           if (a.title > b.title)
             return 1;
           return 0;
@@ -348,18 +379,18 @@ module.exports = function (config) {
       });
     };
     // optional step 1 - update the content using git...
-    if( config.useGit ) {
-        var updatesource = require('./updatesource');
-        updatesource(config,function(err,result) {
-            if(err) {
-              console.log('Update did not work '+err);
-            } else {
-              console.log('Update succeeded!');
-              rebuildContent();
-            }
-        });
+    if (config.useGit) {
+      var updatesource = require('./updatesource');
+      updatesource(config, function (err, result) {
+        if (err) {
+          console.log('Update did not work ' + err);
+        } else {
+          console.log('Update succeeded!');
+          rebuildContent();
+        }
+      });
     } else {
-        rebuildContent();
+      rebuildContent();
     }
   }
 
@@ -374,7 +405,7 @@ module.exports = function (config) {
       callback(new Error('Search were settings not specified'), []);
     } else {
       var elasticquery = require("./elasticquery");
-      elasticquery(config, pattern, callback);
+      elasticquery(this.config, pattern, callback);
     }
   }
    
@@ -382,17 +413,17 @@ module.exports = function (config) {
   HelpServerUtil.prototype.getmetadata = function (path, callback) {
     var manifestFile = config.generated + "manifest/" + replaceAll(unescape(path), '/', '_').replace(".html", ".json");
     fs.readFile(manifestFile, function (err, data) {
-      if (err || !data ) {
+      if (err || !data) {
         callback("{}");
       } else {
     		  var textData = data;
     		  if (!textData.indexOf)
           textData = textData.toString('utf8');
         var obj = JSON.parse(textData);
-        if( obj.metadata )
-             callback(JSON.stringify( obj.metadata));
+        if (obj.metadata)
+          callback(JSON.stringify(obj.metadata));
         else
-             callback("{}");
+          callback("{}");
       }
     })
   };
@@ -433,7 +464,6 @@ module.exports = function (config) {
                 if (err) {
                   callback(true);
                 } else {
-                  debugger;
                   refreshData(function () {
                     callback(true);
                   });
@@ -453,10 +483,15 @@ module.exports = function (config) {
       callback(false);
     }
   };
+  
+  HelpServerUtil.prototype.isAdmin = function () {
+    return this.config.isAdmin ? true : false;
+  }
+  
 
-  var help = new HelpServerUtil();
+  var help = new HelpServerUtil(config);
   var assets = {};
-
+  
   var loadAssetUTF8 = function (name, callback) {
     if (assets[name]) {
       callback(null, assets[name]);
@@ -483,11 +518,11 @@ module.exports = function (config) {
 
 
   var expressHandler = {
-    "blank": function (path, req, res) {
+    "blank": function (hlp,path, req, res) {
       res.send('&nbsp;');
     },
 
-    "main": function (path, req, res) {
+    "main": function (hlp,path, req, res) {
       loadAssetUTF8("main.html", function (err, data) {
         if (err) {
           res.res.status(404);
@@ -497,7 +532,7 @@ module.exports = function (config) {
         }
       });
     },
-    "search_panel": function (path, req, res) {
+    "search_panel": function (hlp,path, req, res) {
       loadAssetUTF8("search.html", function (err, data) {
         if (err) {
           res.res.status(404);
@@ -507,8 +542,8 @@ module.exports = function (config) {
         }
       });
     },
-    "toc": function (path, req, res) {
-      help.gettree(path, function (err, data) {
+    "toc": function (hlp,path, req, res) {
+      hlp.gettree(path, function (err, data) {
         res.type('html');
         if (err) {
           res.send('error ' + err);
@@ -517,8 +552,8 @@ module.exports = function (config) {
         }
       });
     },
-    "assets": function (path, req, res) {
-      help.get(path, function (err, data, type) {
+    "assets": function (hlp,path, req, res) {
+      hlp.get(path, function (err, data, type) {
         if (err) {
           res.send(err);
         } else {
@@ -530,8 +565,8 @@ module.exports = function (config) {
       });
     },
 
-    "help": function (path, req, res) {
-      help.get(path, function (err, data, type) {
+    "help": function (hlp,path, req, res) {
+      hlp.get(path, function (err, data, type) {
         if (err) {
           res.send(err);
         } else {
@@ -543,8 +578,8 @@ module.exports = function (config) {
       });
     },
 
-    "search": function (path, req, res) {
-      help.search(req.query.pattern, function (err, data) {
+    "search": function (hlp,path, req, res) {
+      hlp.search(req.query.pattern, function (err, data) {
         if (err) {
           res.send(JSON.stringify([{ 'error': err }]));
         } else {
@@ -553,18 +588,19 @@ module.exports = function (config) {
       });
     },
 
-    "refresh": function (path, req, res) {
-      if (req.method == 'POST') {
-        if (!global.refresh_locked) {
-          global.refresh_locked = true;
-          help.refresh(function (err, result) {
-            global.refresh_locked = false;
-            res.end("complete");
-          });
+    "refresh": function (hlp,path, req, res) {
+      if (hlp.isAdmin()) {
+        if (req.method == 'POST') {
+          if (!global.refresh_locked) {
+            global.refresh_locked = true;
+            hlp.refresh(function (err, result) {
+              global.refresh_locked = false;
+              res.end("complete");
+            });
+          } else {
+            res.end("busy");
+          }
         } else {
-          res.end("busy");
-        }
-      } else {        
           loadAssetUTF8("refresh.html", function (err, data) {
             if (err) {
               res.res.status(404);
@@ -572,20 +608,27 @@ module.exports = function (config) {
               res.type('html');
               res.send(data);
             }
-          });          
-      }
-    },
-    "metadata": function (path,req, res) {
-      if (req.method == 'POST') {
-        if (res.body) {
-          help.setmetadata(path, JSON.stringify(res.body), function (data) {
-            res.send(JSON.stringify({ result: data }));
           });
-        } else {
-          res.send(JSON.stringify({ result: false, error: 'Post has no body' }));
         }
       } else {
-        help.getmetadata(path, function (data) {
+        res.status(401).send('Not authorized');
+      }
+    },
+    "metadata": function (hlp,path, req, res) {
+      if (req.method == 'POST') {
+        if (hlp.isAdmin()) {
+          if (res.body) {
+            hlp.setmetadata(path, JSON.stringify(res.body), function (data) {
+              res.send(JSON.stringify({ result: data }));
+            });
+          } else {
+            res.status(400).send('Bad request - body is missing');
+          }
+        } else {
+          res.status(401).send('Not authorized');
+        }
+      } else {
+        hlp.getmetadata(path, function (data) {
           res.type('json');
           res.send(data);
         })
@@ -598,11 +641,26 @@ module.exports = function (config) {
     var items = req.path.split('/');
     var handler = expressHandler[items[1]];
     if (handler) {
-      handler('/' + items.slice(2).join('/'), req, res);
+      handler(help,'/' + items.slice(2).join('/'), req, res);
     } else {
-      res.status(404).send('Not found');
+      var altConfig = configurationObjects[items[1]];
+      if( altConfig ) {
+         handler = expressHandler[items[2]];
+         if (handler) {
+             handler(altConfig,'/' + items.slice(3).join('/'), req, res);
+         } else {
+             res.status(404).send('Not found');  
+         }
+      } else {      
+         res.status(404).send('Not found');
+      }
     }
   };
+  
+  for(var configName in configurations ) {
+      // Create a helpservice object with a different config...
+      configurationObjects[configName] = new HelpServerUtil(configurations[ configName ]);
+  }; 
 
   return help;
 }

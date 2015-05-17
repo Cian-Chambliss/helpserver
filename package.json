@@ -16,6 +16,7 @@
   ],
   "author": "Cian Chambliss <cian@alphasoftware.com>",
   "dependencies": {
+     "nodegit" : "0.3.3",
      "async" : ">0.0.0",
      "elasticsearch" : ">0.0.0",
      "htmlparser2" : ">0.0.0",
