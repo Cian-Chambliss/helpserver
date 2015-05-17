@@ -8,11 +8,11 @@ module.exports = function (config) {
     return str;
   };
   var fs = require('fs');
-  var modulePath = 'node_modules/helpserver/';  
+  var modulePath = 'node_modules/helpserver/';
   var configurations = {}; // Child configurations (filters & permissions added to views)
   var configurationObjects = {}; // Child configuration objects
   var filters = {};
-  
+
   function HelpServerUtil(config) {
     this.config = config;
     if (!config || !config.hasOwnProperty('source') || !config.hasOwnProperty('generated')) {
@@ -90,31 +90,55 @@ module.exports = function (config) {
       return path;
     }
     config.source = terminatePath(config.source);
-    config.generated = terminatePath(config.generated);   
+    config.generated = terminatePath(config.generated);
+      
+    // Create a dummy filter for 'all'   
+    if (!filters["_all"]) {
+      filters["_all"] = {
+        filter_name: '_all',
+        source: config.source,
+        generated: config.generated,
+        search: config.search,
+        escapes: config.escapes,
+        templatefile: config.templatefile,
+        structurefile: config.structurefile,
+        htmlfile: config.htmlfile,
+        flatfile: config.flatfile,
+        assetpath: config.assetpath,
+        useGit: config.useGit,
+        repoSource: config.repoSource,
+        isAdmin: config.isAdmin
+      };
+    }  
+       
+    // Collect a filter if it is not already included    
+    if (config.filter_name && config.filter && !filters[config.filter_name]) {
+      filters[config.filter_name] = config;
+    }
     // Setup Configurations
-    if( config.configurations ) {
-      for(var configName in config.configurations ) {
-          var configDef = config.configurations[ configName ];
-          configurations[ configName ] = {
-            source : configDef.source ? configDef.source : config.source ,
-            generated :  configDef.generated ? configDef.generated : config.generated ,
-            search : configDef.search ? configDef.search : config.search ,
-            filter_name : configDef.filter_name ? configDef.filter_name : config.filter_name ,
-            filter :  configDef.filter ? configDef.filter : config.filter ,
-            escapes : configDef.escapes ? configDef.escapes : config.escapes ,
-            templatefile : configDef.templatefile ? configDef.templatefile : config.templatefile ,
-            structurefile : configDef.structurefile ? configDef.structurefile : config.structurefile ,
-            htmlfile : configDef.htmlfile ? configDef.htmlfile : config.htmlfile ,
-            flatfile :  configDef.flatfile ? configDef.flatfile : config.flatfile ,
-            assetpath : configDef.assetpath ? configDef.assetpath : config.assetpath ,
-            useGit : configDef.useGit ? configDef.useGit : config.useGit ,
-            repoSource : configDef.repoSource ? configDef.repoSource : config.repoSource ,
-            isAdmin : configDef.isAdmin ? configDef.isAdmin : config.isAdmin 
-          };
-          // Collect all the filters - first occurence of every type (this is for building refresh lists)...
-          if( configDef.filter_name && configDef.filter ) {
-              filters[configDef.filter_name] = configurations[ configName ];
-          }
+    if (config.configurations) {
+      for (var configName in config.configurations) {
+        var configDef = config.configurations[configName];
+        configurations[configName] = {
+          source: configDef.source ? configDef.source : config.source,
+          generated: configDef.generated ? configDef.generated : config.generated,
+          search: configDef.search ? configDef.search : config.search,
+          filter_name: configDef.filter_name ? configDef.filter_name : config.filter_name,
+          filter: configDef.filter ? configDef.filter : config.filter,
+          escapes: configDef.escapes ? configDef.escapes : config.escapes,
+          templatefile: configDef.templatefile ? configDef.templatefile : config.templatefile,
+          structurefile: configDef.structurefile ? configDef.structurefile : config.structurefile,
+          htmlfile: configDef.htmlfile ? configDef.htmlfile : config.htmlfile,
+          flatfile: configDef.flatfile ? configDef.flatfile : config.flatfile,
+          assetpath: configDef.assetpath ? configDef.assetpath : config.assetpath,
+          useGit: configDef.useGit ? configDef.useGit : config.useGit,
+          repoSource: configDef.repoSource ? configDef.repoSource : config.repoSource,
+          isAdmin: configDef.isAdmin ? configDef.isAdmin : config.isAdmin
+        };
+        // Collect all the filters - first occurence of every type (this is for building refresh lists)...
+        if (configDef.filter_name && configDef.filter && !filters[configDef.filter_name]) {
+          filters[configDef.filter_name] = configurations[configName];
+        }
       }
     }
   }  
@@ -240,7 +264,7 @@ module.exports = function (config) {
   
   // Get the table of contents
   HelpServerUtil.prototype.gettree = function (page, callback) {
-    fs.readFile(this.config.generated + this.config.filter_name + this.config.htmlfile, 'utf8', function (err, data) {
+    fs.readFile(this.config.generated + (this.config.filter_name ? this.config.filter_name : '_all' ) + this.config.htmlfile, 'utf8', function (err, data) {
       callback(err, data);
     });
   }
@@ -248,7 +272,7 @@ module.exports = function (config) {
 
   // Get the table of contents
   HelpServerUtil.prototype.gettreejson = function (page, callback) {
-    fs.readFile(this.config.generated + this.config.filter_name + this.config.structurefile, 'utf8', function (err, data) {
+    fs.readFile(this.config.generated + (this.config.filter_name ? this.config.filter_name : '_all' ) + this.config.structurefile, 'utf8', function (err, data) {
       callback(err, data);
     });
   }
@@ -273,6 +297,9 @@ module.exports = function (config) {
   
   // After any indices are generated, we should make sure to update the filter
   HelpServerUtil.prototype.generateFiltered = function (callback) {
+    var filterNames = [];
+    var rememberErr = null;
+
     if (!callback) {
       callback = function (err, result) {
         if (err) {
@@ -282,46 +309,74 @@ module.exports = function (config) {
         }
       }
     }
-    if (config.filter) {
+
+    // Get all the 'filters' that we need to regenerate...
+    for (var configName in filters) {
+      filterNames.push(configName);
+    }
+
+    // look through all the filters...
+    if (filterNames.length > 0) {
+      var async = require('async');
       var elasticquery = require("./elasticquery");
-      elasticquery(config, '', function (err, results) {
-        if (err) {
-          callback(err, null);
-          return;
-        }
-        var ListUtilities = require('./listutilities');
-        var lu = new ListUtilities(config);
-        results.sort(function compare(a, b) {
-          if (a.title < b.title)
-            return -1;
-          if (a.title > b.title)
-            return 1;
-          return 0;
-        });
-        var tree = lu.treeFromList(results);
-        var treeUL = lu.treeToUL(tree);
-        fs.readFile(config.templatefile, "utf8", function (err, templateData) {
+      var ListUtilities = require('./listutilities');
+      
+      console.log('Generateing filters');
+      
+      async.eachSeries(filterNames, function (filterName, callbackLoop) {
+        var cfg = filters[filterName];
+        console.log('Generate filter for '+filterName);
+        elasticquery(cfg, '', function (err, results) {
           if (err) {
-            callback(err, null);
+            rememberErr = err;
+            callbackLoop();
             return;
           }
-          treeUL = templateData.replace("{{placeholder}}", treeUL);
+          var lu = new ListUtilities(cfg);
+          results.sort(function compare(a, b) {
+            if (a.title < b.title)
+              return -1;
+            if (a.title > b.title)
+              return 1;
+            return 0;
+          });
 
-          fs.writeFile(config.generated + config.filter_name + config.htmlfile, treeUL, function (err) {
+          var tree = lu.treeFromList(results);
+          var treeUL = lu.treeToUL(tree);
+          
+          console.log('Saving filtered list...');
+
+          fs.readFile(cfg.templatefile, "utf8", function (err, templateData) {
             if (err) {
-              callback(err, null);
+              rememberErr = err;
+              callbackLoop();
               return;
             }
-            fs.writeFile(config.generated + config.filter_name + config.structurefile, JSON.stringify(tree), function (err) {
+            treeUL = templateData.replace("{{placeholder}}", treeUL);
+
+            fs.writeFile(cfg.generated + cfg.filter_name + cfg.htmlfile, treeUL, function (err) {
               if (err) {
-                callback(err, null);
+                rememberErr = err;
+                callbackLoop();
                 return;
               }
-              callback(null, true);
+              fs.writeFile(cfg.generated + cfg.filter_name + cfg.structurefile, JSON.stringify(tree), function (err) {
+                if (err) {
+                  rememberErr = err;
+                }
+                callbackLoop();
+              });
             });
           });
+        }, 0, 100000);
+      }, function () {
+          if (rememberErr)
+            callback(rememberErr, null);
+          else
+            callback(null, true);
         });
-      }, 0, 100000);
+    } else {
+      console.log('No filters defined');
     };
   }
   
@@ -342,15 +397,11 @@ module.exports = function (config) {
       throw new Error('First parameter must be a callback function');
     }
     var buildlist = require('./buildindex');
-    if (config.filter) {
-      buildlist(config, function (err, info) {
-        genFiltered(function (err2, result2) {
-          callback(err, info);
-        });
+    buildlist(config, function (err, info) {
+      genFiltered(function (err2, result2) {
+        callback(err, info);
       });
-    } else {
-      buildlist(config, callback);
-    }
+    });
   }
   
   // refresh help from repo, and rebuild TOC 
@@ -368,14 +419,10 @@ module.exports = function (config) {
         }
       };
       var buildlist = require('./buildlist');
-      buildlist(config, function (err, result) {
-        if (config.filter) {
+      buildlist(config, function (err, result) {        
           genFiltered(function (err2, result2) {
             handler(err, result);
           });
-        } else {
-          handler(err, result);
-        }
       });
     };
     // optional step 1 - update the content using git...
@@ -483,15 +530,15 @@ module.exports = function (config) {
       callback(false);
     }
   };
-  
+
   HelpServerUtil.prototype.isAdmin = function () {
     return this.config.isAdmin ? true : false;
   }
-  
+
 
   var help = new HelpServerUtil(config);
   var assets = {};
-  
+
   var loadAssetUTF8 = function (name, callback) {
     if (assets[name]) {
       callback(null, assets[name]);
@@ -518,11 +565,11 @@ module.exports = function (config) {
 
 
   var expressHandler = {
-    "blank": function (hlp,path, req, res) {
+    "blank": function (hlp, path, req, res) {
       res.send('&nbsp;');
     },
 
-    "main": function (hlp,path, req, res) {
+    "main": function (hlp, path, req, res) {
       loadAssetUTF8("main.html", function (err, data) {
         if (err) {
           res.res.status(404);
@@ -532,7 +579,7 @@ module.exports = function (config) {
         }
       });
     },
-    "search_panel": function (hlp,path, req, res) {
+    "search_panel": function (hlp, path, req, res) {
       loadAssetUTF8("search.html", function (err, data) {
         if (err) {
           res.res.status(404);
@@ -542,7 +589,7 @@ module.exports = function (config) {
         }
       });
     },
-    "toc": function (hlp,path, req, res) {
+    "toc": function (hlp, path, req, res) {
       hlp.gettree(path, function (err, data) {
         res.type('html');
         if (err) {
@@ -552,7 +599,7 @@ module.exports = function (config) {
         }
       });
     },
-    "assets": function (hlp,path, req, res) {
+    "assets": function (hlp, path, req, res) {
       hlp.get(path, function (err, data, type) {
         if (err) {
           res.send(err);
@@ -565,7 +612,7 @@ module.exports = function (config) {
       });
     },
 
-    "help": function (hlp,path, req, res) {
+    "help": function (hlp, path, req, res) {
       hlp.get(path, function (err, data, type) {
         if (err) {
           res.send(err);
@@ -578,7 +625,7 @@ module.exports = function (config) {
       });
     },
 
-    "search": function (hlp,path, req, res) {
+    "search": function (hlp, path, req, res) {
       hlp.search(req.query.pattern, function (err, data) {
         if (err) {
           res.send(JSON.stringify([{ 'error': err }]));
@@ -588,7 +635,7 @@ module.exports = function (config) {
       });
     },
 
-    "refresh": function (hlp,path, req, res) {
+    "refresh": function (hlp, path, req, res) {
       if (hlp.isAdmin()) {
         if (req.method == 'POST') {
           if (!global.refresh_locked) {
@@ -614,7 +661,7 @@ module.exports = function (config) {
         res.status(401).send('Not authorized');
       }
     },
-    "metadata": function (hlp,path, req, res) {
+    "metadata": function (hlp, path, req, res) {
       if (req.method == 'POST') {
         if (hlp.isAdmin()) {
           if (res.body) {
@@ -641,26 +688,26 @@ module.exports = function (config) {
     var items = req.path.split('/');
     var handler = expressHandler[items[1]];
     if (handler) {
-      handler(help,'/' + items.slice(2).join('/'), req, res);
+      handler(help, '/' + items.slice(2).join('/'), req, res);
     } else {
       var altConfig = configurationObjects[items[1]];
-      if( altConfig ) {
-         handler = expressHandler[items[2]];
-         if (handler) {
-             handler(altConfig,'/' + items.slice(3).join('/'), req, res);
-         } else {
-             res.status(404).send('Not found');  
-         }
-      } else {      
-         res.status(404).send('Not found');
+      if (altConfig) {
+        handler = expressHandler[items[2]];
+        if (handler) {
+          handler(altConfig, '/' + items.slice(3).join('/'), req, res);
+        } else {
+          res.status(404).send('Not found');
+        }
+      } else {
+        res.status(404).send('Not found');
       }
     }
   };
-  
-  for(var configName in configurations ) {
-      // Create a helpservice object with a different config...
-      configurationObjects[configName] = new HelpServerUtil(configurations[ configName ]);
-  }; 
+
+  for (var configName in configurations) {
+    // Create a helpservice object with a different config...
+    configurationObjects[configName] = new HelpServerUtil(configurations[configName]);
+  };
 
   return help;
 }
