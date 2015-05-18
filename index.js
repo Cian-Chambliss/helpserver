@@ -703,6 +703,13 @@ module.exports = function (config) {
       }
     }
   };
+  
+  // If webhookport is defined, lets listen on it
+  if( config.webhookPort ) {
+    var webhooklisten = require("./webhooklisten");
+    webhooklisten(config,help);
+  }
+  
 
   for (var configName in configurations) {
     // Create a helpservice object with a different config...
