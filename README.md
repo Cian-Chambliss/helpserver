@@ -89,7 +89,9 @@ The helpserver class requires some initialization parameters, which include
  - isAdmin : (optional) - allows the configuration to do refresh and to set metadata.
  - useGit: (optional) does a pull from a git repo on 'repoSource' before every 'refresh' call
  - repoSource: (optional) path to git repo on system.
-
+ - webhookPort : (optional) port to listen for webhook notifications on.
+ - webhookPath : (optional) base path for webhook notifications.
+ - webhookSecret: (optional) secret for webhook.
  - configurations : (optional) - different filters / handlers.
    * In the example at the bottom, the help page path is /novice/main  and /expert/main for displaying easy pages, or easy+expert pages,  admin allows refresh and setmetadata calls, which are otherwise not authorized.
       
@@ -176,11 +178,17 @@ var options = {
   "source": "/myhelp/helpfiles/",
   "generated": "/myhelp/generated/",
   "ignoreItems": [ "images" ],
-  "useGit": true,
-  "repoSource": "/myhelp/helpfiles" ,  
   "search": {
     "provider": "elasticsearch"
   } ,
+  // Optional github integration (does a pull on refresh calls)
+  "useGit": true,
+  "repoSource": "/myhelp/helpfiles" ,  
+  // Optional github webhook integration
+  "webhookPort" : 9001 ,
+  "webhookPath" : "/" , 
+  "webhookSecret" : "mywebhooksecretcode" ,
+  // Optional Multiple configurations
   "configurations" : {
     "novice" : {
         "filter_name" : "novice" ,
@@ -209,6 +217,7 @@ console.log('Listening on port '+options.port);
 
 ## Release History
 
+* 1.0.14 added support for github webhook notification to drive the refresh.
 * 1.0.13 added support for multiple, added nodegit to packages.
 * 1.0.12 the latest elasticpublish.js script was missing 
 * 1.0.11 the latest elasticquery.js script was missing
