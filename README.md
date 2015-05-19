@@ -188,7 +188,10 @@ The settings file properties are set
  - webhookPath: "/" - the base path for the webhook url.
  - webhookSecret: "mywebhooksecretcode" - The secret that was entered when the webhook was added to github. 
  - configurations: filters for the help.
- 
+   * novice - This is the handler for a path called 'novice' this is a user assigned name, it will be the top level route '<host>/novice/main' will be the 'novice' help page
+   * expert - This is the handler for a path called 'expert', also user assigned the url '<host>/expert/main' will be the 'novice' expert page
+   * admin - This would not be a requirement normally if we are using webhooks, but this provides the interface for doing a manual 'refresh' - '<host>/admin/refresh display a page with a refresh button that allows help to be refreshed from the browser,  it is useful for local testing where setting up a webhook can be more of a pain.
+    
 ```json
 {
   "port": 80,
