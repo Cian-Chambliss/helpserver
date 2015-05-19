@@ -8,12 +8,14 @@ module.exports = function (config) {
     return str;
   };
   var fs = require('fs');
-  var modulePath = 'node_modules/helpserver/';
+  var path = require('path');
+  var appDir = path.dirname(require.main.filename)+'/';
+  var modulePath = appDir + 'node_modules/helpserver/';
   var configurations = {}; // Child configurations (filters & permissions added to views)
   var configurationObjects = {}; // Child configuration objects
   var filters = {};
   var assets = {};
-
+  
   var loadAssetUTF8 = function (name, callback) {
     if (assets[name]) {
       callback(null, assets[name]);

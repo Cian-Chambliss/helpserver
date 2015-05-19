@@ -284,6 +284,7 @@ help.status(function (stats) {
 
 ## Release History
 
+* 1.0.20 module path is now relative to the startup path (main) so that service will load resources from the correct location.
 * 1.0.19 fixed problems in error handling, addressed double page load when navigating from inside the help iframe. 
 * 1.0.18 through 1.0.16 - fixes for deployment 
 * 1.0.15 improved documentation 
