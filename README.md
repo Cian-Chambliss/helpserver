@@ -180,9 +180,15 @@ The settings file properties are set
  - dependencies : true - generates a list of dependencies, a simple array of href and images on a page, and stores the result in a manifest file.
  - source : Our help files start in folder /myhelp/helpfiles/
  - generated: Our intermediate files are stored in /myhelp/generated/ - must be writeable (like generated table of contents, plaintext, and extracted metdatadata and dependency files).
- - 
-
-
+ - ignoreItems: ["images","css"] Any folder with the name 'images' or 'css' gets ignored, as they are assumed to hold assets for the pages in the folder, not contain help.
+ - search: { "provider": "elasticsearch" } - Currently the only option, if ommitted, you cannot use the full text search methods.
+ - useGit: true - indicates that our help is stored in a git repository, and when a 'refresh' is done, a pull will done against the repository first
+ - repoSource: "/myhelp/helpfiles" - the path for our git repository, may match, include, or be beneath the source folder.
+ - webhookPort: 9001 - indicates that our help server is using git webhook, and a refresh will automatically occur any time a push is done to the repository.
+ - webhookPath: "/" - the base path for the webhook url.
+ - webhookSecret: "mywebhooksecretcode" - The secret that was entered when the webhook was added to github. 
+ - configurations: filters for the help.
+ 
 ```json
 {
   "port": 80,
@@ -190,7 +196,7 @@ The settings file properties are set
   "dependencies" : true ,
   "source": "/myhelp/helpfiles/",
   "generated": "/myhelp/generated/",
-  "ignoreItems": [ "images" ],
+  "ignoreItems": [ "images" , "css" ],
   "search": {
     "provider": "elasticsearch"
   } ,
