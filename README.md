@@ -12,6 +12,12 @@ populate and query against an elasticsearch index to perform full text search of
 
 The help server includes the methods
 
+
+  .expressuse(req, res)
+
+To handle top level express route (let helpserver handle all the routing).  
+  
+
 	.status(function(stats) {})
 	
 To get the status, including whats been generated, and if the index provider is running  (in the case of using search, you will 
@@ -99,79 +105,76 @@ The helpserver class requires some initialization parameters, which include
 Generating a table of contents from a folder structure.  In the following example, we want to create a 
 table of contents file that from a directory structure and contained html files.
 
-	var Help = require('helpserver');
-	var config = {
-		source: '/dev/AlphaHelp/helpfiles',
-		generated: '/dev/AlphaHelp/generated',
-		ignoreItems: ['images', 'Orphans'] ,
-		search : {
-			provider: "elasticsearch"
-		}
-	};
-	var help = Help(config);
+```js
+var Help = require('helpserver');
+var config = {
+	source: '/dev/AlphaHelp/helpfiles',
+	generated: '/dev/AlphaHelp/generated',
+	ignoreItems: ['images', 'Orphans'] ,
+	search : {
+		provider: "elasticsearch"
+	}
+};
+var help = Help(config);
 
-	help.generate(function (err, result) {
-		if (err)
-			console.log("Error: " + err);
-		else
-			console.log('Help generated ' + result);
-	});
+help.generate(function (err, result) {
+	if (err)
+		console.log("Error: " + err);
+	else
+		console.log('Help generated ' + result);
+});
+```
 
 Populate a locally running elastic search instance with plaintext from all the files (requires a generate)
 
-	var Help = require('helpserver');
-	var config = {
-		source: '/dev/AlphaHelp/helpfiles',
-		generated: '/dev/AlphaHelp/generated',
-		ignoreItems: ['images', 'Orphans'] ,
-		search : {
-			provider: "elasticsearch"
-		}
-	};
-	var help = Help(config);
-	
-    help.buildindex(function (err, result) {
-	 	if(err)
-			console.log( err );
-		else
-			console.log('Index built ' + JSON.stringify(result,null," "));
-    });
+```js
+var Help = require('helpserver');
+var config = {
+	source: '/dev/AlphaHelp/helpfiles',
+	generated: '/dev/AlphaHelp/generated',
+	ignoreItems: ['images', 'Orphans'] ,
+	search : {
+		provider: "elasticsearch"
+	}
+};
+var help = Help(config);
+
+help.buildindex(function (err, result) {
+  if(err)
+  	console.log( err );
+  else
+  	console.log('Index built ' + JSON.stringify(result,null," "));
+});
+```
 
 Once an index exists, perform a query (fulltext search with greater weight given to match of a topic title)
 
-	var Help = require('helpserver');
-	var config = {
-		source: '/dev/AlphaHelp/helpfiles',
-		generated: '/dev/AlphaHelp/generated',
-		ignoreItems: ['images', 'Orphans'] ,
-		search : {
-			provider: "elasticsearch"
-		}
-	};
-	var help = Help(config);
-	
-	help.search('for_each',function(err,result) {
-		if(err) {
-			console.log(err);
-		} else {
-			console.log(JSON.stringify(result));		
-		}
-	});
-	
-##Example help server
-
-
-An express server with hooks for resolving pages, performing searchs, pulling the table of contents.  In the following example, 
-the main page is <host>/main (i.e. "127.0.0.1/main" on your local machine).
-    
-source (/myhelp/helpfiles/) is the root of the static html files stored in a folder structure.
-generated (/myhelp/generated/) is where helpserver puts any generated html content (like the table of contents).  
-    
-
 ```js
-var express = require('express');
-var app = express();
-var options = {
+var Help = require('helpserver');
+var config = {
+	source: '/dev/AlphaHelp/helpfiles',
+	generated: '/dev/AlphaHelp/generated',
+	ignoreItems: ['images', 'Orphans'] ,
+	search : {
+		provider: "elasticsearch"
+	}
+};
+var help = Help(config);
+
+help.search('for_each',function(err,result) {
+	if(err) {
+		console.log(err);
+	} else {
+		console.log(JSON.stringify(result));		
+	}
+});
+```
+## Example Help Settings
+
+For out examples, we are placing the configuration for the help server in a json file we will call settings.json. 
+
+```json
+{
   "port": 80,
   "metadata" : true ,
   "dependencies" : true ,
@@ -202,7 +205,23 @@ var options = {
         "isAdmin" : true
     }
   }  
-};
+}
+```
+	
+## Example help server
+
+
+An express server with hooks for resolving pages, performing searchs, pulling the table of contents.  In the following example, 
+the main page is <host>/main (i.e. "127.0.0.1/main" on your local machine).
+    
+source (/myhelp/helpfiles/) is the root of the static html files stored in a folder structure.
+generated (/myhelp/generated/) is where helpserver puts any generated html content (like the table of contents).  
+    
+
+```js
+var express = require('express');
+var app = express();
+var options = require("./settings");
 var Help = require('helpserver');
 var help = Help(options);
 
@@ -213,10 +232,43 @@ app.use("/",function (req, res) {
 app.listen(options.port);
 console.log('Listening on port '+options.port);
 ```	
+## Initialize the Elasticsearch index
 
+A script to initialize Elastic Search index, this must be done before the the help server can be used, and depending on the size of your help system, this might take a while.
+
+```js
+var express = require('express');
+var app = express();
+var options = require("./settings");
+var Help = require('helpserver');
+var help = Help(options);
+
+// First build the table of contents
+help.status(function (stats) {
+	if (options.search && !stats.indexServiceRunning) {
+		console.log('Cannot initialize indexes without '+options.search.provider+' instance running.');
+	} else {
+		help.generate(function (err, result) {
+			if (err)
+				console.log("Error: " + err);
+			else {
+				console.log('Help generated');
+				// Then build the index
+				help.buildindex(function (err, result) {
+					if (err)
+						console.log(err);
+					else
+						console.log('Indexes built ' + JSON.stringify(result, null, " "));
+				});
+			}
+		});
+	}
+});
+```
 
 ## Release History
 
+* 1.0.15 improved documentation 
 * 1.0.14 added support for github webhook notification to drive the refresh.
 * 1.0.13 added support for multiple, added nodegit to packages.
 * 1.0.12 the latest elasticpublish.js script was missing 
