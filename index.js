@@ -634,7 +634,7 @@ module.exports = function (config) {
     "main": function (hlp, path, req, res) {
       loadAssetUTF8("main.html", function (err, data) {
         if (err) {
-          res.res.status(404);
+          res.status(404).send('Not found');
         } else {
           res.type('html');
           res.send(data);
@@ -644,7 +644,7 @@ module.exports = function (config) {
     "search_panel": function (hlp, path, req, res) {
       loadAssetUTF8("search.html", function (err, data) {
         if (err) {
-          res.res.status(404);
+          res.status(404).send('Not found');
         } else {
           res.type('html');
           res.send(data);
@@ -712,7 +712,7 @@ module.exports = function (config) {
         } else {
           loadAssetUTF8("refresh.html", function (err, data) {
             if (err) {
-              res.res.status(404);
+              res.status(404).send('Not found');
             } else {
               res.type('html');
               res.send(data);
