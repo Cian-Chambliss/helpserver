@@ -12,6 +12,32 @@ module.exports = function (config) {
   var configurations = {}; // Child configurations (filters & permissions added to views)
   var configurationObjects = {}; // Child configuration objects
   var filters = {};
+  var assets = {};
+
+  var loadAssetUTF8 = function (name, callback) {
+    if (assets[name]) {
+      callback(null, assets[name]);
+    } else {
+      // First try the asset folder under modules...
+      fs.readFile(config.assetpath + 'assets/' + name, "utf8", function (err, data) {
+        if (err) {
+          console.log(config.assetpath + 'assets/' + name + " not found - using default.");
+          // Next try the module asset folder
+          fs.readFile(modulePath + 'assets/' + name, "utf8", function (err, data) {
+            if (err) {
+              callback(err, null);
+            } else {
+              assets[name] = data;
+              callback(null, data);
+            }
+          });
+        } else {
+          assets[name] = data;
+          callback(null, data);
+        }
+      });
+    }
+  };
 
   function HelpServerUtil(config) {
     this.config = config;
@@ -88,7 +114,7 @@ module.exports = function (config) {
       if (lastChar !== '\\' && lastChar !== '/')
         path += '/';
       return path;
-    }
+    };
     config.source = terminatePath(config.source);
     config.generated = terminatePath(config.generated);
       
@@ -145,33 +171,54 @@ module.exports = function (config) {
  
   // status determines if index server is running (if specified) as well as existence of required files...
   HelpServerUtil.prototype.status = function (callback) {
-    var stats = { htmlTreeExists: false, jsonTreeExists: false, indexServiceRunning: false, indexExists: false, indexCount: 0 };
+    var stats = { htmlTreeExists: false, jsonTreeExists: false, indexServiceRunning: false, indexExists: false, indexCount: 0, filtersExist: 0, filtersMissing: 0 };
+    var filterNames = [];
+
+    // Get all the 'filters' that we need to regenerate...
+    for (var configName in filters) {
+      filterNames.push(configName);
+    }
+
     fs.exists(config.generated + config.htmlfile, function (htmlExists) {
       stats.htmlTreeExists = htmlExists;
       fs.exists(config.generated + config.structurefile, function (jsonExists) {
+        var async = require('async');
         stats.jsonTreeExists = jsonExists;
-        if (config.search) {
-          var elasticsearch = require('elasticsearch');
-          var client = new elasticsearch.Client({ host: config.search.host });
-          client.ping({ requestTimeout: 10000 }, function (error) {
-            if (!error) {
-              stats.indexServiceRunning = true;
-              client.count({
-                index: config.search.index
-              }, function (error, response) {
-                  if (!error && response.count) {
-                    stats.indexCount = response.count;
-                  }
+
+        async.eachSeries(filterNames, function (filterName, callbackLoop) {
+          fs.exists("", function (exists) {
+            if (exists)
+              ++stats.filtersExist;
+            else
+              ++stats.filtersMissing;
+            callbackLoop();
+          });
+        }, function () {
+            if (config.search) {
+              var elasticsearch = require('elasticsearch');
+              var client = new elasticsearch.Client({ host: config.search.host });
+              client.ping({ requestTimeout: 10000 }, function (error) {
+                if (!error) {
+                  stats.indexServiceRunning = true;
+                  client.count({
+                    index: config.search.index
+                  }, function (error, response) {
+                      if (!error && response.count) {
+                        stats.indexCount = response.count;
+                      }
+                      callback(stats);
+                    });
+                } else {
                   callback(stats);
-                });
+                }
+              });
             } else {
               callback(stats);
             }
           });
-        }
       });
     });
-  }
+  };
  
   // Get a help page or resource (image css). or help resource
   HelpServerUtil.prototype.get = function (page, callback) {
@@ -203,7 +250,7 @@ module.exports = function (config) {
     } else if (extension == "css" || extension == "svg") {
       var helpServerFile = relativePath.lastIndexOf("helpserver-");
       if (helpServerFile > -1) {
-        fs.readFile(modulePath + 'assets/' + relativePath.substr(helpServerFile), "utf8", function (err, data) {
+        loadAssetUTF8(relativePath.substr(helpServerFile), function (err, data) {
           if (err) {
             console.log(modulePath + 'assets/' + relativePath.substr(helpServerFile));
             callback(err, null);
@@ -214,12 +261,12 @@ module.exports = function (config) {
       } else {
         fs.readFile(config.source + relativePath, "utf8", function (err, data) {
           if (err) {
-            debugger;
             var endPath = relativePath.indexOf('/');
             if (endPath >= 0)
               relativePath = relativePath.substring(endPath + 1);
-            fs.readFile(modulePath + 'assets/' + relativePath, "utf8", function (err, data) {
+            loadAssetUTF8(relativePath, function (err, data) {
               if (err) {
+                console.log(modulePath + 'assets/' + relativePath.substr(helpServerFile));
                 callback(err, null);
               } else {
                 callback(null, data, extension);
@@ -260,22 +307,22 @@ module.exports = function (config) {
       }
         );
     }
-  }
+  };
   
   // Get the table of contents
   HelpServerUtil.prototype.gettree = function (page, callback) {
-    fs.readFile(this.config.generated + (this.config.filter_name ? this.config.filter_name : '_all' ) + this.config.htmlfile, 'utf8', function (err, data) {
+    fs.readFile(this.config.generated + (this.config.filter_name ? this.config.filter_name : '_all') + this.config.htmlfile, 'utf8', function (err, data) {
       callback(err, data);
     });
-  }
+  };
 
 
   // Get the table of contents
   HelpServerUtil.prototype.gettreejson = function (page, callback) {
-    fs.readFile(this.config.generated + (this.config.filter_name ? this.config.filter_name : '_all' ) + this.config.structurefile, 'utf8', function (err, data) {
+    fs.readFile(this.config.generated + (this.config.filter_name ? this.config.filter_name : '_all') + this.config.structurefile, 'utf8', function (err, data) {
       callback(err, data);
     });
-  }
+  };
    
   // Generate table of contents and optionally populate the search engine with plaintext version of the data
   HelpServerUtil.prototype.generate = function (callback) {
@@ -286,14 +333,14 @@ module.exports = function (config) {
         } else {
           console.log("Generate complete!");
         }
-      }
+      };
     }
     if (typeof (callback) !== 'function') {
       throw new Error('First parameter must be a callback function');
     }
     var buildlist = require('./buildlist');
     buildlist(config, callback);
-  }
+  };
   
   // After any indices are generated, we should make sure to update the filter
   HelpServerUtil.prototype.generateFiltered = function (callback) {
@@ -307,7 +354,7 @@ module.exports = function (config) {
         } else {
           console.log("Generate complete!");
         }
-      }
+      };
     }
 
     // Get all the 'filters' that we need to regenerate...
@@ -320,12 +367,12 @@ module.exports = function (config) {
       var async = require('async');
       var elasticquery = require("./elasticquery");
       var ListUtilities = require('./listutilities');
-      
+
       console.log('Generateing filters');
-      
+
       async.eachSeries(filterNames, function (filterName, callbackLoop) {
         var cfg = filters[filterName];
-        console.log('Generate filter for '+filterName);
+        console.log('Generate filter for ' + filterName);
         elasticquery(cfg, '', function (err, results) {
           if (err) {
             rememberErr = err;
@@ -343,7 +390,7 @@ module.exports = function (config) {
 
           var tree = lu.treeFromList(results);
           var treeUL = lu.treeToUL(tree);
-          
+
           console.log('Saving filtered list...');
 
           fs.readFile(cfg.templatefile, "utf8", function (err, templateData) {
@@ -378,7 +425,7 @@ module.exports = function (config) {
     } else {
       console.log('No filters defined');
     };
-  }
+  };
   
   
   // Generate entire index (generate had to be run) 
@@ -402,12 +449,11 @@ module.exports = function (config) {
         callback(err, info);
       });
     });
-  }
+  };
   
   // refresh help from repo, and rebuild TOC 
   HelpServerUtil.prototype.refresh = function (callback) {
-    var genFiltered = this.generateFiltered;
-    var rebuildContent = function () {
+    var rebuildContent = function (help) {
       var handler = function (err, result) {
         if (err) {
           callback(err, null);
@@ -419,27 +465,28 @@ module.exports = function (config) {
         }
       };
       var buildlist = require('./buildlist');
-      buildlist(config, function (err, result) {        
-          genFiltered(function (err2, result2) {
-            handler(err, result);
-          });
+      buildlist(config, function (err, result) {
+        help.generateFiltered(function (err2, result2) {
+          handler(err, result);
+        });
       });
     };
     // optional step 1 - update the content using git...
     if (config.useGit) {
       var updatesource = require('./updatesource');
+      var help = this;
       updatesource(config, function (err, result) {
         if (err) {
           console.log('Update did not work ' + err);
         } else {
           console.log('Update succeeded!');
-          rebuildContent();
+          rebuildContent(help);
         }
       });
     } else {
-      rebuildContent();
+      rebuildContent(this);
     }
-  }
+  };
 
   // perform a pattern seach, returns 'path' portion of help
   HelpServerUtil.prototype.search = function (pattern, callback) {
@@ -454,7 +501,7 @@ module.exports = function (config) {
       var elasticquery = require("./elasticquery");
       elasticquery(this.config, pattern, callback);
     }
-  }
+  };
    
   // Get metadata for am item
   HelpServerUtil.prototype.getmetadata = function (path, callback) {
@@ -472,12 +519,12 @@ module.exports = function (config) {
         else
           callback("{}");
       }
-    })
+    });
   };
 
   // Set metadata for am item
   HelpServerUtil.prototype.setmetadata = function (path, metadata, callback) {
-    var refreshData = this.refresh;
+    var help = this;
     try {
       var test = JSON.parse(metadata);
       if (test) {
@@ -511,7 +558,7 @@ module.exports = function (config) {
                 if (err) {
                   callback(true);
                 } else {
-                  refreshData(function () {
+                  help.refresh(function () {
                     callback(true);
                   });
                 }
@@ -533,36 +580,51 @@ module.exports = function (config) {
 
   HelpServerUtil.prototype.isAdmin = function () {
     return this.config.isAdmin ? true : false;
-  }
+  };
+
+  // Create required table of contents and index files...
+  HelpServerUtil.prototype.initializeIfFirstTime = function (callback) {
+    var genFiltered = this.generateFiltered;
+    this.status(function (stats) {
+      if (stats.htmlTreeExists) {
+        // we don't need to regenerated the tree
+        if (stats.filtersMissing > 0) {
+          genFiltered(function (err2, result2) {
+            callback(err2, result2);
+          });
+        } else {
+          callback(null, true);
+        }
+      } else if (config.search && !stats.indexServiceRunning) {
+        callback(new Error('Cannot initialize indexes without ' + config.search.provider + ' instance running.'), false);
+      } else {
+        help.generate(function (err, result) {
+          if (err)
+            callback(err, false);
+          else {
+            console.log('Help generated');
+            // Then build the index
+            help.buildindex(function (err, result) {
+              if (err)
+                callback(err, false);
+              else {
+                if (stats.filtersMissing > 0) {
+                  genFiltered(function (err2, result2) {
+                    callback(err2, result2);
+                  });
+                } else {
+                  callback(null, true);
+                }
+              }
+            });
+          }
+        });
+      }
+    });
+  };
 
 
   var help = new HelpServerUtil(config);
-  var assets = {};
-
-  var loadAssetUTF8 = function (name, callback) {
-    if (assets[name]) {
-      callback(null, assets[name]);
-    } else {
-      // First try the asset folder under modules...
-      fs.readFile(config.assetpath + 'assets/' + name, "utf8", function (err, data) {
-        if (err) {
-          // Next try the module asset folder
-          fs.readFile(modulePath + 'assets/' + name, "utf8", function (err, data) {
-            if (err) {
-              callback(err, null);
-            } else {
-              assets[name] = data;
-              callback(null, data);
-            }
-          });
-        } else {
-          assets[name] = data;
-          callback(null, data);
-        }
-      });
-    }
-  };
-
 
   var expressHandler = {
     "blank": function (hlp, path, req, res) {
@@ -678,7 +740,7 @@ module.exports = function (config) {
         hlp.getmetadata(path, function (data) {
           res.type('json');
           res.send(data);
-        })
+        });
       }
     }
   };
@@ -705,11 +767,11 @@ module.exports = function (config) {
   };
   
   // If webhookport is defined, lets listen on it
-  if( config.webhookPort ) {
+  if (config.webhookPort) {
     var webhooklisten = require("./webhooklisten");
-    webhooklisten(config,help);
+    webhooklisten(config, help);
   }
-  
+
 
   for (var configName in configurations) {
     // Create a helpservice object with a different config...
@@ -717,4 +779,4 @@ module.exports = function (config) {
   };
 
   return help;
-}
+};
