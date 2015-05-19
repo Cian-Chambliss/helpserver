@@ -173,6 +173,16 @@ help.search('for_each',function(err,result) {
 
 For out examples, we are placing the configuration for the help server in a json file we will call settings.json. 
 
+The settings file properties are set
+
+ - port : 80 - this is ignored by helpserver, as the top level script establishes the route. 
+ - metadata : true - indicates that we support embedded metadata in the HTML - comments that follow the pattern   __&lt;!---HELPMETADATA: { ..JSON... } ---&gt;__
+ - dependencies : true - generates a list of dependencies, a simple array of href and images on a page, and stores the result in a manifest file.
+ - source : Our help files start in folder /myhelp/helpfiles/
+ - generated: Our intermediate files are stored in /myhelp/generated/ - must be writeable (like generated table of contents, plaintext, and extracted metdatadata and dependency files).
+ - 
+
+
 ```json
 {
   "port": 80,
@@ -184,14 +194,11 @@ For out examples, we are placing the configuration for the help server in a json
   "search": {
     "provider": "elasticsearch"
   } ,
-  // Optional github integration (does a pull on refresh calls)
   "useGit": true,
   "repoSource": "/myhelp/helpfiles" ,  
-  // Optional github webhook integration
   "webhookPort" : 9001 ,
   "webhookPath" : "/" , 
   "webhookSecret" : "mywebhooksecretcode" ,
-  // Optional Multiple configurations
   "configurations" : {
     "novice" : {
         "filter_name" : "novice" ,
