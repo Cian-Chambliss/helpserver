@@ -35,26 +35,37 @@ module.exports = function (config, callback) {
 			var times = JSON.parse(listData);
 			var i;
 			var changed = [];
+			var timeSrc = {};
+			var deletedPages = [];
+			var timeId;
+			
 			for (i = 0; i < list.length; ++i) {
-				if (times[list[i].title] != list[i].mtime) {
-					changed.push(list[i]);
+				if( times[list[i].path]  != list[i].mtime) {
+					if (times[list[i].title] != list[i].mtime) {					
+						changed.push(list[i]);
+					}
 				}
 			}
-			if (changed.length > 0) {
+			for (i = 0; i < list.length; ++i)
+				timeSrc[list[i].path] = list[i].mtime;
+				
+			// List to delete	
+			for( timeId in times ) {	
+			    if( !timeSrc[ timeId ] ) {
+					deletedPages.push(timeId);
+				}
+			}
+			if ( changed.length > 0 || deletedPages.length > 0 ) {
 				console.log("Changes\n\n" + JSON.stringify(changed, null, "\t"));
-				var timeSrc = {};
-
-				for (i = 0; i < list.length; ++i)
-					timeSrc[list[i].title] = list[i].mtime;
 
 				fs.writeFile(outputFilesList, JSON.stringify(timeSrc), function (err) {
 					var bar = null;
-					if (list.length > 0) {
-						bar = new ProgressBar('  building ' + list.length + ' plaintext files [:bar] :percent :etas', {
+					if (changed.length > 0 || deletedPages.length > 0 ) {
+						bar = new ProgressBar('  building ' + changed.length + ' plaintext files [:bar] :percent :etas', {
 							complete: '=',
 							incomplete: ' ',
 							width: 20,
-							total: list.length
+							total: changed.length
 						});
 						async.eachSeries(changed, function (fo, callbackLoop) {
 							bar.tick();
@@ -77,6 +88,13 @@ module.exports = function (config, callback) {
 								}
 							});
 						}, function () {
+							    // Add deletions (if there are any)
+							    var i;
+								if( deletedPages.length > 0 ) {
+									for(i = 0 ; i <  deletedPages.length ; ++i ) {
+										publishList.push({ path: deletedPages[i] , isDelete : true });
+									}
+								}
 								fs.writeFile(outputPublish, JSON.stringify(publishList), function (err) {
 									publishIndexDriver(config, callback);
 								});

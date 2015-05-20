@@ -51,7 +51,7 @@ module.exports = function (config, callback) {
 		// create keyed lookup
 		var timeSrc = {};
 		for (i = 0; i < list.length; ++i)
-			timeSrc[list[i].title] = list[i].mtime;
+			timeSrc[list[i].path] = list[i].mtime;
 
 		fs.writeFile(outputFilesList, JSON.stringify(timeSrc), function (err) {
 			if (err) {

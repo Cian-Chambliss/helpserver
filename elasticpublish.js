@@ -17,8 +17,8 @@ module.exports = function (config, callback) {
       str = str.replace(find, replace);
     return str;
   };
-  fs.readFile(inputPublish, "utf8", function (err, listData) {      
-    var list = JSON.parse(listData);    
+  fs.readFile(inputPublish, "utf8", function (err, listData) {
+    var list = JSON.parse(listData);
     if (list.length > 0) {
       var elasticsearch = require('elasticsearch');
       var client = new elasticsearch.Client({
@@ -34,8 +34,8 @@ module.exports = function (config, callback) {
       async.eachSeries(list, function (fo, callbackLoop) {
         var fn = replaceAll(replaceAll(fo.path, '/', '_'), '\\', '_');
         fn = fn.replace(".html", ".txt");
-        fs.readFile(plainTextPath+fn, "utf8", function (err, content) {
-          if (err) {
+        fs.readFile(plainTextPath + fn, "utf8", function (err, content) {
+          if (err && !fo.isDelete) {
             bar.tick();
             unpublished.push(fo);
             publishStats.errors++;
@@ -48,34 +48,41 @@ module.exports = function (config, callback) {
             type: helpSystemType,
             id: fo.path,
           }, function (error, response) {
-              client.create({
-                index: helpSystemIndex,
-                type: helpSystemType,
-                id: fo.path,
-                body: {
-                  title: fo.title,
-                  path: fo.path,
-                  content: content,
-                  metadata: fo.metadata ? fo.metadata : null 
-                }
-              }, function (error) {
-                  bar.tick();
-                  if (error) {
-                    unpublished.push(fo);
-                    publishStats.errors++;
-                    publishStats.errorList.push(error);
-                    callbackLoop();
-                  } else {
-                    publishStats.published++;
-                    callbackLoop();
+              if (fo.isDelete) {
+                // if this is a deletion, we are done with this entry
+                console.log('deleted item '+fo.path+' '+error+"\n\n");
+                publishStats.published++;
+                callbackLoop();
+              } else {
+                client.create({
+                  index: helpSystemIndex,
+                  type: helpSystemType,
+                  id: fo.path,
+                  body: {
+                    title: fo.title,
+                    path: fo.path,
+                    content: content,
+                    metadata: fo.metadata ? fo.metadata : null
                   }
-                });
+                }, function (error) {
+                    bar.tick();
+                    if (error) {
+                      unpublished.push(fo);
+                      publishStats.errors++;
+                      publishStats.errorList.push(error);
+                      callbackLoop();
+                    } else {
+                      publishStats.published++;
+                      callbackLoop();
+                    }
+                  });
+              }
             });
         });
       }, function () {
           // unpublished files get kept around (so that an update will retry any failed writes)
           fs.writeFile(outputUnpublished, JSON.stringify(unpublished), function (err) {
-            callback(err, { updated : true , reindexed : false , publish : publishStats } );
+            callback(err, { updated: true, reindexed: false, publish: publishStats });
           });
         });
     }
