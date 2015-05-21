@@ -93,12 +93,20 @@ var tableOfContents = {
 					var resultList = JSON.parse(xmlhttp.responseText);
 					var html = '';
 					var i;
+					var prefix = "/main#";
+					var parts = window.location.pathname.split('/');
+					// Remember the path
+					if( parts.length > 2 ) {
+						if( parts[1] != 'toc' ) {
+							prefix = "/"+parts[1]+"/main#"; 
+						}
+					}					
 					for (i = 0; i < resultList.length; ++i) {
-						html += "<a href=\"/main#" + resultList[i].path + "\" target=\"_top\">" + resultList[i].title + "</a><br>";
+						html += "<a href=\"" + prefix + resultList[i].path + "\" target=\"_top\">" + resultList[i].title + "</a><br>";
 					}
+					tableOfContents.searchMode = true;					
 					document.getElementById("searchResults").innerHTML = html;
 					document.body.className = 'searchActive';
-					tableOfContents.searchMode = true;
 				}
 			};
 			xmlhttp.open("GET", command, true);
