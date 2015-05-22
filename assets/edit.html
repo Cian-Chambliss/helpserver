@@ -1,0 +1,45 @@
+<html>
+	<head>
+		<link href="/assets/helpserver-main.css" media="all" rel="stylesheet" />
+		<script src="/assets/helpserver-main.js"></script>
+		<script>
+			var helpEditor = {
+				checkedList: [] ,
+				trackCheckChanged : function(list) {
+					var checked = document.getElementById('checkedStatus');
+					this.checkedList = list;
+					if( list.length > 1 )
+						checked.innerHTML = list.length+" Items Checked";
+					else if( list.length > 0 )	
+						checked.innerHTML = "1 Item Checked";
+					else	
+						checked.innerHTML = "No Items Checked";
+				},
+				tocLoaded : function() {
+				  var iframeToc = document.getElementById('toc');
+			      if (iframeToc) {
+			        iframeToc.contentWindow.tableOfContents.allowCheck = true;
+					iframeToc.contentWindow.tableOfContents.onCheckChanged = this.trackCheckChanged;
+				  }
+				},
+				Deselect : function() {
+					var iframeToc = document.getElementById('toc');
+					if (iframeToc) {
+						iframeToc.contentWindow.tableOfContents.DeselectChecked();
+					}
+				},
+				Apply : function() {
+				   alert('TBD - apply changes of tags and group to the selected items.')	
+				}
+			};
+		</script>
+	</head>
+	<body onload="helpServer.onLoad()" style="margin:0px;padding:0px;" onhashchange="helpServer.onHashChange()">
+		<div style="height:9%;background:cyan;" >
+			 <div style="height:10pt;"></div>
+			 <div style="float:left;width:107pt;" id="checkedStatus" >No Items Checked</div> <button id="Deselect" onclick="helpEditor.Deselect()">Deselect</button> &nbsp;Tags&nbsp; <input id="tagNames"></input> &nbsp;Group&nbsp; <input id="groupName" ></input> <button id="Apply" onclick="helpEditor.Apply()" >Apply Changes</button>
+		</div>			
+		<iframe src="toc" id="toc" style="height:90%;width:34%;float:left;border:none;" onload="helpEditor.tocLoaded()" ></iframe>
+		<iframe src="/blank" id="help" name="help" style="height:90%;width:66%;float:left;border:none;" onload="helpServer.helpFrameLoad();"></iframe>
+	</body>
+</html>
