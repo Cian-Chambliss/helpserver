@@ -9,13 +9,13 @@ module.exports = function (config) {
   };
   var fs = require('fs');
   var path = require('path');
-  var appDir = path.dirname(require.main.filename)+'/';
+  var appDir = path.dirname(require.main.filename) + '/';
   var modulePath = appDir + 'node_modules/helpserver/';
   var configurations = {}; // Child configurations (filters & permissions added to views)
   var configurationObjects = {}; // Child configuration objects
   var filters = {};
   var assets = {};
-  
+
   var loadAssetUTF8 = function (name, callback) {
     if (assets[name]) {
       callback(null, assets[name]);
@@ -310,20 +310,40 @@ module.exports = function (config) {
         );
     }
   };
+
+  var readOptimizedFile = function (filename, acceptEncoding, callback) {
+    if (!acceptEncoding) {
+      acceptEncoding = '';
+    }
+    // If caller accepts 'deflated' files
+    if (acceptEncoding.match(/\bdeflate\b/)) {
+      // .. First look for .gz file
+      fs.readFile(filename + '.gz', function (err, data) {
+        if (!err) {
+          callback(err, data, 'deflate');
+        } else {
+          // fallback to the source file
+          fs.readFile(filename, 'utf8', function (err, data) {
+            callback(err, data, null);
+          });
+        }
+      });
+    } else {
+      // Just read the file.
+      fs.readFile(filename, 'utf8', function (err, data) {
+        callback(err, data, null);
+      });
+    }
+  };
   
   // Get the table of contents
-  HelpServerUtil.prototype.gettree = function (page, callback) {
-    fs.readFile(this.config.generated + (this.config.filter_name ? this.config.filter_name : '_all') + this.config.htmlfile, 'utf8', function (err, data) {
-      callback(err, data);
-    });
+  HelpServerUtil.prototype.gettree = function (page, acceptEncoding, callback) {
+    readOptimizedFile(this.config.generated + (this.config.filter_name ? this.config.filter_name : '_all') + this.config.htmlfile, acceptEncoding, callback);
   };
 
-
   // Get the table of contents
-  HelpServerUtil.prototype.gettreejson = function (page, callback) {
-    fs.readFile(this.config.generated + (this.config.filter_name ? this.config.filter_name : '_all') + this.config.structurefile, 'utf8', function (err, data) {
-      callback(err, data);
-    });
+  HelpServerUtil.prototype.gettreejson = function (page, acceptEncoding, callback) {
+    readOptimizedFile(this.config.generated + (this.config.filter_name ? this.config.filter_name : '_all') + this.config.structurefile, acceptEncoding, callback);
   };
    
   // Generate table of contents and optionally populate the search engine with plaintext version of the data
@@ -367,6 +387,7 @@ module.exports = function (config) {
     // look through all the filters...
     if (filterNames.length > 0) {
       var async = require('async');
+      var zlib = require('zlib');
       var elasticquery = require("./elasticquery");
       var ListUtilities = require('./listutilities');
 
@@ -402,18 +423,26 @@ module.exports = function (config) {
               return;
             }
             treeUL = templateData.replace("{{placeholder}}", treeUL);
-
             fs.writeFile(cfg.generated + cfg.filter_name + cfg.htmlfile, treeUL, function (err) {
-              if (err) {
-                rememberErr = err;
-                callbackLoop();
-                return;
-              }
-              fs.writeFile(cfg.generated + cfg.filter_name + cfg.structurefile, JSON.stringify(tree), function (err) {
-                if (err) {
-                  rememberErr = err;
-                }
-                callbackLoop();
+              zlib.deflate(treeUL, function (err, packeddata) {
+                fs.writeFile(cfg.generated + cfg.filter_name + cfg.htmlfile + '.gz', packeddata, function (err) {
+                  if (err) {
+                    rememberErr = err;
+                    callbackLoop();
+                    return;
+                  }
+                  var jsonString = JSON.stringify(tree);
+                  fs.writeFile(cfg.generated + cfg.filter_name + cfg.structurefile, jsonString, function (err) {
+                    zlib.deflate(jsonString, function (err, packeddata2) {
+                      fs.writeFile(cfg.generated + cfg.filter_name + cfg.structurefile + ".gz", packeddata2, function (err) {
+                        if (err) {
+                          rememberErr = err;
+                        }
+                        callbackLoop();
+                      });
+                    });
+                  });
+                });
               });
             });
           });
@@ -512,24 +541,24 @@ module.exports = function (config) {
       if (err || !data) {
         callback("{}");
       } else {
-    		  var textData = data;
-    		  if (!textData.indexOf)
+        var textData = data;
+        if (!textData.indexOf)
           textData = textData.toString('utf8');
         var obj = JSON.parse(textData);
         if (obj.metadata)
-          callback(JSON.stringify(obj.metadata));
+          callback(obj.metadata);
         else
-          callback("{}");
+          callback({});
       }
     });
   };
-
+  
+ 
   // Set metadata for am item
   HelpServerUtil.prototype.setmetadata = function (path, metadata, callback) {
     var help = this;
     try {
-      var test = JSON.parse(metadata);
-      if (test) {
+      if (path && path !== '/') {
         var relativePath = unescape(path.substring(1));
         var fn = config.source + relativePath;
         fs.readFile(fn, "utf8", function (err, data) {
@@ -537,7 +566,7 @@ module.exports = function (config) {
             console.log('setmetadata ' + err);
             callback(false);
           } else {
-            var newMetaData = '<!---HELPMETADATA: ' + metadata + ' --->';
+            var newMetaData = '<!---HELPMETADATA: ' + JSON.stringify(metadata) + ' --->';
             var pos = data.lastIndexOf('<!---HELPMETADATA:');
             var newData = data;
             if (pos >= 0) {
@@ -558,27 +587,95 @@ module.exports = function (config) {
             if (newData != data) {
               fs.writeFile(fn, newData, function () {
                 if (err) {
-                  callback(true);
+                  callback(metadata);
                 } else {
                   help.refresh(function () {
-                    callback(true);
+                    callback(metadata);
                   });
                 }
               });
             } else {
-              callback(false);
+              callback(metadata);
             }
           }
         });
       } else {
-        console.log('Error ' + path + ' metadata empty: ' + metadata);
-        callback(false);
+        // Array support - for multiple pages...
+        var sanitizedCommands = [];
+        var outputArray = [];
+        var async = require('async');
+        var sresult = metadata.toString();
+        if (metadata && metadata.pages && metadata.pages.length) {
+          var i;
+          if ((typeof (metadata.pages[0])) == "string") {
+            // Get metadata for multiple pages....
+            for (i = 0; i < metadata.pages.length; ++i) {
+              if (typeof (metadata.pages[i]) == "string") {
+                sanitizedCommands.push(metadata.pages[i]);
+              }
+            }
+            async.eachSeries(sanitizedCommands, function (path, callbackLoop) {
+              help.getmetadata(path, function (data) {
+                outputArray.push({ path: path, metadata: data });
+                callbackLoop();
+              });
+            }, function () {
+                callback(outputArray);
+              });
+          } else {
+            // Set metadata for multiple pages....
+            for (i = 0; i < metadata.pages.length; ++i) {
+              var mdata = metadata.pages[i];
+              if (typeof (mdata) == "object") {
+                if (mdata.path && mdata.metadata && typeof mdata.metadata == "object") {
+                  sanitizedCommands.push(mdata);
+                }
+              }
+            }
+            async.eachSeries(sanitizedCommands, function (mdata, callbackLoop) {
+              if (metadata.patch) {
+                help.patchmetadata(mdata.path, mdata.metadata, function (result) {
+                  outputArray.push({ path: path, set: result });
+                  callbackLoop();
+                });
+              } else {
+                help.setmetadata(mdata.path, mdata.metadata, function (result) {
+                  outputArray.push({ path: path, set: result });
+                  callbackLoop();
+                });
+              }
+            }, function () {
+                if (metadata.patch) {
+                  help.patchmetadata()
+                } else {
+                  callback(outputArray);
+                }
+              });
+          }
+        } else {
+          callback([]);
+        }
       }
     } catch (err) {
-      console.log(err + " data " + metadata);
+      console.log(err + " data " + JSON.stringify(metadata));
       callback(false);
     }
   };
+
+  // Patch metadata gets the old metadata, and merges in changes...  
+  HelpServerUtil.prototype.patchmetadata = function (path, metadata, callback) {
+    var help = this;
+    help.getmetadata(path, function (data) {
+      var propName;
+      for (propName in metadata) {
+        data[propName] = metadata[propName];
+      }
+      help.setmetadata(path, data, function (result) {
+        callback(data);
+      });
+    });
+  };
+
 
   HelpServerUtil.prototype.isAdmin = function () {
     return this.config.isAdmin ? true : false;
@@ -643,6 +740,16 @@ module.exports = function (config) {
         }
       });
     },
+    "edit": function (hlp, path, req, res) {
+      loadAssetUTF8("edit.html", function (err, data) {
+        if (err) {
+          res.status(404).send('Not found');
+        } else {
+          res.type('html');
+          res.send(data);
+        }
+      });
+    },
     "search_panel": function (hlp, path, req, res) {
       loadAssetUTF8("search.html", function (err, data) {
         if (err) {
@@ -654,12 +761,36 @@ module.exports = function (config) {
       });
     },
     "toc": function (hlp, path, req, res) {
-      hlp.gettree(path, function (err, data) {
-        res.type('html');
+      var acceptEncoding = req.headers['accept-encoding'];
+      hlp.gettree(path, acceptEncoding, function (err, data, encoding) {
         if (err) {
+          res.type('html');
           res.send('error ' + err);
         } else {
-          res.send(data);
+          if (encoding) {
+            res.set({ 'Content-Encoding': encoding, 'Content-Type': 'text/html; charset=utf-8' });
+            res.send(data);
+          } else {
+            res.type('html');
+            res.send(data);
+          }
+        }
+      });
+    },
+    "toc.json": function (hlp, path, req, res) {
+      var acceptEncoding = req.headers['accept-encoding'];
+      hlp.gettreejson(path, acceptEncoding, function (err, data, encoding) {
+        if (err) {
+          res.type('json');
+          res.send('error ' + err);
+        } else {
+          if (encoding) {
+            res.set({ 'Content-Encoding': encoding, 'Content-Type': 'text/json; charset=utf-8' });
+            res.send(data);
+          } else {
+            res.type('html');
+            res.send(data);
+          }
         }
       });
     },
@@ -728,8 +859,8 @@ module.exports = function (config) {
     "metadata": function (hlp, path, req, res) {
       if (req.method == 'POST') {
         if (hlp.isAdmin()) {
-          if (res.body) {
-            hlp.setmetadata(path, JSON.stringify(res.body), function (data) {
+          if (req.body) {
+            hlp.setmetadata(path, req.body, function (data) {
               res.send(JSON.stringify({ result: data }));
             });
           } else {
@@ -741,7 +872,7 @@ module.exports = function (config) {
       } else {
         hlp.getmetadata(path, function (data) {
           res.type('json');
-          res.send(data);
+          res.send(JSON.stringify(data));
         });
       }
     }

@@ -65,6 +65,23 @@ padding: 3px;
 border-radius: 2px;
 }
 
+.checkedselected {
+color:Black;
+background:Red;
+border: 1px solid rgba(0,0,0,.25);
+padding: 3px;
+border-radius: 2px;	
+}
+
+.checked {
+color:Gray;
+background:Orange;
+border: 1px solid rgba(0,0,0,.25);
+padding: 3px;
+border-radius: 2px;	
+}
+
+
 #TOC {
 margin-top: 36px;
 }

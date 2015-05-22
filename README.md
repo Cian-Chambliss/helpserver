@@ -45,13 +45,13 @@ To search the index for a pattern.
 
 To retrieve a help page	or resource.
 
-    .gettree(page,callback(err,data) { });
+    .gettree(page,allowEncoding,callback(err,data) { });
 	
-To retrieve the html tree (generated ul).
+To retrieve the html tree (generated ul) , allowEncoding is the encoding we expect (i.e. deflate returns a gzip deflated version).
 
-	.gettreejson(page,callback(err,data) { });
+	.gettreejson(page,allowEncoding,callback(err,data) { });
 	
-To retrieve the json tree ( text and paths ).
+To retrieve the json tree ( text and paths ) , allowEncoding is the encoding we expect (i.e. deflate returns a gzip deflated version).
 	
 
 ## Usage
