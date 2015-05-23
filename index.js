@@ -555,7 +555,7 @@ module.exports = function (config) {
   
  
   // Set metadata for am item
-  HelpServerUtil.prototype.setmetadata = function (path, metadata, callback) {
+  HelpServerUtil.prototype.setmetadata = function (path, metadata, callback , batchMode) {
     var help = this;
     try {
       if (path && path !== '/') {
@@ -587,6 +587,8 @@ module.exports = function (config) {
             if (newData != data) {
               fs.writeFile(fn, newData, function () {
                 if (err) {
+                  callback(metadata);
+                } else if( batchMode ) {
                   callback(metadata);
                 } else {
                   help.refresh(function () {
@@ -632,25 +634,22 @@ module.exports = function (config) {
                 }
               }
             }
+            var lastCmd = sanitizedCommands[sanitizedCommands.length-1].path;
             async.eachSeries(sanitizedCommands, function (mdata, callbackLoop) {
               if (metadata.patch) {
                 help.patchmetadata(mdata.path, mdata.metadata, function (result) {
                   outputArray.push({ path: path, set: result });
                   callbackLoop();
-                });
+                } , mdata.path !== lastCmd );
               } else {
                 help.setmetadata(mdata.path, mdata.metadata, function (result) {
                   outputArray.push({ path: path, set: result });
                   callbackLoop();
-                });
+                } , mdata.path !== lastCmd );
               }
             }, function () {
-                if (metadata.patch) {
-                  help.patchmetadata()
-                } else {
-                  callback(outputArray);
-                }
-              });
+                callback(outputArray);
+            });
           }
         } else {
           callback([]);
@@ -663,7 +662,7 @@ module.exports = function (config) {
   };
 
   // Patch metadata gets the old metadata, and merges in changes...  
-  HelpServerUtil.prototype.patchmetadata = function (path, metadata, callback) {
+  HelpServerUtil.prototype.patchmetadata = function (path, metadata, callback,batchMode) {
     var help = this;
     help.getmetadata(path, function (data) {
       var propName;
@@ -672,7 +671,7 @@ module.exports = function (config) {
       }
       help.setmetadata(path, data, function (result) {
         callback(data);
-      });
+      },batchMode);
     });
   };
 

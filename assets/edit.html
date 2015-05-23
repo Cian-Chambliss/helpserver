@@ -7,7 +7,7 @@
 				checkedList: [] ,
 				trackCheckChanged : function(list) {
 					var checked = document.getElementById('checkedStatus');
-					this.checkedList = list;
+					helpEditor.checkedList = list;
 					if( list.length > 1 )
 						checked.innerHTML = list.length+" Items Checked";
 					else if( list.length > 0 )	
@@ -21,25 +21,90 @@
 			        iframeToc.contentWindow.tableOfContents.allowCheck = true;
 					iframeToc.contentWindow.tableOfContents.onCheckChanged = this.trackCheckChanged;
 				  }
-				},
+				},				
 				Deselect : function() {
 					var iframeToc = document.getElementById('toc');
 					if (iframeToc) {
 						iframeToc.contentWindow.tableOfContents.DeselectChecked();
 					}
 				},
-				Apply : function() {
-				   alert('TBD - apply changes of tags and group to the selected items.')	
+				RefreshServer:  function(metadata) {
+					var xmlhttp = new XMLHttpRequest();
+					xmlhttp.onload = function() {
+					  if (this.status==200)
+					    {
+						window.location.reload();
+						}
+					};					
+					xmlhttp.open("POST","/admin/refresh",true);
+					xmlhttp.send(JSON.stringify(metadata));
+				},
+				SetMetadata:  function(metadata) {
+				   if( metadata.pages.length > 0 ) {
+						var xmlhttp = new XMLHttpRequest();
+						xmlhttp.onload = function() {
+						  if (this.status==200)
+						    {
+							helpEditor.RefreshServer();
+							}
+						};					
+						xmlhttp.open("POST","/admin/metadata",true);
+						xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+						xmlhttp.send(JSON.stringify(metadata));
+				   } else {
+					   alert('no pages are checked.');   
+				   }
+				} ,			
+				ApplyTags : function() {
+				   var tagNames = document.getElementById('tagNames');
+				   if( tagNames.value && tagNames.value.length > 0 ) {
+					   var tagEdits = { pages : [] , patch : true };
+					   var i;
+					   var metadata = { tags : tagNames.value };
+					   for( i = 0 ; i < this.checkedList.length ; ++i ) {
+						   tagEdits.pages.push({ path : this.checkedList[i] , metadata : metadata });
+					   }
+					   this.SetMetadata(tagEdits);
+				   } else {
+					   alert('cannot apply an empty tag');
+				   }
+				},
+				ApplyGroup : function() {
+				   var groupName = document.getElementById('groupName');
+				   if( groupName.value && groupName.value.length > 0 ) {
+					   var tagEdits = { pages : [] , patch : true };
+					   var i;
+					   var metadata = { group : groupName.value };
+					   for( i = 0 ; i < this.checkedList.length ; ++i ) {
+						   tagEdits.pages.push({ path : this.checkedList[i] , metadata : metadata });
+					   }
+					   this.SetMetadata(tagEdits);
+				   } else {
+					   alert('cannot apply an empty group');
+				   }
+				},
+				trackMetaData: function(mdata) {
+					var tagNames = document.getElementById('tagNames');
+					var groupName = document.getElementById('groupName');
+					tagNames.value = mdata.tags || "";
+					groupName.value = mdata.group || "";
 				}
 			};
+			helpServer.trackMetaData = helpEditor.trackMetaData;
 		</script>
 	</head>
 	<body onload="helpServer.onLoad()" style="margin:0px;padding:0px;" onhashchange="helpServer.onHashChange()">
-		<div style="height:9%;background:cyan;" >
-			 <div style="height:10pt;"></div>
-			 <div style="float:left;width:107pt;" id="checkedStatus" >No Items Checked</div> <button id="Deselect" onclick="helpEditor.Deselect()">Deselect</button> &nbsp;Tags&nbsp; <input id="tagNames"></input> &nbsp;Group&nbsp; <input id="groupName" ></input> <button id="Apply" onclick="helpEditor.Apply()" >Apply Changes</button>
-		</div>			
-		<iframe src="toc" id="toc" style="height:90%;width:34%;float:left;border:none;" onload="helpEditor.tocLoaded()" ></iframe>
+		<div style="height:9%;background:cyan;">
+			<div style="height:10pt;"></div>
+			<div style="float:left;width:107pt;" id="checkedStatus">No Items Checked</div>
+			<button id="Deselect" onclick="helpEditor.Deselect()">Deselect</button>&nbsp;Tags&nbsp;
+			<input id="tagNames"></input>
+			<button id="ApplyTags" onclick="helpEditor.ApplyTags()">Apply Tags</button>&nbsp;Group&nbsp;
+			<input id="groupName"></input>
+			<button id="ApplyGroup" onclick="helpEditor.ApplyGroup()">Apply Group</button>
+		</div>
+		<iframe src="toc" id="toc" style="height:90%;width:34%;float:left;border:none;" onload="helpEditor.tocLoaded()"></iframe>
 		<iframe src="/blank" id="help" name="help" style="height:90%;width:66%;float:left;border:none;" onload="helpServer.helpFrameLoad();"></iframe>
 	</body>
+
 </html>

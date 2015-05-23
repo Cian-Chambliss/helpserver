@@ -3,6 +3,31 @@ var helpServer = {
   originalHelpPath: null,
   originalHelpPage: null,
   lastSearchedElement: -1,
+  pageMetaData : {} ,
+  trackMetaData : null ,
+  findMetadata : function( el ) {
+    for(var i = 0; i < el.childNodes.length; i++) {
+        var node = el.childNodes[i];
+        if(node.nodeType === 8) {
+           var md = node.data.indexOf('HELPMETADATA:');
+           if( md >= 0 ) {
+              helpServer.pageMetaData = node.data.substring(md+13);
+              while( helpServer.pageMetaData.substring( helpServer.pageMetaData.length - 1 ) == '-' ) {
+                   helpServer.pageMetaData = helpServer.pageMetaData.substring(0,helpServer.pageMetaData.length - 1);
+              }
+              if( helpServer.pageMetaData != '' ) {
+                try {
+                    helpServer.pageMetaData = JSON.parse(helpServer.pageMetaData); 
+                } catch(err) {                  
+                    helpServer.pageMetaData = {}
+                }                  
+              }
+           }
+        } else {
+           helpServer.findMetadata(node);
+        }    
+    }
+  },
   getSrcPath: function (src) {
     var oldPath = src;
     var oldPathIndex = oldPath.indexOf('/help');
@@ -60,7 +85,8 @@ var helpServer = {
     if (path.substring(0, 5) == '/help') {
       path = path.substr(5);
       this.checkNavigation(path, 'help');
-      var tocEle = document.getElementById('toc');
+      var tocEle = document.getElementById('toc');      
+          
       helpEle.contentDocument.body.onclick = function (e) {
         var ele = e.target || e.srcElement;
         if (ele && ele.href ) {
@@ -71,10 +97,18 @@ var helpServer = {
             var navPath = ele.href.substring(startPattern.length);
             if( navPath.substring(0,6).toLowerCase() == '/help/' )
                navPath = navPath.substring(5);
-            window.top.helpServer.checkNavigation(navPath, 'load');
+            window.top.helpServer.checkNavigation(navPath, 'load');            
           }
         }
       }
+      
+      // Track metadata
+      if( this.trackMetaData ) {
+         this.pageMetaData = {};
+         this.findMetadata(helpEle.contentDocument.body);
+         this.trackMetaData( this.pageMetaData );
+      }
+              
       if (tocEle
         && tocEle.contentWindow.tableOfContents
         && tocEle.contentWindow.tableOfContents.searchMode
