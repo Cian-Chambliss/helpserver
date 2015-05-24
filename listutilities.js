@@ -22,7 +22,25 @@ module.exports = function (config) {
 		}
 		return name;
 	};
-	
+	ListUtilities.prototype.sortTree = function(tree) {
+		var i = 0;
+		for( i = 0 ; i < tree.length ; ++i ) { 
+		    if( tree[i].children && tree[i].children.length > 0 )
+				tree[i].children = this.sortTree( tree[i].children );
+		}			
+		if( tree.length > 1 ) {
+	        tree.sort(function compare(a, b) {
+				var aTitle = a.title.toLowerCase().trim();
+				var bTitle = b.title.toLowerCase().trim(); 
+	            if ( aTitle < bTitle )
+	              return -1;
+	            if ( aTitle > bTitle )
+	              return 1;
+	            return 0;
+	        });
+		}
+		return tree;
+	}
 	// Convert a flat list of paths & titles into a 'tree'
 	ListUtilities.prototype.treeFromList = function (flatList) {
 		var tree = [];
@@ -123,8 +141,8 @@ module.exports = function (config) {
 					currentBranch.path = item.path;
 				}
 			}
-
 		}
+		tree = this.sortTree(tree);
 		return tree;
 	};
 
