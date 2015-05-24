@@ -20,7 +20,10 @@ module.exports = function (config, pattern, callback, startAt, maximum) {
       queryDef.bool.must = [{ match: config.filter }];
     }
   } else if (config.filter) {
-    queryDef = { match: config.filter };
+    if( config.filter.missing && config.filter.missing.field )
+       queryDef = { filtered : { filter: config.filter } };        
+    else
+       queryDef = { match: config.filter };
   } else {
     queryDef = { "match_all": {} };
   }
@@ -40,6 +43,7 @@ module.exports = function (config, pattern, callback, startAt, maximum) {
     }
   }, function (error, response) {
       if (error) {
+        console.log('Query:'+error);
         callback(error, null);
       } else {
         var results = [], srcArray = response.hits.hits;

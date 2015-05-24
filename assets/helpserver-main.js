@@ -3,29 +3,32 @@ var helpServer = {
   originalHelpPath: null,
   originalHelpPage: null,
   lastSearchedElement: -1,
-  pageMetaData : {} ,
-  trackMetaData : null ,
-  findMetadata : function( el ) {
-    for(var i = 0; i < el.childNodes.length; i++) {
-        var node = el.childNodes[i];
-        if(node.nodeType === 8) {
-           var md = node.data.indexOf('HELPMETADATA:');
-           if( md >= 0 ) {
-              helpServer.pageMetaData = node.data.substring(md+13);
-              while( helpServer.pageMetaData.substring( helpServer.pageMetaData.length - 1 ) == '-' ) {
-                   helpServer.pageMetaData = helpServer.pageMetaData.substring(0,helpServer.pageMetaData.length - 1);
-              }
-              if( helpServer.pageMetaData != '' ) {
-                try {
-                    helpServer.pageMetaData = JSON.parse(helpServer.pageMetaData); 
-                } catch(err) {                  
-                    helpServer.pageMetaData = {}
-                }                  
-              }
-           }
-        } else {
-           helpServer.findMetadata(node);
-        }    
+  pageMetaData: {},
+  trackMetaData: null,
+  allowCheck: false,
+	checkedItems: [],
+	onCheckChanged : null ,
+  findMetadata: function (el) {
+    for (var i = 0; i < el.childNodes.length; i++) {
+      var node = el.childNodes[i];
+      if (node.nodeType === 8) {
+        var md = node.data.indexOf('HELPMETADATA:');
+        if (md >= 0) {
+          helpServer.pageMetaData = node.data.substring(md + 13);
+          while (helpServer.pageMetaData.substring(helpServer.pageMetaData.length - 1) == '-') {
+            helpServer.pageMetaData = helpServer.pageMetaData.substring(0, helpServer.pageMetaData.length - 1);
+          }
+          if (helpServer.pageMetaData != '') {
+            try {
+              helpServer.pageMetaData = JSON.parse(helpServer.pageMetaData);
+            } catch (err) {
+              helpServer.pageMetaData = {}
+            }
+          }
+        }
+      } else {
+        helpServer.findMetadata(node);
+      }
     }
   },
   getSrcPath: function (src) {
@@ -85,30 +88,59 @@ var helpServer = {
     if (path.substring(0, 5) == '/help') {
       path = path.substr(5);
       this.checkNavigation(path, 'help');
-      var tocEle = document.getElementById('toc');      
-          
+      var tocEle = document.getElementById('toc');
+
+      if (helpEle && helpEle.contentDocument && this.allowCheck) {
+        var style = document.createElement('style');
+        style.type = 'text/css';
+        style.innerHTML = '.checkedHREF { background: Orange; }';
+        helpEle.contentDocument.getElementsByTagName('head')[0].appendChild(style);
+      }
+
       helpEle.contentDocument.body.onclick = function (e) {
         var ele = e.target || e.srcElement;
-        if (ele && ele.href ) {
+        if (ele && ele.href) {
           var startPattern = window.top.location.protocol + "//" + window.top.location.host;
           if (ele.href.substring(0, startPattern.length) == startPattern) {
             e.stopPropagation();
             e.preventDefault();
             var navPath = ele.href.substring(startPattern.length);
-            if( navPath.substring(0,6).toLowerCase() == '/help/' )
-               navPath = navPath.substring(5);
-            window.top.helpServer.checkNavigation(navPath, 'load');            
+            if (navPath.substring(0, 6).toLowerCase() == '/help/')
+              navPath = navPath.substring(5);
+            if (e.ctrlKey && helpServer.allowCheck) {
+              if (ele.className.indexOf('checkedHREF') >= 0) {
+                ele.className = ele.className.replace(' checkedHREF', '').replace('checkedHREF', '');
+                var i;
+                for( i = 0 ; i < helpServer.checkedItems.length ; ++i ) {
+                  if( helpServer.checkedItems[i] == navPath ) {
+                      helpServer.checkedItems.splice(i, 1);
+                      break;
+                  } 
+                }                
+              } else if (ele.className && ele.className != '') {
+                ele.className += ' checkedHREF';
+                helpServer.checkedItems.push(navPath);
+              } else {
+                ele.className = 'checkedHREF';
+                helpServer.checkedItems.push(navPath);
+              }
+              debugger;
+              if( helpServer.onCheckChanged )
+                helpServer.onCheckChanged(helpServer.checkedItems);
+            } else {
+              window.top.helpServer.checkNavigation(navPath, 'load');
+            }
           }
         }
       }
       
       // Track metadata
-      if( this.trackMetaData ) {
-         this.pageMetaData = {};
-         this.findMetadata(helpEle.contentDocument.body);
-         this.trackMetaData( this.pageMetaData );
+      if (this.trackMetaData) {
+        this.pageMetaData = {};
+        this.findMetadata(helpEle.contentDocument.body);
+        this.trackMetaData(this.pageMetaData);
       }
-              
+
       if (tocEle
         && tocEle.contentWindow.tableOfContents
         && tocEle.contentWindow.tableOfContents.searchMode

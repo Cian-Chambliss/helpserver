@@ -5,15 +5,25 @@
 		<script>
 			var helpEditor = {
 				checkedList: [] ,
-				trackCheckChanged : function(list) {
+				checkedList0: [] ,
+				checkedList1: [] ,
+				trackCheckChangedMerge : function() {
 					var checked = document.getElementById('checkedStatus');
-					helpEditor.checkedList = list;
-					if( list.length > 1 )
-						checked.innerHTML = list.length+" Items Checked";
-					else if( list.length > 0 )	
+					this.checkedList = this.checkedList0.concat(this.checkedList1);
+					if( helpEditor.checkedList.length > 1 )
+						checked.innerHTML = helpEditor.checkedList.length+" Items Checked";
+					else if( helpEditor.checkedList.length > 0 )	
 						checked.innerHTML = "1 Item Checked";
 					else	
 						checked.innerHTML = "No Items Checked";
+				},
+				trackCheckChanged : function(list) {
+					helpEditor.checkedList0 = list;
+					helpEditor.trackCheckChangedMerge();
+				},
+				trackHREFCheckChange: function(list) {
+					helpEditor.checkedList1 = list;
+					helpEditor.trackCheckChangedMerge();					
 				},
 				tocLoaded : function() {
 				  var iframeToc = document.getElementById('toc');
@@ -75,10 +85,24 @@
 					   var tagEdits = { pages : [] , patch : true };
 					   var i;
 					   var metadata = { group : groupName.value };
+					   var matchPath = '';
+					   if(  this.checkedList.length > 0 ) {
+					   		matchPath = this.checkedList[0];
+					   }
+					   var pathLen = matchPath.lastIndexOf("/");
+					   var excluded = [];
+					   matchPath = matchPath.substring(0,pathLen);					   
 					   for( i = 0 ; i < this.checkedList.length ; ++i ) {
-						   tagEdits.pages.push({ path : this.checkedList[i] , metadata : metadata });
+						   if( i > 0 && ((pathLen != this.checkedList[i].lastIndexOf("/")) || this.checkedList[i].substring(0,pathLen) != matchPath ) ) {
+							    excluded.push(this.checkedList[i]);					   
+						   } else {
+						   		tagEdits.pages.push({ path : this.checkedList[i] , metadata : metadata });
+						   }
 					   }
 					   this.SetMetadata(tagEdits);
+					   if( excluded.length > 0 ) {
+						   alert('Not all paths matched, only set paths that matched the first selection');   
+					   }
 				   } else {
 					   alert('cannot apply an empty group');
 				   }
@@ -91,6 +115,10 @@
 				}
 			};
 			helpServer.trackMetaData = helpEditor.trackMetaData;
+			helpServer.allowCheck = true;
+			helpServer.onCheckChanged = function(list) {
+				helpEditor.trackHREFCheckChange(list);
+			}
 		</script>
 	</head>
 	<body onload="helpServer.onLoad()" style="margin:0px;padding:0px;" onhashchange="helpServer.onHashChange()">
