@@ -284,6 +284,7 @@ help.status(function (stats) {
 
 ## Release History
 
+* 1.0.22 Added post-process recursive sorting of the table of contents so that groups don't alter the sort order. Changed metadata functions + added patch. 
 * 1.0.21 Changed 'saved file times' to use the path instead of the title - path is guarrenteed unique, and is used as the key.  Added tracking of 'deletions' to the udpateindex.js script. 
 * 1.0.20 module path is now relative to the startup path (main) so that service will load resources from the correct location.
 * 1.0.19 fixed problems in error handling, addressed double page load when navigating from inside the help iframe. 

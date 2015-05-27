@@ -584,9 +584,10 @@ module.exports = function (config) {
                 newData = data + "\n" + newMetaData;
               }
             }
-            if (newData != data) {
+            if (newData != data) {              
               fs.writeFile(fn, newData, function () {
                 if (err) {
+                  console.log('setmetadata write ' + err);
                   callback(metadata);
                 } else if( batchMode ) {
                   callback(metadata);

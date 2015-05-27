@@ -6,6 +6,7 @@ var helpServer = {
   pageMetaData: {},
   trackMetaData: null,
   allowCheck: false,
+  currentPath: '',
 	checkedItems: [],
 	onCheckChanged : null ,
   findMetadata: function (el) {
@@ -43,6 +44,8 @@ var helpServer = {
     var path = "";
     if (window.location.hash)
       path = window.location.hash.substring(1);
+      
+    helpServer.currentPath = path; 
     var iframeToc = document.getElementById('toc');
     var iframeHelper = document.getElementById('help');
     if (path != "") {
@@ -64,6 +67,7 @@ var helpServer = {
     }
     var iframeToc = document.getElementById('toc');
     var iframeHelper = document.getElementById('help');
+    helpServer.currentPath = path; 
     if (from != 'toc' && iframeToc) {
       if (iframeToc.contentWindow.tableOfContents) {
         iframeToc.contentWindow.tableOfContents.setSelectedPage(path);

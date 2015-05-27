@@ -1,6 +1,6 @@
 {
   "name": "helpserver",
-  "version": "1.0.21",
+  "version": "1.0.22",
   "description": "Help system serving and  for static html and markdown files.",
   "main": "index.js",
   "scripts": {
@@ -15,16 +15,16 @@
     "search"
   ],
   "author": "Cian Chambliss <cian@alphasoftware.com>",
-  "dependencies": {  
-     "async" : ">=0.0.0",
-     "elasticsearch" : ">=0.0.0",
-     "htmlparser2" : ">=0.0.0",
-     "string" : ">=0.0.0",
-     "progress" : ">=0.0.0",
-     "marked" : ">=0.0.0" ,
-     "nodegit" : ">=0.0.0",
-     "github-webhook-handler" : ">=0.0.0",
-     "http" : ">=0.0.0" 
+  "dependencies": {
+    "async": ">=0.0.0",
+    "elasticsearch": ">=0.0.0",
+    "htmlparser2": ">=0.0.0",
+    "string": ">=0.0.0",
+    "progress": ">=0.0.0",
+    "marked": ">=0.0.0",
+    "nodegit": ">=0.0.0",
+    "github-webhook-handler": ">=0.0.0",
+    "http": ">=0.0.0"
   },
   "license": "MIT"
 }

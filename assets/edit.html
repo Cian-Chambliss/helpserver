@@ -86,23 +86,39 @@
 					   var i;
 					   var metadata = { group : groupName.value };
 					   var matchPath = '';
+					   var pathLen = 0;
+					   var fullPath = groupName.value;
 					   if(  this.checkedList.length > 0 ) {
-					   		matchPath = this.checkedList[0];
+					   	   matchPath = this.checkedList[0];
+						   pathLen = matchPath.lastIndexOf("/");					   
+						   matchPath = matchPath.substring(0,pathLen);
+						   fullPath = matchPath + '/';
+						   var gname = groupName.value;
+						   if( gname.substring(0,1) == '/' ) {
+						   	fullPath = gname;
+						   } else {
+							   if( gname.substring(0,3) == '../' ) {
+								while( gname.substring(0,3) == '../' ) {   	
+									gname = gname.substring(3);
+									fullPath = fullPath.substring( 0 , fullPath.lastIndexOf('/') );
+									fullPath = fullPath.substring( 0 , fullPath.lastIndexOf('/') )+'/';   		
+								}
+							   }
+							   if( gname.length > 0 ) {
+							   	fullPath += gname;
+						   	  }
+						   }
 					   }
-					   var pathLen = matchPath.lastIndexOf("/");
-					   var excluded = [];
-					   matchPath = matchPath.substring(0,pathLen);					   
+					   var fullyQualifiedMetadata = { group : fullPath };
+					   
 					   for( i = 0 ; i < this.checkedList.length ; ++i ) {
 						   if( i > 0 && ((pathLen != this.checkedList[i].lastIndexOf("/")) || this.checkedList[i].substring(0,pathLen) != matchPath ) ) {
-							    excluded.push(this.checkedList[i]);					   
+								tagEdits.pages.push({ path : this.checkedList[i] , metadata : fullyQualifiedMetadata });					   
 						   } else {
 						   		tagEdits.pages.push({ path : this.checkedList[i] , metadata : metadata });
 						   }
 					   }
 					   this.SetMetadata(tagEdits);
-					   if( excluded.length > 0 ) {
-						   alert('Not all paths matched, only set paths that matched the first selection');   
-					   }
 				   } else {
 					   alert('cannot apply an empty group');
 				   }
@@ -110,8 +126,25 @@
 				trackMetaData: function(mdata) {
 					var tagNames = document.getElementById('tagNames');
 					var groupName = document.getElementById('groupName');
+					var pagePath = document.getElementById('pagePath');					
 					tagNames.value = mdata.tags || "";
 					groupName.value = mdata.group || "";
+					var levels = helpServer.currentPath.split('/');
+					levels.splice(levels.length-1,1);
+					if( mdata.group && mdata.group != '' ) {
+						var groupName = mdata.group;
+						if( groupName.substring(0,1) == '/') {
+							levels = groupName.split('/');
+						} else {						
+							while( groupName.substring(0,3) == '../' ) {
+								levels.splice(levels.length-1,1);
+								groupName = groupName.substr(3);
+							}
+							if( groupName != '' )
+								levels = levels.concat(groupName.split('/'));
+						}
+					}									
+					pagePath.value = decodeURI( levels.join('/') );
 				}
 			};
 			helpServer.trackMetaData = helpEditor.trackMetaData;
@@ -130,6 +163,9 @@
 			<button id="ApplyTags" onclick="helpEditor.ApplyTags()">Apply Tags</button>&nbsp;Group&nbsp;
 			<input id="groupName"></input>
 			<button id="ApplyGroup" onclick="helpEditor.ApplyGroup()">Apply Group</button>
+			<br/>
+			<div style="height:5pt;"></div>
+			Page Path &nbsp; <input id="pagePath" style="width:5in"></input>
 		</div>
 		<iframe src="toc" id="toc" style="height:90%;width:34%;float:left;border:none;" onload="helpEditor.tocLoaded()"></iframe>
 		<iframe src="/blank" id="help" name="help" style="height:90%;width:66%;float:left;border:none;" onload="helpServer.helpFrameLoad();"></iframe>

@@ -22,25 +22,50 @@ module.exports = function (config) {
 		}
 		return name;
 	};
-	ListUtilities.prototype.sortTree = function(tree) {
+	var removeNumericPrefix = function (title) {
+		var length = 1;
+		while (length < title.length) {
+			var chr = title.substr(length, 1);
+			if ('0' <= chr && chr <= '9') {
+				++length;
+			} else if (chr == '_') {
+				++length;
+				var newtitle = title.substring(length);
+				if (newtitle && newtitle != '')
+					title = newtitle;
+				break;
+			} else {
+				break;
+			}
+		}
+		return title;
+	};
+	ListUtilities.prototype.sortTree = function (tree) {
 		var i = 0;
-		for( i = 0 ; i < tree.length ; ++i ) { 
-		    if( tree[i].children && tree[i].children.length > 0 )
-				tree[i].children = this.sortTree( tree[i].children );
-		}			
-		if( tree.length > 1 ) {
-	        tree.sort(function compare(a, b) {
+		for (i = 0; i < tree.length; ++i) {
+			if (tree[i].children && tree[i].children.length > 0)
+				tree[i].children = this.sortTree(tree[i].children);
+		}
+		if (tree.length > 1) {
+			tree.sort(function compare(a, b) {
 				var aTitle = a.title.toLowerCase().trim();
-				var bTitle = b.title.toLowerCase().trim(); 
-	            if ( aTitle < bTitle )
-	              return -1;
-	            if ( aTitle > bTitle )
-	              return 1;
-	            return 0;
-	        });
+				var bTitle = b.title.toLowerCase().trim();
+				if (aTitle < bTitle)
+					return -1;
+				if (aTitle > bTitle)
+					return 1;
+				return 0;
+			});
+		}
+		if (tree.length > 0) {
+			for (i = 0; i < tree.length; ++i) {
+				if (tree[i].title.substr(0, 1) == '_') {
+					tree[i].title = removeNumericPrefix(tree[i].title);
+				}
+			}
 		}
 		return tree;
-	}
+	};
 	// Convert a flat list of paths & titles into a 'tree'
 	ListUtilities.prototype.treeFromList = function (flatList) {
 		var tree = [];
@@ -54,10 +79,12 @@ module.exports = function (config) {
 			var branch = tree;
 			var currentLevel;
 			var itemgroup = item.group;
-			var lastLevel = levels.length;			
+			var lastLevel = levels.length;
 			if (itemgroup) {
 				if (itemgroup.substring(0, 1) == '/') {
+					var filename = levels[levels.length - 1];
 					levels = itemgroup.split('/');
+					levels.push(filename);
 					lastLevel = levels.length;
 					itemgroup = null;
 				} else {
@@ -94,7 +121,7 @@ module.exports = function (config) {
 			if (itemgroup) {
 				var itemGroups = itemgroup.split('/');
 				var ig;
-				for( ig = 0 ; ig < itemGroups.length ; ++ig ) {
+				for (ig = 0; ig < itemGroups.length; ++ig) {
 					currentBranch = null;
 					currentLevel = itemGroups[ig];
 					for (k = 0; k < branch.length; ++k) {
