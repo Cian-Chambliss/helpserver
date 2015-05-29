@@ -161,7 +161,8 @@ module.exports = function (config) {
           assetpath: configDef.assetpath ? configDef.assetpath : config.assetpath,
           useGit: configDef.useGit ? configDef.useGit : config.useGit,
           repoSource: configDef.repoSource ? configDef.repoSource : config.repoSource,
-          isAdmin: configDef.isAdmin ? configDef.isAdmin : config.isAdmin
+          isAdmin: configDef.isAdmin ? configDef.isAdmin : config.isAdmin,
+          responseHeader: configDef.responseHeader ? configDef.responseHeader : config.responseHeader 
         };
         // Collect all the filters - first occurence of every type (this is for building refresh lists)...
         if (configDef.filter_name && configDef.filter && !filters[configDef.filter_name]) {
@@ -721,12 +722,22 @@ module.exports = function (config) {
       }
     });
   };
-
+  
+  
+  HelpServerUtil.prototype.onSendExpress = function (res) {
+     if( this.config.responseHeader ) {
+       var headerName;
+       for( headerName in this.config.responseHeader ) {
+         res.header(headerName,this.config.responseHeader[headerName]);
+       }
+     }
+  };
 
   var help = new HelpServerUtil(config);
 
   var expressHandler = {
     "blank": function (hlp, path, req, res) {
+      hlp.onSendExpress(res);
       res.send('&nbsp;');
     },
 
@@ -736,6 +747,7 @@ module.exports = function (config) {
           res.status(404).send('Not found');
         } else {
           res.type('html');
+          hlp.onSendExpress(res);          
           res.send(data);
         }
       });
@@ -746,6 +758,7 @@ module.exports = function (config) {
           res.status(404).send('Not found');
         } else {
           res.type('html');
+          hlp.onSendExpress(res);          
           res.send(data);
         }
       });
@@ -756,6 +769,7 @@ module.exports = function (config) {
           res.status(404).send('Not found');
         } else {
           res.type('html');
+          hlp.onSendExpress(res);
           res.send(data);
         }
       });
@@ -765,13 +779,16 @@ module.exports = function (config) {
       hlp.gettree(path, acceptEncoding, function (err, data, encoding) {
         if (err) {
           res.type('html');
+          hlp.onSendExpress(res);
           res.send('error ' + err);
         } else {
           if (encoding) {
             res.set({ 'Content-Encoding': encoding, 'Content-Type': 'text/html; charset=utf-8' });
+            hlp.onSendExpress(res);
             res.send(data);
           } else {
             res.type('html');
+            hlp.onSendExpress(res);
             res.send(data);
           }
         }
@@ -782,13 +799,16 @@ module.exports = function (config) {
       hlp.gettreejson(path, acceptEncoding, function (err, data, encoding) {
         if (err) {
           res.type('json');
+          hlp.onSendExpress(res);
           res.send('error ' + err);
         } else {
           if (encoding) {
             res.set({ 'Content-Encoding': encoding, 'Content-Type': 'text/json; charset=utf-8' });
+            hlp.onSendExpress(res);
             res.send(data);
           } else {
             res.type('html');
+            hlp.onSendExpress(res);
             res.send(data);
           }
         }
@@ -797,11 +817,13 @@ module.exports = function (config) {
     "assets": function (hlp, path, req, res) {
       hlp.get(path, function (err, data, type) {
         if (err) {
+          hlp.onSendExpress(res);
           res.send(err);
         } else {
           if (type) {
             res.type(type);
           }
+          hlp.onSendExpress(res);
           res.send(data);
         }
       });
@@ -810,11 +832,13 @@ module.exports = function (config) {
     "help": function (hlp, path, req, res) {
       hlp.get(path, function (err, data, type) {
         if (err) {
+          hlp.onSendExpress(res);
           res.send(err);
         } else {
           if (type) {
             res.type(type);
           }
+          hlp.onSendExpress(res);
           res.send(data);
         }
       });
@@ -823,8 +847,10 @@ module.exports = function (config) {
     "search": function (hlp, path, req, res) {
       hlp.search(req.query.pattern, function (err, data) {
         if (err) {
+          hlp.onSendExpress(res);
           res.send(JSON.stringify([{ 'error': err }]));
         } else {
+          hlp.onSendExpress(res);
           res.send(JSON.stringify(data));
         }
       });
@@ -848,6 +874,7 @@ module.exports = function (config) {
               res.status(404).send('Not found');
             } else {
               res.type('html');
+              hlp.onSendExpress(res);
               res.send(data);
             }
           });
@@ -861,6 +888,7 @@ module.exports = function (config) {
         if (hlp.isAdmin()) {
           if (req.body) {
             hlp.setmetadata(path, req.body, function (data) {
+              hlp.onSendExpress(res);
               res.send(JSON.stringify({ result: data }));
             });
           } else {
@@ -872,6 +900,7 @@ module.exports = function (config) {
       } else {
         hlp.getmetadata(path, function (data) {
           res.type('json');
+          hlp.onSendExpress(res);
           res.send(JSON.stringify(data));
         });
       }
