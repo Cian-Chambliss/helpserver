@@ -39,7 +39,7 @@ module.exports = function (config, pattern, callback, startAt, maximum) {
       from: startAt,
       size: maximum,
       query: queryDef,
-      _source: ["title", "path", "metadata"]
+      _source: ["title", "path", "metadata" , "toc" ]
     }
   }, function (error, response) {
       if (error) {
@@ -58,7 +58,10 @@ module.exports = function (config, pattern, callback, startAt, maximum) {
             }
           } else
             results.push({ title: item.title, path: item.path });
-        }
+          if( item.toc ) {
+            results[ results.length - 1 ].toc = item.toc;
+          }  
+        }        
         callback(null, results);
       }
     });

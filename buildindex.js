@@ -80,9 +80,12 @@ module.exports = function (config, callback) {
 							} else {
 								callStatus.converted++;
 							}
-							publishList.push({ title: fo.title, path: fo.path, metadata: fo.metadata });
+							if( fo.toc ) {
+								publishList.push({ title: fo.title, path: fo.path, metadata: fo.metadata , toc : fo.toc });
+							} else {
+								publishList.push({ title: fo.title, path: fo.path, metadata: fo.metadata });
+							}
 							callbackLoop();
-
 						});
 					}
 				});

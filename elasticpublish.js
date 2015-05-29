@@ -54,16 +54,19 @@ module.exports = function (config, callback) {
                 publishStats.published++;
                 callbackLoop();
               } else {
+                var bodyContent = {
+                    title: fo.title,
+                    path: fo.path,
+                    content: content,
+                    metadata: fo.metadata ? fo.metadata : null                  
+                };
+                if( fo.toc )
+                  bodyContent.toc = fo.toc;
                 client.create({
                   index: helpSystemIndex,
                   type: helpSystemType,
                   id: fo.path,
-                  body: {
-                    title: fo.title,
-                    path: fo.path,
-                    content: content,
-                    metadata: fo.metadata ? fo.metadata : null
-                  }
+                  body: bodyContent
                 }, function (error) {
                     bar.tick();
                     if (error) {

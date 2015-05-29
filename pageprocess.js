@@ -11,31 +11,31 @@ module.exports = function (config, data, page, callbackPage) {
 	var ofn = replaceAll(replaceAll(page.path, '/', '_'), '\\', '_');
 	var extensionStart = ofn.lastIndexOf('.');
 	var extension = ofn.substring(extensionStart).toLowerCase();
-	var manifestFile = config.generated + "manifest/" + ofn.substring(0,extensionStart) + ".json";
-	if( extension == '.md' ) {
+	var manifestFile = config.generated + "manifest/" + ofn.substring(0, extensionStart) + ".json";
+	if (extension == '.md') {
 		// Convert to html first
 		var marked = require('marked');
 		var textData = data;
-		if( !textData.indexOf )
+		if (!textData.indexOf)
 			textData = textData.toString('utf8');
 		data = marked(textData);
-	}	
-	if( config.metadata ) {
+	}
+	if (config.metadata) {
 		var textData = data;
-		if( !textData.indexOf )
+		if (!textData.indexOf)
 			textData = textData.toString('utf8');
 		var metadataAt = textData.indexOf('<!---HELPMETADATA:');
 		if (metadataAt > -1) {
-			var metadataJson = textData.substr( metadataAt + 18 );
+			var metadataJson = textData.substr(metadataAt + 18);
 			var metadataEnd = metadataJson.indexOf('--->');
 			if (metadataEnd > -1)
 				metadataJson = metadataJson.substring(0, metadataEnd);
 			try {
 				page.metadata = JSON.parse(metadataJson);
-			} catch (err) {				
+			} catch (err) {
 			}
 		}
-		if( page.metadata )
+		if (page.metadata)
 			haveConfigData = true;
 	}
 	if (config.dependencies || config.search) {
@@ -43,27 +43,80 @@ module.exports = function (config, data, page, callbackPage) {
 		var deps = { href: [], images: [] };
 		var plainText = "";
 		var stringJs = require('string');
+		var divDepth = 0;
+		var tocDiv = -1;
+		var tocDepth = -1;
+		var tocHash = null;
+		var subTOC = null;
+		var tocStack = [];
+
 		var parser = new htmlparser.Parser({
 			onopentag: function (name, attribs) {
 				if (name === "a" && attribs.href) {
-					deps.href.push(attribs.href);
+					if (attribs.href.substring(0, 1) == '#') {
+						if (tocDepth >= 0) {
+							if (attribs.href) {
+								tocHash = attribs.href.substring(1);
+							}
+						}
+					} else {
+						deps.href.push(attribs.href);
+					}
 				} else if (name === "img" && attribs.src) {
 					deps.images.push(attribs.src);
+				} else if (name === "div") {
+					if (attribs.class && attribs.class == 'helpserver_toc') {
+						tocDiv = divDepth;
+					}
+					++divDepth;
+				} else if (name === "ul") {
+					if (tocDiv >= 0) {
+						++tocDepth;
+						if (tocStack.length <= tocDepth)
+							tocStack.push([]);
+						else
+							tocStack[tocDepth] = [];
+					}
 				}
 			},
 			ontext: function (text) {
-				if (config.search)				
-					plainText += stringJs( stringJs(text).decodeHTMLEntities().s );
+				if (config.search)
+					plainText += stringJs(stringJs(text).decodeHTMLEntities().s);
+				if (tocHash) {
+					tocStack[tocDepth].push({ title: stringJs(text).decodeHTMLEntities().s, hash: tocHash });
+					tocHash = null;
+				}
 			},
-			onclosetag: function (tagname) {
+			onclosetag: function (name) {
+				if (name === "div") {
+					--divDepth;
+					if (tocDiv == divDepth) {
+						tocDiv = -1;
+					}
+				} else if (name === "ul") {
+					if (tocDiv >= 0) {
+						if (tocDepth > 0) {
+							var parentTree = tocStack[tocDepth - 1];
+							parentTree[parentTree.length - 1].children = tocStack[tocDepth];
+						} else {
+							subTOC = tocStack[0];
+						}
+						--tocDepth;
+					}
+				}
 			}
 		});
 		parser.write(data);
 		parser.end();
 		if (config.dependencies) {
 			page.dependencies = deps;
-			if( deps.href.length > 0 || deps.images.length > 0 )
+			if (deps.href.length > 0 || deps.images.length > 0)
 				haveConfigData = true;
+		}
+		// Add a table of contents to the node....
+		if( subTOC ) {
+			page.toc = subTOC;
+			haveConfigData = true;
 		}
 		if (config.search) {
 			var plainTextPath = config.generated + "plaintext/";
@@ -76,28 +129,28 @@ module.exports = function (config, data, page, callbackPage) {
 			plainText = replaceAll(plainText, "  ", " ");
 			plainText = replaceAll(plainText, "  ", " ");
 			fs.writeFile(plainTextPath + ofn, plainText, function (err) {
-				if ( haveConfigData ) {
-					fs.writeFile( manifestFile , JSON.stringify(page,null,"  ") , function (err2) {
-						callbackPage(err,ofn);	
+				if (haveConfigData) {
+					fs.writeFile(manifestFile, JSON.stringify(page, null, "  "), function (err2) {
+						callbackPage(err, ofn);
 					});
 				} else {
-					callbackPage(err,ofn);
+					callbackPage(err, ofn);
 				}
 			});
 		} else {
-			if ( haveConfigData ) {
-				fs.writeFile( manifestFile , JSON.stringify(page,null,"  ") , function (err) {
-					callbackPage(err,"");	
+			if (haveConfigData) {
+				fs.writeFile(manifestFile, JSON.stringify(page, null, "  "), function (err) {
+					callbackPage(err, "");
 				});
 			} else {
-				callbackPage(null,"");
+				callbackPage(null, "");
 			}
 		}
-	} else if ( haveConfigData ) { 
-		fs.writeFile( manifestFile , JSON.stringify(page,null,"  ") , function (err) {
-			callbackPage(err,"");	
+	} else if (haveConfigData) {
+		fs.writeFile(manifestFile, JSON.stringify(page, null, "  "), function (err) {
+			callbackPage(err, "");
 		});
 	} else {
-		callbackPage(null,"");
+		callbackPage(null, "");
 	}
 }

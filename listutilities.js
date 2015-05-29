@@ -66,12 +66,56 @@ module.exports = function (config) {
 		}
 		return tree;
 	};
+
+	ListUtilities.prototype.expandTocChildren = function (item, list) {
+		var output = [];
+		var i;
+		for (i = 0; i < list.length; ++i) {
+			var subitem = list[i];
+			var kids = null;
+			if (subitem.children) {
+				kids = this.expandTocChildren(item, subitem.children);
+			}
+			if (kids) {
+				output.push({ title: subitem.title, hash: subitem.hash, path: item.path, children: kids });
+			} else {
+				output.push({ title: subitem.title, hash: subitem.hash, path: item.path });
+			}
+		}
+		if (output.length)
+			return output;
+		return null;
+	};
+
+	ListUtilities.prototype.expandSubToc = function (tree) {
+		var i = 0;
+		// Children first
+		for (i = 0; i < tree.length; ++i) {
+			if (tree[i].children && tree[i].children.length > 0)
+				tree[i].children = this.expandSubToc(tree[i].children);
+		}
+		// Then this level
+		for (i = 0; i < tree.length; ++i) {
+			if (tree[i].toc) {
+				var thisToc = tree[i].toc;
+				tree[i].toc = undefined;
+				var tocChildren = this.expandTocChildren(tree[i], thisToc);
+				if (tocChildren) {
+					if (!tree[i].children)
+						tree[i].children = tocChildren;
+					else
+						tree[i].children = tree[i].children.concat(tocChildren);
+				}
+			}
+		}
+		return tree;
+	};
 	// Convert a flat list of paths & titles into a 'tree'
 	ListUtilities.prototype.treeFromList = function (flatList) {
 		var tree = [];
 		var i, j, k;
 		var currentBranch;
-		debugger;
+		var hasSubToc = false;
 
 		for (i = 0; i < flatList.length; ++i) {
 			var item = flatList[i];
@@ -80,6 +124,9 @@ module.exports = function (config) {
 			var currentLevel;
 			var itemgroup = item.group;
 			var lastLevel = levels.length;
+			if (item.toc) {
+				hasSubToc = true;
+			}
 			if (itemgroup) {
 				if (itemgroup.substring(0, 1) == '/') {
 					var filename = levels[levels.length - 1];
@@ -149,9 +196,16 @@ module.exports = function (config) {
 					}
 				}
 				if (!currentBranch) {
-					branch.push({ title: currentLevel, path: item.path });
+					if (item.toc) {
+						branch.push({ title: currentLevel, path: item.path, toc: item.toc });
+					} else {
+						branch.push({ title: currentLevel, path: item.path });
+					}
 				} else {
 					currentBranch.path = item.path;
+					if (item.toc) {
+						currentBranch.toc = item.toc;
+					}
 				}
 			} else if (levels.length > 0) {
 				currentBranch = null;
@@ -163,13 +217,23 @@ module.exports = function (config) {
 					}
 				}
 				if (!currentBranch) {
-					branch.push({ title: currentLevel, path: item.path });
+					if (item.toc) {
+						branch.push({ title: currentLevel, path: item.path, toc: item.toc });
+					} else {
+						branch.push({ title: currentLevel, path: item.path });
+					}
 				} else {
 					currentBranch.path = item.path;
+					if (item.toc) {
+						currentBranch.toc = item.toc;
+					}
 				}
 			}
 		}
 		tree = this.sortTree(tree);
+		if (hasSubToc) {
+			tree = this.expandSubToc(tree);
+		}
 		return tree;
 	};
 
@@ -184,9 +248,12 @@ module.exports = function (config) {
 				} else {
 					ulList += "<li class=\"leaf\" >";
 				}
-				if (res[i].path)
-					ulList += "<div id=\"" + res[i].path + "\">" + res[i].title + "</div>";
-				else
+				if (res[i].path) {
+					if (res[i].hash)
+						ulList += "<div id=\"" + res[i].path + "#" + res[i].hash + "\">" + res[i].title + "</div>";
+					else
+						ulList += "<div id=\"" + res[i].path + "\">" + res[i].title + "</div>";
+				} else
 					ulList += "<div>" + res[i].title + "</div>";
 				if (res[i].children)
 					ulList += buildTree(res[i].children, false);
