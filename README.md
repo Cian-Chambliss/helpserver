@@ -8,6 +8,59 @@ populate and query against an elasticsearch index to perform full text search of
 
   npm install helpserver
   
+## HelpServer Specific Page Content
+
+The helpserver processes the HTML to extract the plaintext for performing text search against, but it also looks for comments and classes.
+
+Metadata is included on a page in the form of a comment "&lt;!---HELPMETADATA:" - for example: 
+
+```html
+<!---HELPMETADATA: { "tags" : "expert" } --->
+```
+
+Changing the location of a help pages location in the table of contents - the group metadata tag, this can be relative - for example.
+
+```html
+<!---HELPMETADATA: { "group" : "Subtopic" } --->
+```
+
+Will move the page to aunder a child branch called 'subtopic'.
+
+```html
+<!---HELPMETADATA: { "group" : "../Sibling/Kid" } --->
+```
+
+Will move the page to under a Kid topic under the Sibling topic that gets added a level up.
+
+```html
+<!---HELPMETADATA: { "group" : "/New Features/Create Document" } --->
+```
+
+Will move the page to an absolute position in the TOC (top level branch 'New Features' under sub topic 'Create Document'
+
+
+This is used by the filter logic to allow a subset of the pages to be exposed based on content (i.e show me 'expert' pages). 
+
+If a div of class 'helpserver_toc' exists in a page, we look for ul and li tags that contain anchor tags that reference the document, for example if your
+help page contains this 
+
+```html
+<div class="helperserver_toc" >
+   <ul>
+     <li><a href="#Intro">Intro</a> </li>
+     <li><a href="#API">API</a>
+       <ul>
+          <li><a href="#Query">Query</a> </li>
+          <li><a href="#Metadata">Retrieve Metadata</a> </li>
+       </ul>     
+     </li>
+   </ul>
+</div>
+```
+
+Then helpserver will add child tags of 'Intro', 'Api' with children 'Query' and 'Retrieve Metadata' for the help page.
+  
+  
 ## API
 
 The help server includes the methods
@@ -284,6 +337,7 @@ help.status(function (stats) {
 
 ## Release History
 
+* 1.0.24 Added page table of contents (so that a branch of the toc can have multiple entries for a page). 
 * 1.0.23 Added post-process of titles to remove _###_ (where # is a digit)  so that titles don't always have to show up alphabetically.
 * 1.0.22 Added post-process recursive sorting of the table of contents so that groups don't alter the sort order. Changed metadata functions + added patch. 
 * 1.0.21 Changed 'saved file times' to use the path instead of the title - path is guarrenteed unique, and is used as the key.  Added tracking of 'deletions' to the udpateindex.js script. 
