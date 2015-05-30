@@ -349,6 +349,7 @@ help.status(function (stats) {
 
 ## Release History
 
+* 1.0.26 Added limit and offset parameters to search - default search to 50 (instead of elastic search default of 10). 
 * 1.0.25 Added editTOC to postprocess TOC (remove or move paths)- but keeping pages. Added notes to edit.
 * 1.0.24 Added page table of contents (so that a branch of the toc can have multiple entries for a page). added support for customization of response through reponseHeader property.  
 * 1.0.23 Added post-process of titles to remove _###_ (where # is a digit)  so that titles don't always have to show up alphabetically.

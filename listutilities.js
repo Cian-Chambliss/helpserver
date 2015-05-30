@@ -230,13 +230,11 @@ module.exports = function (config) {
 						if( levels[0] === newlevels[0] ) {
 							// same? it might be a rename...
 							levels.splice(0,1);
-							newlevels.splice(0,1);
-							console.log('RENAME/MOVE DEEP\n');
+							newlevels.splice(0,1);							
 							this.moveNode(tree[index].children,levels.join('/'),newlevels.join('/'));
 							needToRemoveAndAdd = false;
 						}
-					} else {
-						console.log('RENAME ONE\n');
+					} else {						
 						tree[index].title = newname;
 						needToRemoveAndAdd = false;
 					}
@@ -244,7 +242,6 @@ module.exports = function (config) {
 			} 
 			if( needToRemoveAndAdd ) {
 				// At this point, we need to alter the structure - get the node, remove from hierarchy, then re-insert it.
-				console.log('REMOVE AND ADD\n');
 				var node = this.getNode(tree,name);
 				if( node ) {
 					this.removeNode(tree,name);

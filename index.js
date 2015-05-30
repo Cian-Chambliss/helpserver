@@ -522,7 +522,7 @@ module.exports = function (config) {
   };
 
   // perform a pattern seach, returns 'path' portion of help
-  HelpServerUtil.prototype.search = function (pattern, callback) {
+  HelpServerUtil.prototype.search = function (pattern, callback,startAt,limit) {
     if (!callback || typeof (callback) !== 'function') {
       throw new Error('Second parameter must be a callback function');
     }
@@ -532,7 +532,10 @@ module.exports = function (config) {
       callback(new Error('Search were settings not specified'), []);
     } else {
       var elasticquery = require("./elasticquery");
-      elasticquery(this.config, pattern, callback);
+      if( limit && limit > 0 && startAt >= 0 ) 
+         elasticquery(this.config, pattern, callback,startAt,limit);
+      else   
+         elasticquery(this.config, pattern, callback);
     }
   };
    
@@ -846,6 +849,12 @@ module.exports = function (config) {
     },
 
     "search": function (hlp, path, req, res) {
+      var offset = 0;
+      var limit = 0;
+      if( req.query.limit )
+        limit = parseInt(req.query.limit);
+      if( req.query.offset )
+        offset = parseInt(req.query.offset);      
       hlp.search(req.query.pattern, function (err, data) {
         if (err) {
           hlp.onSendExpress(res);
@@ -854,7 +863,7 @@ module.exports = function (config) {
           hlp.onSendExpress(res);
           res.send(JSON.stringify(data));
         }
-      });
+      } , offset , limit );
     },
 
     "refresh": function (hlp, path, req, res) {

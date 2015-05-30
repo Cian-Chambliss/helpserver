@@ -137,7 +137,7 @@ var tableOfContents = {
 			window.parent.helpServer.searchTerm = ele.value;
 		this.searchText = ele.value;
 		if (ele.value != '') {
-			var command = "/search?pattern=" + ele.value;
+			var command = "/search?limit=50&pattern=" + ele.value;
 			var xmlhttp = new XMLHttpRequest();
 			xmlhttp.onreadystatechange = function () {
 				if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
