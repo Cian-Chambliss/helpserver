@@ -110,6 +110,151 @@ module.exports = function (config) {
 		}
 		return tree;
 	};
+	
+	ListUtilities.prototype.findNode = function (tree,name) {
+		var i;
+		for( i = 0 ; i < tree.length ; ++i )
+		    if( tree[i].title.toLowerCase() == name )
+				return i;
+		return -1;
+	}
+	
+	// Remove a node from the tree...
+	ListUtilities.prototype.removeNode = function (tree,name) {
+		if( name ) {
+			var levels = name.split('/');
+			if( levels.length > 0 && levels[0] === '' ) {
+				levels.splice(0,1);
+			}
+			if( levels.length > 0 ) {
+				var index = this.findNode(tree,levels[0].toLowerCase());
+				if( index >= 0 ) {
+					if( levels.length > 1 ) {
+						if( tree[index].children ) {
+							levels.splice(0,1);
+							this.removeNode(tree[index].children,levels.join('/'));
+						}
+					} else {
+						tree.splice(index,1);
+					}
+				}		
+			}
+		}
+		return tree;
+	};
+	
+	// Get a pointer to a node
+	ListUtilities.prototype.getNode = function (tree,name) {
+		var node = null;
+		if( name ) {
+			var levels = name.split('/');
+			var i;
+			for( i = 0 ; i < levels.length ; ++i ) {
+				if( levels[i] !== '' ) {
+					var index = this.findNode(tree,levels[i].toLowerCase());
+					if( index >= 0 ) {
+						tree = tree[index].children;
+						if(  (i+1) == levels.length ) {
+							node = tree;
+							break;
+						} 
+					} else {
+						break;
+					}
+				}
+			}
+		}	
+		return node;
+	};
+	
+	ListUtilities.prototype.addNode = function (tree,name,node) {
+		if( name && node ) {
+			var levels = name.split('/');
+			var i;
+			for( i = 0 ; i < levels.length ; ++i ) {
+				if( levels[i] !== '' ) {
+					var index = this.findNode(tree,levels[i].toLowerCase());
+					if( index >= 0 ) {
+						if(  (i+1) == levels.length ) {
+							// Make sure title gets set (use case of new name)
+							tree[index].title = levels[i];
+							// Set the path for the node
+							if( node.path )
+								tree[index].path = node.path;
+							// merge any child nodes....	
+							if( node.children ) {
+								if( tree[index].children )
+									tree[index].children = tree[index].children.concat(node.children);
+								else
+									tree[index].children = node.children;
+							}
+							break;
+						} else {
+							if( !tree[index].children )
+								tree[index].children = [];
+							tree = tree[index].children;					
+						} 
+					} else if(  (i+1) == levels.length ) {
+						node.title = levels[i];
+						tree.push(node);
+						break;
+					} else {
+						var newItem = { title : levels[i] , children : [] };
+						tree.push(newItem);
+						tree = newItem.children;
+					}
+				}
+			}	
+		}
+		return node;		
+	};
+	
+	// Move (or rename) a node ...
+	ListUtilities.prototype.moveNode = function (tree,name,newname) {
+		if( name ) {
+			var levels = name.split('/');
+			var newlevels = newname.split('/');
+			
+			if( levels.length > 0 && levels[0] === '' ) {
+				levels.splice(0,1);
+			}
+			if( newlevels.length > 0 && newlevels[0] === '' ) {
+				newlevels.splice(0,1);
+			}
+			var needToRemoveAndAdd = true;
+			// Same number of levels?
+			if( levels.length == newlevels.length ) {
+				var index = this.findNode(tree,levels[0].toLowerCase());
+				if( index >= 0 ) {
+					if( levels.length > 1 ) {
+						if( levels[0] === newlevels[0] ) {
+							// same? it might be a rename...
+							levels.splice(0,1);
+							newlevels.splice(0,1);
+							console.log('RENAME/MOVE DEEP\n');
+							this.moveNode(tree[index].children,levels.join('/'),newlevels.join('/'));
+							needToRemoveAndAdd = false;
+						}
+					} else {
+						console.log('RENAME ONE\n');
+						tree[index].title = newname;
+						needToRemoveAndAdd = false;
+					}
+				}
+			} 
+			if( needToRemoveAndAdd ) {
+				// At this point, we need to alter the structure - get the node, remove from hierarchy, then re-insert it.
+				console.log('REMOVE AND ADD\n');
+				var node = this.getNode(tree,name);
+				if( node ) {
+					this.removeNode(tree,name);
+					this.addNode(tree,newname,node);
+				}
+			}
+		}
+		return tree;
+	};
+	
 	// Convert a flat list of paths & titles into a 'tree'
 	ListUtilities.prototype.treeFromList = function (flatList) {
 		var tree = [];
@@ -227,6 +372,20 @@ module.exports = function (config) {
 					if (item.toc) {
 						currentBranch.toc = item.toc;
 					}
+				}
+			}
+		}
+		if( config.editTOC ) {
+			if( config.editTOC.remove ) {
+				// remove list
+				for( i = 0 ; i < config.editTOC.remove.length ; ++i ) {
+					tree = this.removeNode(tree,config.editTOC.remove[i]);
+				}
+			}
+			if( config.editTOC.move ) {
+				// move list
+				for( i = 0 ; i < config.editTOC.move.length ; ++i ) {
+					tree = this.moveNode(tree,config.editTOC.move[i].from,config.editTOC.move[i].to);
 				}
 			}
 		}

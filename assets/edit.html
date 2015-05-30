@@ -123,12 +123,28 @@
 					   alert('cannot apply an empty group');
 				   }
 				},
+				SaveNote : function() {
+				   var notes = document.getElementById('notes');
+				   if( notes.value && notes.value.length > 0 ) {
+					   var tagEdits = { pages : [] , patch : true };
+					   var i;
+					   var metadata = { notes : notes.value };
+					   for( i = 0 ; i < this.checkedList.length ; ++i ) {
+						   tagEdits.pages.push({ path : this.checkedList[i] , metadata : metadata });
+					   }
+					   this.SetMetadata(tagEdits);
+				   } else {
+					   alert('cannot apply an empty notes (use "fixed" if reviewed page was fixed)');
+				   }					
+				} ,
 				trackMetaData: function(mdata) {
 					var tagNames = document.getElementById('tagNames');
 					var groupName = document.getElementById('groupName');
 					var pagePath = document.getElementById('pagePath');					
+					var notes = document.getElementById('notes');
 					tagNames.value = mdata.tags || "";
 					groupName.value = mdata.group || "";
+					notes.value = mdata.notes || "";
 					var levels = helpServer.currentPath.split('/');
 					levels.splice(levels.length-1,1);
 					if( mdata.group && mdata.group != '' ) {
@@ -163,6 +179,8 @@
 			<button id="ApplyTags" onclick="helpEditor.ApplyTags()">Apply Tags</button>&nbsp;Group&nbsp;
 			<input id="groupName"></input>
 			<button id="ApplyGroup" onclick="helpEditor.ApplyGroup()">Apply Group</button>
+			&nbsp;Notes&nbsp;<input id="notes"></input>
+			<button id="SaveNote" onclick="helpEditor.SaveNote()">Save Notes</button>
 			<br/>
 			<div style="height:5pt;"></div>
 			Page Path &nbsp; <input id="pagePath" style="width:5in"></input>

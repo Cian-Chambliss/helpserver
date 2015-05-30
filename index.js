@@ -162,7 +162,8 @@ module.exports = function (config) {
           useGit: configDef.useGit ? configDef.useGit : config.useGit,
           repoSource: configDef.repoSource ? configDef.repoSource : config.repoSource,
           isAdmin: configDef.isAdmin ? configDef.isAdmin : config.isAdmin,
-          responseHeader: configDef.responseHeader ? configDef.responseHeader : config.responseHeader 
+          responseHeader: configDef.responseHeader ? configDef.responseHeader : config.responseHeader ,
+          editTOC: configDef.editTOC ? configDef.editTOC : config.editTOC
         };
         // Collect all the filters - first occurence of every type (this is for building refresh lists)...
         if (configDef.filter_name && configDef.filter && !filters[configDef.filter_name]) {
