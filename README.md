@@ -153,6 +153,9 @@ The helpserver class requires some initialization parameters, which include
  - webhookSecret: (optional) secret for webhook.
  - configurations : (optional) - different filters / handlers.
    * In the example at the bottom, the help page path is /novice/main  and /expert/main for displaying easy pages, or easy+expert pages,  admin allows refresh and setmetadata calls, which are otherwise not authorized.
+ - editTOC : (optional) - remove or move branches from the table of contents.
+   * remove - array of strings.
+   * move - Move (or rename) a branch, useful for array of objects with properties "from" and "to".  
  - responseHeader" : (optional) - adds headers to all responses
  
 Example custom responseHeader - Enable CORS access to page - useful if you want to be able to embed helpserver in a site that is on another domain. 
@@ -346,6 +349,7 @@ help.status(function (stats) {
 
 ## Release History
 
+* 1.0.25 Added editTOC to postprocess TOC (remove or move paths)- but keeping pages. Added notes to edit.
 * 1.0.24 Added page table of contents (so that a branch of the toc can have multiple entries for a page). added support for customization of response through reponseHeader property.  
 * 1.0.23 Added post-process of titles to remove _###_ (where # is a digit)  so that titles don't always have to show up alphabetically.
 * 1.0.22 Added post-process recursive sorting of the table of contents so that groups don't alter the sort order. Changed metadata functions + added patch. 
