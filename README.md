@@ -349,6 +349,7 @@ help.status(function (stats) {
 
 ## Release History
 
+* 1.0.29 For IE, disable 'deflate', as IE doesn't support at (need to add compress options that IE does support),  updated boyd and html tag styles to play nice with IE.  
 * 1.0.28 Added postMessage/"message" event to allow embedding. 
 * 1.0.27 Fixes to 'move nodes' logic when re-organizing table of contents after population. 
 * 1.0.26 Added limit and offset parameters to search - default search to 50 (instead of elastic search default of 10). 

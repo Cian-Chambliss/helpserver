@@ -780,6 +780,9 @@ module.exports = function (config) {
     },
     "toc": function (hlp, path, req, res) {
       var acceptEncoding = req.headers['accept-encoding'];
+      var userAgent = req.headers['user-agent'];
+      if( userAgent.indexOf("Trident/") > 0 )
+         acceptEncoding = null;       
       hlp.gettree(path, acceptEncoding, function (err, data, encoding) {
         if (err) {
           res.type('html');
@@ -800,6 +803,9 @@ module.exports = function (config) {
     },
     "toc.json": function (hlp, path, req, res) {
       var acceptEncoding = req.headers['accept-encoding'];
+      var userAgent = req.headers['user-agent'];
+      if( userAgent.indexOf("Trident/") > 0 )
+         acceptEncoding = null;       
       hlp.gettreejson(path, acceptEncoding, function (err, data, encoding) {
         if (err) {
           res.type('json');
