@@ -349,6 +349,7 @@ help.status(function (stats) {
 
 ## Release History
 
+* 1.0.28 Added postMessage/"message" event to allow embedding. 
 * 1.0.27 Fixes to 'move nodes' logic when re-organizing table of contents after population. 
 * 1.0.26 Added limit and offset parameters to search - default search to 50 (instead of elastic search default of 10). 
 * 1.0.25 Added editTOC to postprocess TOC (remove or move paths)- but keeping pages. Added notes to edit.
