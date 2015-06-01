@@ -153,11 +153,11 @@ module.exports = function (config) {
 				if( levels[i] !== '' ) {
 					var index = this.findNode(tree,levels[i].toLowerCase());
 					if( index >= 0 ) {
-						tree = tree[index].children;
 						if(  (i+1) == levels.length ) {
-							node = tree;
+							node = tree[index];
 							break;
 						} 
+						tree = tree[index].children;
 					} else {
 						break;
 					}
@@ -205,8 +205,7 @@ module.exports = function (config) {
 					}
 				}
 			}	
-		}
-		return node;		
+		}	
 	};
 	
 	// Move (or rename) a node ...
