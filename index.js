@@ -918,8 +918,13 @@ module.exports = function (config) {
   };
    
   // Express generic entry point
-  HelpServerUtil.prototype.expressuse = function (req, res) {
+  HelpServerUtil.prototype.expressuse = function (req, res) {   
     var items = req.path.split('/');
+    if( !req.path || req.path == '' || req.path == '/' ) {
+      if( config.defaultPage && config.defaultPage != '' && config.defaultPage != '/' ) {
+        return res.redirect(config.defaultPage);
+      }
+    }    
     var handler = expressHandler[items[1]];
     if (handler) {
       handler(help, '/' + items.slice(2).join('/'), req, res);

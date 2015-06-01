@@ -1,4 +1,5 @@
 var helpServer = {
+  mainWindow: null,
   onItemToggle: null,
   originalHelpPath: null,
   originalHelpPage: null,
@@ -9,6 +10,7 @@ var helpServer = {
   currentPath: '',
 	checkedItems: [],
 	onCheckChanged : null ,
+  followNavigation : null ,
   findMetadata: function (el) {
     for (var i = 0; i < el.childNodes.length; i++) {
       var node = el.childNodes[i];
@@ -58,12 +60,14 @@ var helpServer = {
         }
       }
     }
+    if( this.followNavigation ) {
+      this.followNavigation(path);
+    }
   },
   checkNavigation: function (path, from) {
     if (path && path != "" && ("#" + path) !== window.location.hash) {
-      var parentWindow = window.parent.window;
-      var newLocation = parentWindow.location.pathname + "#" + path;
-      parentWindow.location.replace(newLocation);
+      var newLocation = helpServer.mainWindow.location.pathname + "#" + path;
+      helpServer.mainWindow.location.replace(newLocation);
     }
     var iframeToc = document.getElementById('toc');
     var iframeHelper = document.getElementById('help');
@@ -81,6 +85,17 @@ var helpServer = {
     }
   },
   onLoad: function () {
+    this.mainWindow = window;
+    if (window.top != window.self) {
+      this.followNavigation = function(path) {
+         window.top.postMessage(  { path : path } , "*" ); 
+      };
+  		window.addEventListener('message', function(event) {
+  			if( event.data.path ) {
+  			     window.location.hash = "#" + event.data.path;
+  			}
+  		});      
+    }
     this.navigateToFragment();
   },
   onHashChange: function () {
