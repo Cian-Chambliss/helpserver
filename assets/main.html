@@ -2,10 +2,21 @@
 <html style="height:100%;">
 	<head>
 		<link href="/assets/helpserver-main.css" media="all" rel="stylesheet" />
+		<script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+		<script src="/assets/helpserver-splitter.js"></script>
 		<script src="/assets/helpserver-main.js"></script>
-	</head>
+		<link href="/assets/helpserver-splitter.css" rel="stylesheet"/>
+		<script>
+				$().ready(function() {
+					 $('#vsplitter').split({orientation:'vertical', limit:10 , position: '30%' });					  
+				});
+		</script>
+	</head>   
+	
 	<body onload="helpServer.onLoad()" style="margin:0px;padding:0px;height:100%;" onhashchange="helpServer.onHashChange()">
-		<iframe src="toc" id="toc" style="height:100%;width:34%;float:left;border:none;"></iframe>
-		<iframe src="/blank" id="help" name="help" style="height:100%;width:66%;float:left;border:none;" onload="helpServer.helpFrameLoad();"></iframe>			
+		<div id="vsplitter" style="width:98%;height:98%" >
+			<div><iframe src="toc" id="toc" style="width:98%;height:98%" ></iframe></div>
+			<div><iframe src="/blank" id="help" name="help" onload="helpServer.helpFrameLoad();" style="width:98%;height:98%" ></iframe></div>		
+		</div>			
 	</body>
 </html>
