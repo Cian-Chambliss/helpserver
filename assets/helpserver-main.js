@@ -8,9 +8,9 @@ var helpServer = {
   trackMetaData: null,
   allowCheck: false,
   currentPath: '',
-	checkedItems: [],
-	onCheckChanged : null ,
-  followNavigation : null ,
+  checkedItems: [],
+  onCheckChanged: null,
+  followNavigation: null,
   findMetadata: function (el) {
     for (var i = 0; i < el.childNodes.length; i++) {
       var node = el.childNodes[i];
@@ -34,6 +34,29 @@ var helpServer = {
       }
     }
   },
+  loadHelpDiv: function (path) {
+    var elemHelpPage = document.getElementById('help');
+    elemHelpPage.innerHTML = "Loading " + path + "...";
+    var xmlhttp = new XMLHttpRequest();
+    xmlhttp.onload = function () {
+      if (this.status == 200) {
+        var htmlText = xmlhttp.responseText;
+        var headAt = htmlText.toLowerCase().indexOf('<head');
+        if (headAt >= 0) {
+          var endOfTag = htmlText.substring(headAt).indexOf('>');
+          if (endOfTag >= 0) {
+            headAt += (endOfTag + 1);
+            htmlText = (htmlText.substring(0, headAt) + "<base href=\"/help" + path + "\" target=\"_blank\" >" + htmlText.substring(headAt));
+          }
+        }
+        elemHelpPage.innerHTML = htmlText;
+      }
+    };
+    xmlhttp.open("GET", "/help" + path, true);
+    xmlhttp.send('');
+
+
+  },
   getSrcPath: function (src) {
     var oldPath = src;
     var oldPathIndex = oldPath.indexOf('/help');
@@ -46,28 +69,32 @@ var helpServer = {
     var path = "";
     if (window.location.hash)
       path = window.location.hash.substring(1);
-      
-    helpServer.currentPath = path; 
+
+    helpServer.currentPath = path;
     var elemTOC = document.getElementById('toc');
-    var iframeHelper = document.getElementById('help');
-    
+    var elemHelpPage = document.getElementById('help');
+
     if (path != "") {
-      if( elemTOC ) {        
-          if( elemTOC.tagName.toLowerCase() == "iframe" ) {
-            if (elemTOC) {
-              elemTOC.contentWindow.tableOfContents.selectTreeElement(path);
-            }
-          } else if( tableOfContents ) {
-             tableOfContents.selectTreeElement(path);
+      if (elemTOC) {
+        if (elemTOC.tagName.toLowerCase() == "iframe") {
+          if (elemTOC) {
+            elemTOC.contentWindow.tableOfContents.selectTreeElement(path);
           }
-      } 
-      if (iframeHelper) {
-        if (this.getSrcPath(iframeHelper.src) !== ("/help" + path)) {
-          iframeHelper.src = "/help" + path;
+        } else if (tableOfContents) {
+          tableOfContents.selectTreeElement(path);
+        }
+      }
+      if (elemHelpPage) {
+        if (elemHelpPage.tagName.toLowerCase() == "iframe") {
+          if (this.getSrcPath(elemHelpPage.src) !== ("/help" + path)) {
+            elemHelpPage.src = "/help" + path;
+          }
+        } else {
+          this.loadHelpDiv(path);
         }
       }
     }
-    if( this.followNavigation ) {
+    if (this.followNavigation) {
       this.followNavigation(path);
     }
   },
@@ -77,35 +104,78 @@ var helpServer = {
       helpServer.mainWindow.location.replace(newLocation);
     }
     var elemTOC = document.getElementById('toc');
-    var iframeHelper = document.getElementById('help');
-    helpServer.currentPath = path; 
+    var elemHelpPage = document.getElementById('help');
+    helpServer.currentPath = path;
     if (from != 'toc' && elemTOC) {
-      if( elemTOC.tagName.toLowerCase() == "iframe" ) {
-          if (elemTOC.contentWindow.tableOfContents) {
-            elemTOC.contentWindow.tableOfContents.setSelectedPage(path);
-          }
-      } else if( tableOfContents ) {
-          tableOfContents.setSelectedPage(path);
+      if (elemTOC.tagName.toLowerCase() == "iframe") {
+        if (elemTOC.contentWindow.tableOfContents) {
+          elemTOC.contentWindow.tableOfContents.setSelectedPage(path);
+        }
+      } else if (tableOfContents) {
+        tableOfContents.setSelectedPage(path);
       }
     }
-    if (from != 'help' && iframeHelper) {
-      if (this.getSrcPath(iframeHelper.src) !== ("/help" + path)) {
-        this.originalHelpPage = null;
-        iframeHelper.src = "/help" + path;
+    if (from != 'help' && elemHelpPage) {
+      if (elemHelpPage.tagName.toLowerCase() == "iframe") {
+        if (this.getSrcPath(elemHelpPage.src) !== ("/help" + path)) {
+          this.originalHelpPage = null;
+          elemHelpPage.src = "/help" + path;
+        }
+      } else {
+        this.loadHelpDiv(path);
       }
     }
   },
   onLoad: function () {
     this.mainWindow = window;
     if (window.top != window.self) {
-      this.followNavigation = function(path) {
-         window.top.postMessage(  { path : path } , "*" ); 
+      this.followNavigation = function (path) {
+        window.top.postMessage({ path: path }, "*");
       };
-  		window.addEventListener('message', function(event) {
-  			if( event.data.path ) {
+      window.addEventListener('message', function (event) {
+        if (event.data.path) {
   			     window.location.hash = "#" + event.data.path;
-  			}
-  		});      
+        }
+      });
+    }
+    var helpEle = document.getElementById('help');
+    if (helpEle.tagName.toLowerCase() !== 'iframe') {
+      // Lets hook this div 
+      helpEle.onclick = function (e) {
+        var ele = e.target || e.srcElement;
+        if (ele && ele.href) {
+          var startPattern = window.location.protocol + "//" + window.location.host;
+          if (ele.href.substring(0, startPattern.length) == startPattern) {
+            e.stopPropagation();
+            e.preventDefault();
+            var navPath = ele.href.substring(startPattern.length);
+            if (navPath.substring(0, 6).toLowerCase() == '/help/')
+              navPath = navPath.substring(5);
+            if (e.ctrlKey && helpServer.allowCheck) {
+              if (ele.className.indexOf('checkedHREF') >= 0) {
+                ele.className = ele.className.replace(' checkedHREF', '').replace('checkedHREF', '');
+                var i;
+                for (i = 0; i < helpServer.checkedItems.length; ++i) {
+                  if (helpServer.checkedItems[i] == navPath) {
+                    helpServer.checkedItems.splice(i, 1);
+                    break;
+                  }
+                }
+              } else if (ele.className && ele.className != '') {
+                ele.className += ' checkedHREF';
+                helpServer.checkedItems.push(navPath);
+              } else {
+                ele.className = 'checkedHREF';
+                helpServer.checkedItems.push(navPath);
+              }
+              if (helpServer.onCheckChanged)
+                helpServer.onCheckChanged(helpServer.checkedItems);
+            } else {
+              window.top.helpServer.checkNavigation(navPath, 'load');
+            }
+          }
+        }
+      }
     }
     this.navigateToFragment();
   },
@@ -141,12 +211,12 @@ var helpServer = {
               if (ele.className.indexOf('checkedHREF') >= 0) {
                 ele.className = ele.className.replace(' checkedHREF', '').replace('checkedHREF', '');
                 var i;
-                for( i = 0 ; i < helpServer.checkedItems.length ; ++i ) {
-                  if( helpServer.checkedItems[i] == navPath ) {
-                      helpServer.checkedItems.splice(i, 1);
-                      break;
-                  } 
-                }                
+                for (i = 0; i < helpServer.checkedItems.length; ++i) {
+                  if (helpServer.checkedItems[i] == navPath) {
+                    helpServer.checkedItems.splice(i, 1);
+                    break;
+                  }
+                }
               } else if (ele.className && ele.className != '') {
                 ele.className += ' checkedHREF';
                 helpServer.checkedItems.push(navPath);
@@ -155,7 +225,7 @@ var helpServer = {
                 helpServer.checkedItems.push(navPath);
               }
               debugger;
-              if( helpServer.onCheckChanged )
+              if (helpServer.onCheckChanged)
                 helpServer.onCheckChanged(helpServer.checkedItems);
             } else {
               window.top.helpServer.checkNavigation(navPath, 'load');
@@ -170,19 +240,19 @@ var helpServer = {
         this.findMetadata(helpEle.contentDocument.body);
         this.trackMetaData(this.pageMetaData);
       }
-      
+
       var tocPtr = null;
-      if( elemTOC ) {
-          if( elemTOC.tagName.toLowerCase() == "iframe" ) {
-              if( elemTOC.contentWindow.tableOfContents ) {
-                 tocPtr = elemTOC.contentWindow.tableOfContents;
-              }
-          } else  if( tableOfContents ) {
-             tocPtr = tableOfContents;
+      if (elemTOC) {
+        if (elemTOC.tagName.toLowerCase() == "iframe") {
+          if (elemTOC.contentWindow.tableOfContents) {
+            tocPtr = elemTOC.contentWindow.tableOfContents;
           }
+        } else if (tableOfContents) {
+          tocPtr = tableOfContents;
+        }
       }
 
-      if ( tocPtr
+      if (tocPtr
         && tocPtr.searchMode
         && tocPtr.searchText
         && tocPtr.searchText.length > 0
