@@ -349,6 +349,7 @@ help.status(function (stats) {
 
 ## Release History
 
+* 1.0.33 Implemented non-iframe version of find-in-page. 
 * 1.0.32 Added new SVG icons that work against dark background.
 * 1.0.31 Remove iframe from standard main.html example template - have technique to inject base path & fix content on the fly. 
 * 1.0.30 Moved TOC and search out of iframe and in to the top page.  use the JSON data to generate the TOC on the fly.

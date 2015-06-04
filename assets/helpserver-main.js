@@ -41,27 +41,18 @@ var helpServer = {
     xmlhttp.onload = function () {
       if (this.status == 200) {
         var htmlText = xmlhttp.responseText;
-        var lowText =  htmlText.toLowerCase();
+        var lowText = htmlText.toLowerCase();
         var bodyAt = lowText.indexOf('<body');
         if (bodyAt >= 0) {
           var endBodyAt = lowText.indexOf('</body');
-          if( endBodyAt >= 0 ) {
-              htmlText = "<div"+ htmlText.substring(bodyAt+5,endBodyAt)+"</div>";
+          if (endBodyAt >= 0) {
+            htmlText = "<div" + htmlText.substring(bodyAt + 5, endBodyAt) + "</div>";
           }
         }
-        /*
-        var headAt = htmlText.toLowerCase().indexOf('<head');
-        if (headAt >= 0) {
-          var endOfTag = htmlText.substring(headAt).indexOf('>');
-          if (endOfTag >= 0) {
-            headAt += (endOfTag + 1);
-            htmlText = (htmlText.substring(0, headAt) + "<base href=\""+window.location.protocol + "//" + window.location.host+"/help" + path + "\" target=\"_blank\" >" + htmlText.substring(headAt));
-          }
-        }
-        */
         var baseTagElement = document.getElementById("baseTag");
         baseTagElement.href = "/help" + path;
         elemHelpPage.innerHTML = htmlText;
+        helpServer.helpFrameLoad();
       }
     };
     xmlhttp.open("GET", "/help" + path, true);
@@ -196,17 +187,26 @@ var helpServer = {
   },
   helpFrameLoad: function () {
     var helpEle = document.getElementById('help');
-    var path = helpEle.contentWindow.location.pathname;
-    if (path.substring(0, 5) == '/help') {
-      path = path.substr(5);
+    var helpTagType = helpEle.tagName.toLowerCase();
+    var elemTOC = document.getElementById('toc');
+    var path = this.currentPath;
+
+    if (helpTagType == 'iframe') {
+      path = helpEle.contentWindow.location.pathname;
+      if (path.substring(0, 5) == '/help')
+        path = path.substr(5);
+      else
+        return;
+
       this.checkNavigation(path, 'help');
-      var elemTOC = document.getElementById('toc');
 
       if (helpEle && helpEle.contentDocument && this.allowCheck) {
-        var style = document.createElement('style');
-        style.type = 'text/css';
-        style.innerHTML = '.checkedHREF { background: Orange; }';
-        helpEle.contentDocument.getElementsByTagName('head')[0].appendChild(style);
+        if (helpTagType == 'iframe') {
+          var style = document.createElement('style');
+          style.type = 'text/css';
+          style.innerHTML = '.checkedHREF { background: Orange; }';
+          helpEle.contentDocument.getElementsByTagName('head')[0].appendChild(style);
+        }
       }
 
       helpEle.contentDocument.body.onclick = function (e) {
@@ -245,51 +245,62 @@ var helpServer = {
           }
         }
       }
-      
-      // Track metadata
-      if (this.trackMetaData) {
-        this.pageMetaData = {};
+    }
+    // Track metadata
+    if (this.trackMetaData) {
+      this.pageMetaData = {};
+      if (helpTagType == 'iframe') {
         this.findMetadata(helpEle.contentDocument.body);
-        this.trackMetaData(this.pageMetaData);
+      } else {
+        this.findMetadata(helpEle.innerHTML);
       }
+      this.trackMetaData(this.pageMetaData);
+    }
 
-      var tocPtr = null;
-      if (elemTOC) {
-        if (elemTOC.tagName.toLowerCase() == "iframe") {
-          if (elemTOC.contentWindow.tableOfContents) {
-            tocPtr = elemTOC.contentWindow.tableOfContents;
-          }
-        } else if (tableOfContents) {
-          tocPtr = tableOfContents;
+    var tocPtr = null;
+    if (elemTOC) {
+      if (elemTOC.tagName.toLowerCase() == "iframe") {
+        if (elemTOC.contentWindow.tableOfContents) {
+          tocPtr = elemTOC.contentWindow.tableOfContents;
         }
+      } else if (tableOfContents) {
+        tocPtr = tableOfContents;
       }
+    }
 
-      if (tocPtr
-        && tocPtr.searchMode
-        && tocPtr.searchText
-        && tocPtr.searchText.length > 0
-        ) {
-        var replaceWithSearchTerm = tocPtr.searchText;
-        if (this.originalHelpPath != path) {
-          this.originalHelpPath = path;
-          this.originalHelpPage = null;
-        }
-        if (!this.originalHelpPage) {
+    if (tocPtr
+      && tocPtr.searchMode
+      && tocPtr.searchText
+      && tocPtr.searchText.length > 0
+      ) {
+      var replaceWithSearchTerm = tocPtr.searchText;
+      if (this.originalHelpPath != path) {
+        this.originalHelpPath = path;
+        this.originalHelpPage = null;
+      }
+      if (!this.originalHelpPage) {
+        if (helpTagType == 'iframe') {
           this.originalHelpPage = helpEle.contentDocument.body.innerHTML;
+        } else {
+          this.originalHelpPage = helpEle.innerHTML;
         }
-        var rep = '<span style="color:red;background:yellow;" id="spansearch__sequential" >$1</span>';
-        var re = new RegExp('(' + replaceWithSearchTerm + '+(?![^<>]*>))', 'ig');
-        var newPage = this.originalHelpPage.replace(re, rep);
-        var index = 0;
-        if (newPage != this.originalHelpPage) {
-          while (newPage.indexOf("spansearch__sequential") >= 0) {
-            newPage = newPage.replace("spansearch__sequential", "searchterm_" + index);
-            ++index;
-          }
-          helpEle.contentDocument.body.innerHTML = newPage;
-        }
-        tocPtr.setSearchCount(index);
       }
+      var rep = '<span style="color:red;background:yellow;" id="spansearch__sequential" >$1</span>';
+      var re = new RegExp('(' + replaceWithSearchTerm + '+(?![^<>]*>))', 'ig');
+      var newPage = this.originalHelpPage.replace(re, rep);
+      var index = 0;
+      if (newPage != this.originalHelpPage) {
+        while (newPage.indexOf("spansearch__sequential") >= 0) {
+          newPage = newPage.replace("spansearch__sequential", "searchterm_" + index);
+          ++index;
+        }
+        if (helpTagType == 'iframe') {
+          helpEle.contentDocument.body.innerHTML = newPage;
+        } else {
+          helpEle.innerHTML = newPage;
+        }
+      }
+      tocPtr.setSearchCount(index);
     }
   },
   ItemToggle: function (id) {
@@ -298,12 +309,15 @@ var helpServer = {
     }
   },
   navigateHelpSearch: function (index) {
-    var iframeHelper = document.getElementById('help');
-    if (iframeHelper) {
-      var ele = iframeHelper.contentDocument.getElementById('searchterm_' + index);
+    var helpEle = document.getElementById('help');
+    if (helpEle) {
+      var docPtr = document;
+      if( helpEle.tagName.toLowerCase() == "iframe" )
+        docPtr = helpEle.contentDocument;
+      var ele = docPtr.getElementById('searchterm_' + index);
       if (ele) {
         if (this.lastSearchedElement >= 0) {
-          var oldEle = iframeHelper.contentDocument.getElementById('searchterm_' + this.lastSearchedElement);
+          var oldEle = docPtr.getElementById('searchterm_' + this.lastSearchedElement);
           if (oldEle) {
             oldEle.style.color = "red";
             oldEle.style.background = "yellow";
