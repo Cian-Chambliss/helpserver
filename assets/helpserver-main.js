@@ -48,12 +48,19 @@ var helpServer = {
       path = window.location.hash.substring(1);
       
     helpServer.currentPath = path; 
-    var iframeToc = document.getElementById('toc');
+    var elemTOC = document.getElementById('toc');
     var iframeHelper = document.getElementById('help');
+    
     if (path != "") {
-      if (iframeToc) {
-        iframeToc.contentWindow.tableOfContents.selectTreeElement(path);
-      }
+      if( elemTOC ) {        
+          if( elemTOC.tagName.toLowerCase() == "iframe" ) {
+            if (elemTOC) {
+              elemTOC.contentWindow.tableOfContents.selectTreeElement(path);
+            }
+          } else if( tableOfContents ) {
+             tableOfContents.selectTreeElement(path);
+          }
+      } 
       if (iframeHelper) {
         if (this.getSrcPath(iframeHelper.src) !== ("/help" + path)) {
           iframeHelper.src = "/help" + path;
@@ -69,12 +76,16 @@ var helpServer = {
       var newLocation = helpServer.mainWindow.location.pathname + "#" + path;
       helpServer.mainWindow.location.replace(newLocation);
     }
-    var iframeToc = document.getElementById('toc');
+    var elemTOC = document.getElementById('toc');
     var iframeHelper = document.getElementById('help');
     helpServer.currentPath = path; 
-    if (from != 'toc' && iframeToc) {
-      if (iframeToc.contentWindow.tableOfContents) {
-        iframeToc.contentWindow.tableOfContents.setSelectedPage(path);
+    if (from != 'toc' && elemTOC) {
+      if( elemTOC.tagName.toLowerCase() == "iframe" ) {
+          if (elemTOC.contentWindow.tableOfContents) {
+            elemTOC.contentWindow.tableOfContents.setSelectedPage(path);
+          }
+      } else if( tableOfContents ) {
+          tableOfContents.setSelectedPage(path);
       }
     }
     if (from != 'help' && iframeHelper) {
@@ -107,7 +118,7 @@ var helpServer = {
     if (path.substring(0, 5) == '/help') {
       path = path.substr(5);
       this.checkNavigation(path, 'help');
-      var tocEle = document.getElementById('toc');
+      var elemTOC = document.getElementById('toc');
 
       if (helpEle && helpEle.contentDocument && this.allowCheck) {
         var style = document.createElement('style');
@@ -159,14 +170,24 @@ var helpServer = {
         this.findMetadata(helpEle.contentDocument.body);
         this.trackMetaData(this.pageMetaData);
       }
+      
+      var tocPtr = null;
+      if( elemTOC ) {
+          if( elemTOC.tagName.toLowerCase() == "iframe" ) {
+              if( elemTOC.contentWindow.tableOfContents ) {
+                 tocPtr = elemTOC.contentWindow.tableOfContents;
+              }
+          } else  if( tableOfContents ) {
+             tocPtr = tableOfContents;
+          }
+      }
 
-      if (tocEle
-        && tocEle.contentWindow.tableOfContents
-        && tocEle.contentWindow.tableOfContents.searchMode
-        && tocEle.contentWindow.tableOfContents.searchText
-        && tocEle.contentWindow.tableOfContents.searchText.length > 0
+      if ( tocPtr
+        && tocPtr.searchMode
+        && tocPtr.searchText
+        && tocPtr.searchText.length > 0
         ) {
-        var replaceWithSearchTerm = tocEle.contentWindow.tableOfContents.searchText;
+        var replaceWithSearchTerm = tocPtr.searchText;
         if (this.originalHelpPath != path) {
           this.originalHelpPath = path;
           this.originalHelpPage = null;
@@ -185,7 +206,7 @@ var helpServer = {
           }
           helpEle.contentDocument.body.innerHTML = newPage;
         }
-        tocEle.contentWindow.tableOfContents.setSearchCount(index);
+        tocPtr.setSearchCount(index);
       }
     }
   },

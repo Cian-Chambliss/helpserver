@@ -7,6 +7,7 @@ var tableOfContents = {
 	lastSelection: null,
 	allowCheck: false,
 	checkedItems: [],
+	tocData: null,
 	onCheckChanged : null ,
 	setSelectedPage: function (navToId) {
 		var navTo = document.getElementById(navToId);
@@ -115,6 +116,7 @@ var tableOfContents = {
 		var eleHeader = document.getElementById('header');
 		if (eleHeader) {
 			eleHeader.innerHTML = [
+				"<div id=\"search\">",
 				"	<div id=\"searchNav\">",
 				"		<button id=\"searchNavFirst\" disabled=\"disabled\"  onclick=\"tableOfContents.searchFirst()\" ></button>",
 				"		<button id=\"searchNavPrev\" disabled=\"disabled\" onclick=\"tableOfContents.searchPrev()\" ></button>",
@@ -122,9 +124,12 @@ var tableOfContents = {
 				"		<button id=\"searchNavLast\" onclick=\"tableOfContents.searchLast()\" ></button>",
 				"		<div id=\"searchNavCount\">Select a page...</div>",
 				"	</div>",
-				"	<button id=\"searchClearButton\" onclick=\"tableOfContents.searchClear();\"></button>",
-				"	<button id=\"searchButton\" onclick=\"tableOfContents.search();\"></button>",
-				"	<div id=\"searchInput\"><input placeholder=\"Search...\" id=\"searchInputText\" onkeyup=\"var keyCode = event.charCode || event.keyCode; if(keyCode == 13){ tableOfContents.search();} else if(keyCode == 27){ tableOfContents.searchClear();}\" /></div>"
+				"   <div id=\"searchBox\">",
+			    "       <button id=\"searchClearButton\" onclick=\"tableOfContents.searchClear();\"></button>",
+				"	    <button id=\"searchButton\" onclick=\"tableOfContents.search();\"></button>",
+				"	    <div id=\"searchInput\"><input placeholder=\"Search...\" id=\"searchInputText\" onkeyup=\"var keyCode = event.charCode || event.keyCode; if(keyCode == 13){ tableOfContents.search();} else if(keyCode == 27){ tableOfContents.searchClear();}\" /></div>",
+				"   </div>",
+				"</div>"
 			].join('\n');
 		}
 		if (window.location.hash) {
@@ -156,7 +161,10 @@ var tableOfContents = {
 						html += "<a href=\"" + prefix + resultList[i].path + "\" target=\"_top\">" + resultList[i].title + "</a><br>";
 					}
 					tableOfContents.searchMode = true;
+					var headerEle = document.getElementById('header'); 
 					document.getElementById("searchResults").innerHTML = html;
+					if( headerEle )					
+						headerEle.className = 'searchActive';
 					document.body.className = 'searchActive';
 				}
 			};
@@ -165,6 +173,9 @@ var tableOfContents = {
 		}
 	},
 	searchClear: function () {
+		var headerEle = document.getElementById('header');
+		if( headerEle )
+			headerEle.className = '';		
 		document.body.className = '';
 		this.searchMode = false;
 	},
@@ -243,5 +254,52 @@ var tableOfContents = {
 				tableOfContents.onCheckChanged(tableOfContents.checkedItems);
 			}
 		}		
+	},
+	repopulateFromData: function() {
+		var buildTree = function (res, isOpen) {
+			var ulList = isOpen ? "<ul>\n" : "<ul style=\"display:none\">\n";
+			var i;
+			for (i = 0; i < res.length; ++i) {
+				if (res[i].children) {
+					ulList += "<li branch=\"true\" class=\"closed\" >";
+				} else {
+					ulList += "<li class=\"leaf\" >";
+				}
+				if (res[i].path) {
+					if (res[i].hash)
+						ulList += "<div id=\"" + res[i].path + "#" + res[i].hash + "\">" + res[i].title + "</div>";
+					else
+						ulList += "<div id=\"" + res[i].path + "\">" + res[i].title + "</div>";
+				} else
+					ulList += "<div>" + res[i].title + "</div>";
+				if (res[i].children)
+					ulList += buildTree(res[i].children, false);
+				ulList += "</li>\n"
+			}
+			ulList += "</ul>\n";
+			return ulList;
+		};
+		this.tocEle.innerHTML = buildTree(this.tocData, true);
+	},
+	tocPopulate: function() {
+		this.tocLoaded();
+
+		var parts = window.location.pathname.split('/');
+		var command = "/toc.json";
+		// Remember the path
+		if (parts.length > 2) {
+			if (parts[1] != 'main') {
+				command = "/" + parts[1] + "/toc.json";
+			}
+		}		
+		var xmlhttp = new XMLHttpRequest();
+		xmlhttp.onload = function() {
+		  if (this.status==200) {
+			  tableOfContents.tocData = JSON.parse(xmlhttp.responseText);
+			  tableOfContents.repopulateFromData();
+		  }
+		};					
+		xmlhttp.open("GET",command,true);
+		xmlhttp.send('');
 	}
 };

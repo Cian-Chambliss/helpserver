@@ -5,17 +5,29 @@
 		<script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
 		<script src="/assets/helpserver-splitter.js"></script>
 		<script src="/assets/helpserver-main.js"></script>
+		<script src="/assets/helpserver-toc.js"></script>
 		<link href="/assets/helpserver-splitter.css" rel="stylesheet"/>
+		<link href="/assets/helpserver-toc.css" rel="stylesheet"/>
 		<script>
+				var loaded = function() {
+					helpServer.onLoad();
+					tableOfContents.tocPopulate();
+					//$('#vsplitter').split({orientation:'vertical', limit:10 , position: '30%' });
+				};
 				$().ready(function() {
 					 $('#vsplitter').split({orientation:'vertical', limit:10 , position: '30%' });					  
 				});
 		</script>
 	</head>   
 	
-	<body onload="helpServer.onLoad()" style="margin:0px;padding:0px;height:100%;" onhashchange="helpServer.onHashChange()">
-		<div id="vsplitter" style="width:98%;height:98%" >
-			<div><iframe src="toc" id="toc" style="width:98%;height:98%" ></iframe></div>
+	<body onload="loaded()" style="margin:0px;padding:0px;height:100%;" onhashchange="helpServer.onHashChange()">
+		<div id="header"  style="width:100%;height:72px;"></div>
+		<div style="position: fixed; background: ThreeDFace; top: 0; bottom: 0; right: 0; width: 1px;"></div>
+		<div id="vsplitter" style="width:98%;height: calc(98% - 72px); top: 72px; " >
+			<div id="toc">
+				<div id="TOC">Loading...</div>
+				<div id="searchResults" style="width:100%"></div>
+			</div>
 			<div><iframe src="/blank" id="help" name="help" onload="helpServer.helpFrameLoad();" style="width:98%;height:98%" ></iframe></div>		
 		</div>			
 	</body>
