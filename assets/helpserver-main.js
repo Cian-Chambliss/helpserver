@@ -41,14 +41,26 @@ var helpServer = {
     xmlhttp.onload = function () {
       if (this.status == 200) {
         var htmlText = xmlhttp.responseText;
+        var lowText =  htmlText.toLowerCase();
+        var bodyAt = lowText.indexOf('<body');
+        if (bodyAt >= 0) {
+          var endBodyAt = lowText.indexOf('</body');
+          if( endBodyAt >= 0 ) {
+              htmlText = "<div"+ htmlText.substring(bodyAt+5,endBodyAt)+"</div>";
+          }
+        }
+        /*
         var headAt = htmlText.toLowerCase().indexOf('<head');
         if (headAt >= 0) {
           var endOfTag = htmlText.substring(headAt).indexOf('>');
           if (endOfTag >= 0) {
             headAt += (endOfTag + 1);
-            htmlText = (htmlText.substring(0, headAt) + "<base href=\"/help" + path + "\" target=\"_blank\" >" + htmlText.substring(headAt));
+            htmlText = (htmlText.substring(0, headAt) + "<base href=\""+window.location.protocol + "//" + window.location.host+"/help" + path + "\" target=\"_blank\" >" + htmlText.substring(headAt));
           }
         }
+        */
+        var baseTagElement = document.getElementById("baseTag");
+        baseTagElement.href = "/help" + path;
         elemHelpPage.innerHTML = htmlText;
       }
     };
