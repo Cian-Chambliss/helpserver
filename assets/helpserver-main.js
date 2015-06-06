@@ -4,6 +4,7 @@ var helpServer = {
   originalHelpPath: null,
   originalHelpPage: null,
   lastSearchedElement: -1,
+  lastLoadedDiv : null ,
   pageMetaData: {},
   trackMetaData: null,
   allowCheck: false,
@@ -35,30 +36,31 @@ var helpServer = {
     }
   },
   loadHelpDiv: function (path) {
-    var elemHelpPage = document.getElementById('help');
-    elemHelpPage.innerHTML = "Loading " + path + "...";
-    var xmlhttp = new XMLHttpRequest();
-    xmlhttp.onload = function () {
-      if (this.status == 200) {
-        var htmlText = xmlhttp.responseText;
-        var lowText = htmlText.toLowerCase();
-        var bodyAt = lowText.indexOf('<body');
-        if (bodyAt >= 0) {
-          var endBodyAt = lowText.indexOf('</body');
-          if (endBodyAt >= 0) {
-            htmlText = "<div" + htmlText.substring(bodyAt + 5, endBodyAt) + "</div>";
+    if( helpServer.lastLoadedDiv != path ) {
+      var elemHelpPage = document.getElementById('help');      
+      helpServer.lastLoadedDiv = path;
+      elemHelpPage.innerHTML = "Loading " + path + "...";
+      var xmlhttp = new XMLHttpRequest();
+      xmlhttp.onload = function () {
+        if (this.status == 200) {
+          var htmlText = xmlhttp.responseText;
+          var lowText = htmlText.toLowerCase();
+          var bodyAt = lowText.indexOf('<body');
+          if (bodyAt >= 0) {
+            var endBodyAt = lowText.indexOf('</body');
+            if (endBodyAt >= 0) {
+              htmlText = "<div" + htmlText.substring(bodyAt + 5, endBodyAt) + "</div>";
+            }
           }
+          var baseTagElement = document.getElementById("baseTag");
+          baseTagElement.href = "/help" + path;
+          elemHelpPage.innerHTML = htmlText;
+          helpServer.helpFrameLoad();
         }
-        var baseTagElement = document.getElementById("baseTag");
-        baseTagElement.href = "/help" + path;
-        elemHelpPage.innerHTML = htmlText;
-        helpServer.helpFrameLoad();
-      }
-    };
-    xmlhttp.open("GET", "/help" + path, true);
-    xmlhttp.send('');
-
-
+      };
+      xmlhttp.open("GET", "/help" + path, true);
+      xmlhttp.send('');
+    }
   },
   getSrcPath: function (src) {
     var oldPath = src;

@@ -9,7 +9,13 @@ var tableOfContents = {
 	checkedItems: [],
 	tocData: null,
 	onCheckChanged : null ,
+	disableScrollTo : null ,
+	disableId : null ,	
 	setSelectedPage: function (navToId) {
+		if( tableOfContents.disableId  ) {
+			tableOfContents.disableScrollTo.id = tableOfContents.disableId;
+			tableOfContents.disableId = null; 
+		}
 		var navTo = document.getElementById(navToId);
 		if (!navTo) {
 			navToId = decodeURI(navToId);
@@ -27,20 +33,25 @@ var tableOfContents = {
 				navTo.className = "checkedselected";
 			else
 				navTo.className = "selected";
-			var dad = navTo.parentNode;
-			while (dad) {
-				if (dad.style && dad.style.display == "none") {
-					dad.style.display = "";
+			if( tableOfContents.disableScrollTo == navTo ) {
+				 tableOfContents.disableScrollTo = null;
+			     tableOfContents.lastSelection = navTo;
+			} else {	 	
+				var dad = navTo.parentNode;
+				while (dad) {
+					if (dad.style && dad.style.display == "none") {
+						dad.style.display = "";
+						dad = dad.parentNode;
+						dad.className = "opened";
+					}
 					dad = dad.parentNode;
-					dad.className = "opened";
 				}
-				dad = dad.parentNode;
+				this.lastSelection = navTo;
+				if (navTo.scrollIntoViewIfNeeded)
+					navTo.scrollIntoViewIfNeeded();
+				else
+					navTo.scrollIntoView();
 			}
-			this.lastSelection = navTo;
-			if (navTo.scrollIntoViewIfNeeded)
-				navTo.scrollIntoViewIfNeeded();
-			else
-				navTo.scrollIntoView();
 		}
 	},
 	tocLoaded: function () {
@@ -84,7 +95,14 @@ var tableOfContents = {
 						window.parent.helpServer.ItemToggle(e.target.id);
 					} else {
 						if (e.target.id) {
-							window.parent.helpServer.checkNavigation(e.target.id, 'toc');
+							var navToId = e.target.id;
+							tableOfContents.disableScrollTo = e.target;
+							tableOfContents.disableId = navToId;
+							tableOfContents.disableScrollTo.id = '';
+							if( helpServer && helpServer.checkNavigation )
+							    helpServer.checkNavigation(navToId, 'toc');
+							else
+							    window.parent.helpServer.checkNavigation(navToId, 'toc');
 						} else {
 							if (tableOfContents.lastSelection != null) {
 								if (tableOfContents.lastSelection.className == "checkedselected") {
