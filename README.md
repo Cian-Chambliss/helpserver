@@ -349,6 +349,7 @@ help.status(function (stats) {
 
 ## Release History
 
+* 1.0.37 Fixed CSS style for TOC so that it is isolated from the page content (ul/li in main page was getting messed up).
 * 1.0.36 Fixed initial selection of TOC (was broken when TOC moved to a top level div) 
 * 1.0.35 Added logic to 'diffuse' the id of the the last clicked TOC entry - this is required to prevent scrolling that the browser automatically does when the current page hash is altered.
 * 1.0.34 Use gradient rather than indent to denote level in TOC (results is less space taken up by TOC). 

@@ -169,7 +169,7 @@ var tableOfContents = {
 						}
 					}
 					for (i = 0; i < resultList.length; ++i) {
-						html += "<a href=\"" + prefix + resultList[i].path + "\" target=\"_top\">" + resultList[i].title + "</a><br>";
+						html += "<a href=\"" + prefix + resultList[i].path + "\" target=\"_top\">" + resultList[i].title + "</a>";
 					}
 					tableOfContents.searchMode = true;
 					var headerEle = document.getElementById('header'); 
