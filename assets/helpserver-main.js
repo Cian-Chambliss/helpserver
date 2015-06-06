@@ -104,11 +104,22 @@ var helpServer = {
     }
   },
   checkNavigation: function (path, from) {
+    var elemTOC = document.getElementById('toc');
     if (path && path != "" && ("#" + path) !== window.location.hash) {
       var newLocation = helpServer.mainWindow.location.pathname + "#" + path;
-      helpServer.mainWindow.location.replace(newLocation);
+      if( elemTOC.tagName != 'iframe' ) {
+          var currentItem = document.getElementById(path);
+          if( currentItem ) {
+               currentItem.id = '';
+               helpServer.mainWindow.location.replace(newLocation);
+               currentItem.id = path;
+          } else {
+               helpServer.mainWindow.location.replace(newLocation);  
+          }
+      } else {
+          helpServer.mainWindow.location.replace(newLocation);
+      }
     }
-    var elemTOC = document.getElementById('toc');
     var elemHelpPage = document.getElementById('help');
     helpServer.currentPath = path;
     if (from != 'toc' && elemTOC) {

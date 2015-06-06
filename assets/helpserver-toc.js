@@ -10,12 +10,7 @@ var tableOfContents = {
 	tocData: null,
 	onCheckChanged : null ,
 	disableScrollTo : null ,
-	disableId : null ,	
 	setSelectedPage: function (navToId) {
-		if( tableOfContents.disableId  ) {
-			tableOfContents.disableScrollTo.id = tableOfContents.disableId;
-			tableOfContents.disableId = null; 
-		}
 		var navTo = document.getElementById(navToId);
 		if (!navTo) {
 			navToId = decodeURI(navToId);
@@ -97,8 +92,6 @@ var tableOfContents = {
 						if (e.target.id) {
 							var navToId = e.target.id;
 							tableOfContents.disableScrollTo = e.target;
-							tableOfContents.disableId = navToId;
-							tableOfContents.disableScrollTo.id = '';
 							if( helpServer && helpServer.checkNavigation )
 							    helpServer.checkNavigation(navToId, 'toc');
 							else
@@ -298,6 +291,10 @@ var tableOfContents = {
 			return ulList;
 		};
 		this.tocEle.innerHTML = buildTree(this.tocData, true);
+		if( window.location.hash != '' ) {
+			var path = window.location.hash.substring(1);
+			tableOfContents.setSelectedPage(path);
+		}
 	},
 	tocPopulate: function() {
 		this.tocLoaded();
