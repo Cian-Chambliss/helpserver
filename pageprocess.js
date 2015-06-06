@@ -12,6 +12,20 @@ module.exports = function (config, data, page, callbackPage) {
 	var extensionStart = ofn.lastIndexOf('.');
 	var extension = ofn.substring(extensionStart).toLowerCase();
 	var manifestFile = config.generated + "manifest/" + ofn.substring(0, extensionStart) + ".json";
+	var normalizeREF = function(srcName,ref) {
+		if( ref.substr(0,1) != '/' &&  ref.substr(0,5) != 'http:' &&  ref.substr(0,6) != 'https:' &&  ref.substr(0,11) != 'javascript:' ) {
+			var parts = srcName.split('/');
+			var removeTail = 1;
+			while( ref.substr(0,3) == '../' ) {
+				ref = ref.substr(3);
+				++removeTail;
+			}
+			parts.splice(parts.length-removeTail,removeTail);
+			ref = parts.join('/')+'/'+ref;
+		}		
+	    return ref;
+	};	
+	
 	if (extension == '.md') {
 		// Convert to html first
 		var marked = require('marked');
@@ -53,17 +67,17 @@ module.exports = function (config, data, page, callbackPage) {
 		var parser = new htmlparser.Parser({
 			onopentag: function (name, attribs) {
 				if (name === "a" && attribs.href) {
-					if (attribs.href.substring(0, 1) == '#') {
+					if (attribs.href.substring(0, 1) == '#' ) {
 						if (tocDepth >= 0) {
 							if (attribs.href) {
 								tocHash = attribs.href.substring(1);
 							}
 						}
-					} else {
-						deps.href.push(attribs.href);
+					} else if( attribs.href.substr(0,11) != 'javascript:' ) {
+						deps.href.push(normalizeREF(page.path,attribs.href));
 					}
 				} else if (name === "img" && attribs.src) {
-					deps.images.push(attribs.src);
+					deps.images.push(normalizeREF(page.path,attribs.src));
 				} else if (name === "div") {
 					if (attribs.class && attribs.class == 'helpserver_toc') {
 						tocDiv = divDepth;
