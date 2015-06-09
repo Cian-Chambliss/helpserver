@@ -8,8 +8,8 @@ var tableOfContents = {
 	allowCheck: false,
 	checkedItems: [],
 	tocData: null,
-	onCheckChanged : null ,
-	disableScrollTo : null ,
+	onCheckChanged: null,
+	disableScrollTo: null,
 	setSelectedPage: function (navToId) {
 		var navTo = document.getElementById(navToId);
 		if (!navTo) {
@@ -28,10 +28,10 @@ var tableOfContents = {
 				navTo.className = "checkedselected";
 			else
 				navTo.className = "selected";
-			if( tableOfContents.disableScrollTo == navTo ) {
-				 tableOfContents.disableScrollTo = null;
-			     tableOfContents.lastSelection = navTo;
-			} else {	 	
+			if (tableOfContents.disableScrollTo == navTo) {
+				tableOfContents.disableScrollTo = null;
+				tableOfContents.lastSelection = navTo;
+			} else {
 				var dad = navTo.parentNode;
 				while (dad) {
 					if (dad.style && dad.style.display == "none") {
@@ -51,12 +51,12 @@ var tableOfContents = {
 	},
 	tocLoaded: function () {
 		this.tocEle = document.getElementById("TOC");
-		this.tocEle.addEventListener("click", function (e) {			
+		this.tocEle.addEventListener("click", function (e) {
 			if (e.target) {
 				if (e.target.id == "TOC") {
 					return false;
 				} else if (e.target.nodeName == "DIV") {
-					if ( e.ctrlKey && tableOfContents.allowCheck ) {
+					if (e.ctrlKey && tableOfContents.allowCheck) {
 						// toggle selections...
 						var addCheck = false;
 						if (e.target.className == "selected") {
@@ -72,7 +72,9 @@ var tableOfContents = {
 						}
 						if (addCheck) {
 							// Add an item...
-							tableOfContents.checkedItems.push(e.target.id);
+							if( e.target.id && e.target.id != '' ) {
+								tableOfContents.checkedItems.push(e.target.id);
+							}
 						} else {
 							// Remove an item...
 							var i;
@@ -83,7 +85,22 @@ var tableOfContents = {
 								}
 							}
 						}
-						if( tableOfContents.onCheckChanged ) {
+						if( e.shiftKey ) {
+							if( e.target.nextElementSibling ) {
+								if( e.target.nextElementSibling.tagName == 'UL' ) {
+									var divs = e.target.nextElementSibling.getElementsByTagName('div');
+									for (var i = 0; i < divs.length; i++) { 
+									    if( divs[i].id && divs[i].id != '' ) { 
+											if( divs[i].className == "" ) {
+												divs[i].className = "checked";
+												tableOfContents.checkedItems.push(divs[i].id);												
+											}
+									    }
+									}									
+								} 
+							}							
+						}
+						if (tableOfContents.onCheckChanged) {
 							tableOfContents.onCheckChanged(tableOfContents.checkedItems);
 						}
 					} else if (this.lastSelection == e.target) {
@@ -92,10 +109,10 @@ var tableOfContents = {
 						if (e.target.id) {
 							var navToId = e.target.id;
 							tableOfContents.disableScrollTo = e.target;
-							if( helpServer && helpServer.checkNavigation )
-							    helpServer.checkNavigation(navToId, 'toc');
+							if (helpServer && helpServer.checkNavigation)
+								helpServer.checkNavigation(navToId, 'toc');
 							else
-							    window.parent.helpServer.checkNavigation(navToId, 'toc');
+								window.parent.helpServer.checkNavigation(navToId, 'toc');
 						} else {
 							if (tableOfContents.lastSelection != null) {
 								if (tableOfContents.lastSelection.className == "checkedselected") {
@@ -136,7 +153,7 @@ var tableOfContents = {
 				"		<div id=\"searchNavCount\">Select a page...</div>",
 				"	</div>",
 				"   <div id=\"searchBox\">",
-			    "       <button id=\"searchClearButton\" onclick=\"tableOfContents.searchClear();\"></button>",
+				"       <button id=\"searchClearButton\" onclick=\"tableOfContents.searchClear();\"></button>",
 				"	    <button id=\"searchButton\" onclick=\"tableOfContents.search();\"></button>",
 				"	    <div id=\"searchInput\"><input placeholder=\"Search...\" id=\"searchInputText\" onkeyup=\"var keyCode = event.charCode || event.keyCode; if(keyCode == 13){ tableOfContents.search();} else if(keyCode == 27){ tableOfContents.searchClear();}\" /></div>",
 				"   </div>",
@@ -172,9 +189,9 @@ var tableOfContents = {
 						html += "<a href=\"" + prefix + resultList[i].path + "\" target=\"_top\">" + resultList[i].title + "</a>";
 					}
 					tableOfContents.searchMode = true;
-					var headerEle = document.getElementById('header'); 
+					var headerEle = document.getElementById('header');
 					document.getElementById("searchResults").innerHTML = html;
-					if( headerEle )					
+					if (headerEle)
 						headerEle.className = 'searchActive';
 					document.body.className = 'searchActive';
 				}
@@ -185,8 +202,8 @@ var tableOfContents = {
 	},
 	searchClear: function () {
 		var headerEle = document.getElementById('header');
-		if( headerEle )
-			headerEle.className = '';		
+		if (headerEle)
+			headerEle.className = '';
 		document.body.className = '';
 		this.searchMode = false;
 	},
@@ -247,26 +264,26 @@ var tableOfContents = {
 			this.setSelectedPage(path);
 		}
 	},
-	DeselectChecked: function() {
-		if( this.checkedItems.length ) {
-		    // First uncheck the items	
+	DeselectChecked: function () {
+		if (this.checkedItems.length) {
+			// First uncheck the items	
 			var i;
-			for( i = 0 ; i < this.checkedItems.length ; ++i ) {
+			for (i = 0; i < this.checkedItems.length; ++i) {
 				var ele = document.getElementById(this.checkedItems[i]);
-				if( ele ) {
-					if( ele.className == "checkedselected" )
+				if (ele) {
+					if (ele.className == "checkedselected")
 						ele.className = "selected";
 					else
 						ele.className = "";
 				}
 			}
 			this.checkedItems = [];
-			if( tableOfContents.onCheckChanged ) {
+			if (tableOfContents.onCheckChanged) {
 				tableOfContents.onCheckChanged(tableOfContents.checkedItems);
 			}
-		}		
+		}
 	},
-	repopulateFromData: function() {
+	repopulateFromData: function () {
 		var buildTree = function (res, isOpen) {
 			var ulList = isOpen ? "<ul>\n" : "<ul style=\"display:none\">\n";
 			var i;
@@ -291,12 +308,12 @@ var tableOfContents = {
 			return ulList;
 		};
 		this.tocEle.innerHTML = buildTree(this.tocData, true);
-		if( window.location.hash != '' ) {
+		if (window.location.hash != '') {
 			var path = window.location.hash.substring(1);
 			tableOfContents.setSelectedPage(path);
 		}
 	},
-	tocPopulate: function() {
+	tocPopulate: function () {
 		this.tocLoaded();
 
 		var parts = window.location.pathname.split('/');
@@ -306,15 +323,54 @@ var tableOfContents = {
 			if (parts[1] != 'main') {
 				command = "/" + parts[1] + "/toc.json";
 			}
-		}		
+		}
 		var xmlhttp = new XMLHttpRequest();
-		xmlhttp.onload = function() {
-		  if (this.status==200) {
-			  tableOfContents.tocData = JSON.parse(xmlhttp.responseText);
-			  tableOfContents.repopulateFromData();
-		  }
-		};					
-		xmlhttp.open("GET",command,true);
+		xmlhttp.onload = function () {
+			if (this.status == 200) {
+				tableOfContents.tocData = JSON.parse(xmlhttp.responseText);
+				tableOfContents.repopulateFromData();
+			}
+		};
+		xmlhttp.open("GET", command, true);
 		xmlhttp.send('');
-	}
+	},
+	selectCurrentTOC: function () {
+		if (tableOfContents.lastSelection) {
+			if (this.lastSelection.className = "selected") {
+				this.lastSelection.className = "checkedselected";
+				tableOfContents.checkedItems.push(tableOfContents.lastSelection.id);
+				if (tableOfContents.onCheckChanged) {
+					tableOfContents.onCheckChanged(tableOfContents.checkedItems);
+				}
+			}
+		}
+	},
+	advanceNextTOC: function () {
+		if (tableOfContents.lastSelection) {
+			var pNode = tableOfContents.lastSelection.parentNode.nextSibling;
+			while (pNode) {
+				if (pNode) {
+					if (pNode.nextSibling && pNode.nextSibling.firstChild && pNode.nextSibling.firstChild.tagName == 'DIV' && pNode.nextSibling.firstChild.id) {
+						var navToId = pNode.nextSibling.firstChild.id;
+						if (helpServer && helpServer.checkNavigation)
+							helpServer.checkNavigation(navToId, 'toc');
+						else
+							window.parent.helpServer.checkNavigation(navToId, 'toc');
+					} else if (pNode.firstChild && pNode.firstChild.tagName == 'DIV') {
+						var navToId = pNode.firstChild.id;
+						if( navToId ) {
+							if (helpServer && helpServer.checkNavigation)
+								helpServer.checkNavigation(navToId, 'toc');
+							else
+								window.parent.helpServer.checkNavigation(navToId, 'toc');
+						}
+					} else if (pNode.parentNode && pNode.parentNode != pNode) {
+						pNode = pNode.parentNode;
+						continue;
+					}
+				}
+				break;
+			}
+		}
+	},
 };

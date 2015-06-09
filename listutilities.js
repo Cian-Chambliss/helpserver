@@ -104,7 +104,7 @@ module.exports = function (config) {
 					if (!tree[i].children)
 						tree[i].children = tocChildren;
 					else
-						tree[i].children = tree[i].children.concat(tocChildren);
+						tree[i].children = this.mergeNode( tree[i].children.concat(tocChildren) );
 				}
 			}
 		}
@@ -167,6 +167,29 @@ module.exports = function (config) {
 		return node;
 	};
 	
+	ListUtilities.prototype.mergeNode = function (tree) {		
+		var i , j;
+		for( i = 0 ; i < tree.length ; ++i ) {
+		    var itemName = tree[i].title.toLowerCase();
+			for( j = tree.length-1 ; j > i ; --j ) {
+				if( tree[j].title.toLowerCase() == itemName ) {
+					if( !tree[i].path && tree[j].path ) {
+						tree[i].path = tree[j].path;
+					}
+					if( tree[j].children ) {
+						if( tree[i].children ) {
+							tree[i].children = this.mergeNode( tree[i].children.concat(tree[j].children) );
+						} else {
+							tree[i].children = tree[j].children;	
+						}
+					}
+					tree.splice(j,1);
+				}
+			}
+		}		
+		return tree;
+	}
+	
 	ListUtilities.prototype.addNode = function (tree,name,node) {
 		if( name && node ) {
 			var levels = name.split('/');
@@ -184,7 +207,7 @@ module.exports = function (config) {
 							// merge any child nodes....	
 							if( node.children ) {
 								if( tree[index].children )
-									tree[index].children = tree[index].children.concat(node.children);
+									tree[index].children = this.mergeNode( tree[index].children.concat(node.children) );
 								else
 									tree[index].children = node.children;
 							}
@@ -269,6 +292,7 @@ module.exports = function (config) {
 				hasSubToc = true;
 			}
 			if (itemgroup) {
+				itemgroup = itemgroup.trim();
 				if (itemgroup.substring(0, 1) == '/') {
 					var filename = levels[levels.length - 1];
 					levels = itemgroup.split('/');

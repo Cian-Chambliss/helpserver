@@ -54,11 +54,25 @@ module.exports = function (config, callback) {
                 publishStats.published++;
                 callbackLoop();
               } else {
+                var metadataInst = fo.metadata;
+                if( metadataInst ) {
+                  // Treat all pages with status that is not accept, allow or accepted as under review
+                  if(  metadataInst.status && metadataInst.status.substr(0,1).toLowerCase() != "a" ) {
+                      if( metadataInst.group ) {
+                          metadataInst = { tags : "review" , group : metadataInst.group };
+                      } else {
+                          metadataInst = { tags : "review" };
+                      }                      
+                  }
+                } else {
+                  metadataInst = null;
+                }
+                
                 var bodyContent = {
                     title: fo.title,
                     path: fo.path,
                     content: content,
-                    metadata: fo.metadata ? fo.metadata : null                  
+                    metadata: metadataInst                  
                 };
                 if( fo.toc )
                   bodyContent.toc = fo.toc;

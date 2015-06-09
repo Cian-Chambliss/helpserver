@@ -265,7 +265,7 @@ var helpServer = {
       if (helpTagType == 'iframe') {
         this.findMetadata(helpEle.contentDocument.body);
       } else {
-        this.findMetadata(helpEle.innerHTML);
+        this.findMetadata(helpEle);
       }
       this.trackMetaData(this.pageMetaData);
     }
