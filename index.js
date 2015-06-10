@@ -925,9 +925,19 @@ module.exports = function (config) {
   };
    
   // Express generic entry point
-  HelpServerUtil.prototype.expressuse = function (req, res) {   
-    var items = req.path.split('/');
-    if( !req.path || req.path == '' || req.path == '/' ) {
+  HelpServerUtil.prototype.expressuse = function (req, res) {
+    var pathValue = req.path;  
+    if( config.replacePath ) {
+        var i;
+        for( i = 0 ; i < config.replacePath.length ; ++i ) {
+             if(  pathValue.substring(0,config.replacePath[i].from.length) == config.replacePath[i].from ) {
+                 pathValue = config.replacePath[i].to + pathValue.substring(config.replacePath[i].from.length);
+                 break;
+             }
+        }
+    }
+    var items = pathValue.split('/');
+    if( !pathValue || pathValue == '' || pathValue == '/' ) {
       if( config.defaultPage && config.defaultPage != '' && config.defaultPage != '/' ) {
         return res.redirect(config.defaultPage);
       }
