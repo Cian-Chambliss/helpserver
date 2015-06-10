@@ -15,6 +15,7 @@ module.exports = function (config) {
   var configurationObjects = {}; // Child configuration objects
   var filters = {};
   var assets = {};
+  var defaultFilter = config.defaultFilter || '_all'; 
 
   var loadAssetUTF8 = function (name, callback) {
     if (assets[name]) {
@@ -340,12 +341,12 @@ module.exports = function (config) {
   
   // Get the table of contents
   HelpServerUtil.prototype.gettree = function (page, acceptEncoding, callback) {
-    readOptimizedFile(this.config.generated + (this.config.filter_name ? this.config.filter_name : '_all') + this.config.htmlfile, acceptEncoding, callback);
+    readOptimizedFile(this.config.generated + (this.config.filter_name ? this.config.filter_name : defaultFilter) + this.config.htmlfile, acceptEncoding, callback);
   };
 
   // Get the table of contents
   HelpServerUtil.prototype.gettreejson = function (page, acceptEncoding, callback) {
-    readOptimizedFile(this.config.generated + (this.config.filter_name ? this.config.filter_name : '_all') + this.config.structurefile, acceptEncoding, callback);
+    readOptimizedFile(this.config.generated + (this.config.filter_name ? this.config.filter_name : defaultFilter) + this.config.structurefile, acceptEncoding, callback);
   };
    
   // Generate table of contents and optionally populate the search engine with plaintext version of the data

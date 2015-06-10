@@ -349,6 +349,7 @@ help.status(function (stats) {
 
 ## Release History
 
+* 1.0.39 Added ability to override the prefix on search (so that we don't redirect page on search on cross-domain) - also, added default filter spec when using a service. 
 * 1.0.38 Added ability to override the host. 
 * 1.0.37 Fixed CSS style for TOC so that it is isolated from the page content (ul/li in main page was getting messed up).
 * 1.0.36 Fixed initial selection of TOC (was broken when TOC moved to a top level div) 

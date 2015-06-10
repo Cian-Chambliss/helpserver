@@ -1,4 +1,5 @@
 var tableOfContents = {
+	anchorPrefix: "",
 	searchMode: false,
 	searchCount: 0,
 	searchIndex: 0,
@@ -177,12 +178,15 @@ var tableOfContents = {
 					var resultList = JSON.parse(xmlhttp.responseText);
 					var html = '';
 					var i;
-					var prefix = "/main#";
-					var parts = window.location.pathname.split('/');
-					// Remember the path
-					if (parts.length > 2) {
-						if (parts[1] != 'toc') {
-							prefix = "/" + parts[1] + "/main#";
+					var prefix = tableOfContents.anchorPrefix;
+					if( !prefix ) {
+						prefix = "/main#";
+						var parts = window.location.pathname.split('/');
+						// Remember the path
+						if (parts.length > 2) {
+							if (parts[1] != 'toc') {
+								prefix = "/" + parts[1] + "/main#";
+							}
 						}
 					}
 					for (i = 0; i < resultList.length; ++i) {

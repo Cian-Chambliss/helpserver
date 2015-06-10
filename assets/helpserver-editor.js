@@ -11,8 +11,8 @@ var helpEditor = {
 			checked.innerHTML = "1 Item Checked";
 		else
 			checked.innerHTML = "No Items Checked";
-				},
-				trackCheckChanged: function (list) {
+	},
+	trackCheckChanged: function (list) {
 		helpEditor.checkedList0 = list;
 		helpEditor.trackCheckChangedMerge();
 				},

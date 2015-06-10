@@ -108,6 +108,12 @@ var helpServer = {
     var elemTOC = document.getElementById('toc');
     if (path && path != "" && ("#" + path) !== window.location.hash) {
       var newLocation = helpServer.mainWindow.location.pathname + "#" + path;
+      var baseTagElement = document.getElementById("baseTag");
+      var saveBaseTag = null;
+      if( baseTagElement ) {
+          saveBaseTag = baseTagElement.href;
+          baseTagElement.href = "/";
+      }
       if( elemTOC.tagName != 'iframe' ) {
           var currentItem = document.getElementById(path);
           if( currentItem ) {
@@ -120,6 +126,8 @@ var helpServer = {
       } else {
           helpServer.mainWindow.location.replace(newLocation);
       }
+      if( baseTagElement )
+           baseTagElement.href = saveBaseTag;
     }
     var elemHelpPage = document.getElementById('help');
     helpServer.currentPath = path;
