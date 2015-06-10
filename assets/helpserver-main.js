@@ -1,4 +1,5 @@
 var helpServer = {
+  baseTagHost: "",
   mainWindow: null,
   onItemToggle: null,
   originalHelpPath: null,
@@ -53,7 +54,7 @@ var helpServer = {
             }
           }
           var baseTagElement = document.getElementById("baseTag");
-          baseTagElement.href = "/help" + path;
+          baseTagElement.href = helpServer.baseTagHost+"/help" + path;
           elemHelpPage.innerHTML = htmlText;
           helpServer.helpFrameLoad();
         }
@@ -160,7 +161,12 @@ var helpServer = {
       helpEle.onclick = function (e) {
         var ele = e.target || e.srcElement;
         if (ele && ele.href) {
-          var startPattern = window.location.protocol + "//" + window.location.host;
+          var startPattern;
+          if( helpServer.baseTagHost !== '' ) {
+               startPattern = helpServer.baseTagHost;
+          } else {
+               startPattern = window.location.protocol + "//" + window.location.host;
+          }
           if (ele.href.substring(0, startPattern.length) == startPattern) {
             e.stopPropagation();
             e.preventDefault();
