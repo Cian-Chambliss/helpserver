@@ -48,6 +48,7 @@ var tableOfContents = {
 				else
 					navTo.scrollIntoView();
 			}
+			tableOfContents.populateBreadcrumbs();
 		}
 	},
 	tocLoaded: function () {
@@ -158,7 +159,9 @@ var tableOfContents = {
 				"	    <button id=\"searchButton\" onclick=\"tableOfContents.search();\"></button>",
 				"	    <div id=\"searchInput\"><input placeholder=\"Search...\" id=\"searchInputText\" onkeyup=\"var keyCode = event.charCode || event.keyCode; if(keyCode == 13){ tableOfContents.search();} else if(keyCode == 27){ tableOfContents.searchClear();}\" /></div>",
 				"   </div>",
-				"</div>"
+				"</div>",
+				"<div id=\"pageTitle\" ></div>",
+				"<div id=\"breadcrumbs\" ></div>"
 			].join('\n');
 		}
 		if (window.location.hash) {
@@ -377,4 +380,70 @@ var tableOfContents = {
 			}
 		}
 	},
+	getBreadcrumbs : function() {
+		var fullPath = '';
+		if( tableOfContents.lastSelection ) {
+			var filename = tableOfContents.lastSelection.id;
+			var namePos = filename.lastIndexOf('/');
+			if( namePos > 0 ) {
+				filename = filename.substr(namePos+1);
+				if( filename.lastIndexOf('.') > 0 ) {
+					fullPath = filename;
+				} 
+			}		
+			if( fullPath == '' )	 						
+			    fullPath = tableOfContents.lastSelection.innerText.trim();
+			if( tableOfContents.lastSelection.parentElement 
+			 && tableOfContents.lastSelection.parentElement.parentElement 
+			 && tableOfContents.lastSelection.parentElement.parentElement.previousElementSibling
+			 && tableOfContents.lastSelection.parentElement.parentElement.previousElementSibling.id
+			  ) {
+			     fullPath = tableOfContents.lastSelection.parentElement.parentElement.previousElementSibling.id + "/" + fullPath;
+			}
+		} 
+		return fullPath;
+	},
+	populateBreadcrumbs : function() {
+		var breadCrumbs = document.getElementById("breadcrumbs");
+		var titleElem = document.getElementById("pageTitle");
+		var elementName = tableOfContents.getBreadcrumbs();
+		if( elementName && elementName != '' ) {
+			var breadCrumbMarkup = "";
+			var levels = elementName.split('/');
+			var i , j;
+			for( i = 1 ; i < (levels.length-1) ; ++i ) {
+				if( i > 1 )
+				   breadCrumbMarkup += " / "; 				
+				breadCrumbMarkup += "<a onclick=\"tableOfContents.clickBreadCrumbs('";
+				for( j = 1 ; j <= i ; ++j ) {
+					breadCrumbMarkup += "/" + levels[j];					
+				}
+				breadCrumbMarkup += "')\">"+levels[i]+"</a>";
+			}
+			var cleanPageName = levels[levels.length-1];
+			var dotPos = cleanPageName.lastIndexOf('.');
+			if( dotPos > 0 )
+			    cleanPageName =cleanPageName.substr(0,dotPos);
+			if( levels.length > 1 ) {
+				var lastLevel = levels[levels.length-2];
+				if( lastLevel.toLowerCase() == cleanPageName.substr(0,lastLevel.length).toLowerCase() ) {
+					var newName = cleanPageName.substr(lastLevel.length);
+					if( newName.length > 1 ) {
+						var sepChr = newName.substr(0,1);
+						if( sepChr == '.' || sepChr == ' ' || sepChr == ':' ) {
+							cleanPageName = newName.trim();						     	
+						}						
+					}
+				}
+			}
+			breadCrumbs.innerHTML = breadCrumbMarkup;
+			titleElem.innerHTML = cleanPageName; 
+		}		
+	},
+	clickBreadCrumbs: function(path) {
+		if (helpServer && helpServer.checkNavigation)
+			helpServer.checkNavigation(path, 'breadcrumbs');
+		else
+			window.parent.helpServer.checkNavigation(path, 'breadcrumbs');
+	}
 };
