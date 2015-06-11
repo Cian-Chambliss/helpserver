@@ -930,6 +930,11 @@ module.exports = function (config) {
           res.send(JSON.stringify(data));
         });
       }
+    },
+    "config": function (hlp, path, req, res) {
+          res.type('json');
+          hlp.onSendExpress(res);
+          res.send(JSON.stringify( { escapes : config.escapes }));
     }
   };
    

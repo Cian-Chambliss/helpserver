@@ -420,10 +420,11 @@ var tableOfContents = {
 				}
 				breadCrumbMarkup += "')\">"+levels[i]+"</a>";
 			}
-			var cleanPageName = levels[levels.length-1];
-			var dotPos = cleanPageName.lastIndexOf('.');
+			var cleanPageName = helpServer.cleanupHelpFilename( levels[levels.length-1] );
+			/*var dotPos = cleanPageName.lastIndexOf('.');
 			if( dotPos > 0 )
 			    cleanPageName =cleanPageName.substr(0,dotPos);
+			*/
 			if( levels.length > 1 ) {
 				var lastLevel = levels[levels.length-2];
 				if( lastLevel.toLowerCase() == cleanPageName.substr(0,lastLevel.length).toLowerCase() ) {
@@ -431,7 +432,7 @@ var tableOfContents = {
 					if( newName.length > 1 ) {
 						var sepChr = newName.substr(0,1);
 						if( sepChr == '.' || sepChr == ' ' || sepChr == ':' ) {
-							cleanPageName = newName.trim();						     	
+							cleanPageName = newName.trim();
 						}						
 					}
 				}

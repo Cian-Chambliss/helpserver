@@ -1,4 +1,5 @@
 var helpServer = {
+	config: {},
   baseTagHost: "",
   mainWindow: null,
   onItemToggle: null,
@@ -359,6 +360,31 @@ var helpServer = {
         ele.style.background = "red";
       }
     }
-  }
+  },
+	cleanupHelpFilename : function (txt) {
+		if( helpServer.config.escapes ) {
+      var replaceAll = function (str, find, replace) {
+        while (str.indexOf(find) >= 0)
+          str = str.replace(find, replace);
+        return str;
+      };      
+			var i;
+			for( i = 0 ; i < helpServer.config.escapes.length ; ++i ) {
+				var esc = helpServer.config.escapes[i];
+				txt = replaceAll(txt,esc.from,esc.to);
+			}
+		}
+		return txt;
+	}  
 };
 
+
+//----- load helpserver config
+var xmlhttp = new XMLHttpRequest();
+xmlhttp.onload = function () {
+	if (this.status == 200) {
+		helpServer.config = JSON.parse(xmlhttp.responseText);
+	}
+};
+xmlhttp.open("GET", "/config", true);
+xmlhttp.send();

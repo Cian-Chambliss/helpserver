@@ -201,5 +201,5 @@ var helpEditor = {
 helpServer.trackMetaData = helpEditor.trackMetaData;
 helpServer.allowCheck = true;
 helpServer.onCheckChanged = function (list) {
-				helpEditor.trackHREFCheckChange(list);
+	helpEditor.trackHREFCheckChange(list);
 }
