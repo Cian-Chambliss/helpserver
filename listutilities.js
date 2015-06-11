@@ -432,8 +432,9 @@ module.exports = function (config) {
 						ulList += "<div id=\"" + res[i].path + "#" + res[i].hash + "\">" + res[i].title + "</div>";
 					else
 						ulList += "<div id=\"" + res[i].path + "\">" + res[i].title + "</div>";
-				} else
+				} else {
 					ulList += "<div>" + res[i].title + "</div>";
+				}
 				if (res[i].children)
 					ulList += buildTree(res[i].children, false);
 				ulList += "</li>\n"
@@ -442,6 +443,48 @@ module.exports = function (config) {
 			return ulList;
 		};
 		return buildTree(tree, true);
+	};
+	ListUtilities.prototype.createIndexPages = function (tree,basePath,suffix) {
+      var async = require('async');
+	  var indexBuild = [];
+	  var fs = require("fs");
+	  var lu = this;
+ 	  var buildIndex = function(items,path) {
+		   var i;
+		   for( i = 0 ; i < items.length ; ++i ) {
+			   if( items[i].children && items[i].children.length > 0 ) {
+				   var pathName = path + (items[i].title || ""); 
+				   buildIndex( items[i].children , pathName + "/" );
+				   if( !items[i].path ) {
+				   		items[i].path = pathName ;
+				   } 
+				   indexBuild.push( { name : pathName , children : items[i].children } );
+			   }
+		   }
+	  };
+	  indexBuild.push( { name : "/" , children : tree } ); 
+	  buildIndex(tree,"/");
+	  		
+      async.eachSeries(indexBuild, function (indexEntry, callbackLoop) {
+		    var htmlText = "<div id='generatedTopics'>";
+			var i , j ;
+			var filename = lu.replaceAll( indexEntry.name , "/" , "_" );
+			for( i = 0 ; i < indexEntry.children.length ; ++i  ) {
+				 var pathName = indexEntry.children[i].path;
+				 if( !pathName ) {
+					 pathName = indexEntry.name + "/"+ indexEntry.children[i].title;
+				 }
+				 var extensionIndex = pathName.lastIndexOf('.');
+				 if( extensionIndex > 0 && pathName.substr(extensionIndex+1).indexOf('/') < 0 )
+					 htmlText += "<a href='"+  pathName +"' >" + indexEntry.children[i].title + "</a>\n";				 
+				 else				 
+					 htmlText += "<a href='"+  pathName +"' >" + indexEntry.children[i].title + "...</a>\n";				 
+			}
+			htmlText += "</div>";			
+			fs.writeFile( basePath + filename + suffix , htmlText, function (err) {
+				callbackLoop();
+			});
+	  });	
 	};
 	return new ListUtilities();
 }

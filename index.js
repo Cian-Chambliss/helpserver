@@ -233,8 +233,15 @@ module.exports = function (config) {
       extension = page.substring(extensionPos + 1).toLowerCase();
     var relativePath = unescape(page.substring(1));
     if (!extension) {
-      // TBD - generate Table of contents...
-      callback(new Error('Page not found!'), null);
+      var generatedTopic = config.generated + "topics/" + replaceAll(page,"/","_") + (this.config.filter_name ? this.config.filter_name : defaultFilter) + ".html";
+      fs.readFile(generatedTopic, "utf8", function (err, data) {
+          if( err ) {
+            console.log('Generated file '+generatedTopic+" is missing!\n");
+             callback(new Error('Page not found!'), null);
+          } else {
+             callback(null, data, "html");
+          }
+      });
     } else if (extension == "html" || extension == "htm") {
       fs.readFile(config.source + relativePath, "utf8", function (err, data) {
         if (err) {
@@ -393,6 +400,7 @@ module.exports = function (config) {
       var zlib = require('zlib');
       var elasticquery = require("./elasticquery");
       var ListUtilities = require('./listutilities');
+      var topicsPath = config.generated + "topics/";
 
       console.log('Generateing filters');
 
@@ -414,7 +422,8 @@ module.exports = function (config) {
             return 0;
           });
 
-          var tree = lu.treeFromList(results);
+          var tree = lu.treeFromList(results);          
+          lu.createIndexPages(tree,topicsPath,cfg.filter_name+".html");
           var treeUL = lu.treeToUL(tree);
 
           console.log('Saving filtered list...');

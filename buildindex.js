@@ -8,6 +8,7 @@ module.exports = function (config, callback) {
 	var inputFilesList = config.generated + config.flatfile;
 	var plainTextPath = config.generated + "plaintext/";
 	var manifestPath = config.generated + "manifest/";
+	var topicsPath = config.generated + "topics/";
 	var outputFilesList = plainTextPath + "filelist.json";
 	var outputPublish = plainTextPath + "publish.json";
 	var publishList = [];
@@ -39,6 +40,10 @@ module.exports = function (config, callback) {
 	if (!fs.existsSync(manifestPath)) {
 		fs.mkdirSync(manifestPath);
 	}
+	if (!fs.existsSync(topicsPath)) {
+		fs.mkdirSync(topicsPath);
+	}
+	
 
 	fs.readFile(inputFilesList, "utf8", function (err, listData) {
 		if (err) {

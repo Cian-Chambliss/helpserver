@@ -234,3 +234,15 @@ border-left: 1px solid #ddd;
 #help {
 padding: 6px;
 }
+#generatedTopics a {
+display: block;
+padding: 4px;
+color: #000;
+text-decoration: none;	
+}
+
+#generatedTopics h1 a {
+display: inline;
+color: #338;
+text-decoration: none;	
+}
