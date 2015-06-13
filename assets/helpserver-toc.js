@@ -380,10 +380,10 @@ var tableOfContents = {
 			}
 		}
 	},
-	getBreadcrumbs : function() {
+	getBreadcrumbsLow : function(elem){
 		var fullPath = '';
-		if( tableOfContents.lastSelection ) {
-			var filename = tableOfContents.lastSelection.id;
+		if( elem ) {
+			var filename = elem.id;
 			var namePos = filename.lastIndexOf('/');
 			if( namePos > 0 ) {
 				filename = filename.substr(namePos+1);
@@ -392,14 +392,30 @@ var tableOfContents = {
 				} 
 			}		
 			if( fullPath == '' )	 						
-			    fullPath = tableOfContents.lastSelection.innerText.trim();
-			if( tableOfContents.lastSelection.parentElement 
-			 && tableOfContents.lastSelection.parentElement.parentElement 
-			 && tableOfContents.lastSelection.parentElement.parentElement.previousElementSibling
-			 && tableOfContents.lastSelection.parentElement.parentElement.previousElementSibling.id
+			    fullPath = elem.innerText.trim();
+			if( elem.parentElement 
+			 && elem.parentElement.parentElement 
+			 && elem.parentElement.parentElement.previousElementSibling
+			 && elem.parentElement.parentElement.previousElementSibling.id
 			  ) {
-			     fullPath = tableOfContents.lastSelection.parentElement.parentElement.previousElementSibling.id + "/" + fullPath;
+				 var prefix = elem.parentElement.parentElement.previousElementSibling.id;
+				 var extnPos = prefix.lastIndexOf('.');
+				 if( extnPos > 0 ) {
+					 var extn = prefix.substr(extn).toLowerCase();
+					 if( extn == ".html" || extn == ".md" ) {
+						 // we have an actual page - need to recurse	
+						 prefix = tableOfContents.getBreadcrumbsLow(elem.parentElement.parentElement.previousElementSibling);
+					 } 
+				 } 
+			     fullPath = prefix + "/" + fullPath;
 			}
+		}
+		return fullPath;
+	},
+	getBreadcrumbs : function() {
+		var fullPath = '';
+		if( tableOfContents.lastSelection ) {
+			fullPath = tableOfContents.getBreadcrumbsLow( tableOfContents.lastSelection );
 		} 
 		return fullPath;
 	},

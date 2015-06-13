@@ -25,8 +25,14 @@ module.exports = function (config, callback) {
 		}
 	} else if (config.search.provider === 'elasticsearch') {
 		var publishIndexDriver = function () {
-			var elasticpublish = require("./elasticpublish");
-			elasticpublish(config, callback);
+		    var elasticsearch = require('elasticsearch');
+		    var client = new elasticsearch.Client({
+		        host: config.search.host
+		    });
+			client.indices.delete({ index : config.search.index } , function(err) { 
+				var elasticpublish = require("./elasticpublish");
+				elasticpublish(config, callback);
+			});
 		};
 	} else {
 		callback(new Error('Search provider ' + config.search.provider + ' is not supported.'), null);

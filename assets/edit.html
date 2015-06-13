@@ -29,15 +29,7 @@
 				background: #2c3e50;
 			}
 			#search {
-				z-index: 2;
-				position: fixed;
-				top: 0px;
-				left: 0px;
-				width: 300px;
-				height: 160px;
-				color: #b6b6b6;
-				background: #2c3e50;
-				border-right: 1px solid #485767;
+				display:none;
 			}
 			
 		</style>
@@ -47,6 +39,7 @@
 					tableOfContents.tocPopulate();
 					tableOfContents.allowCheck = true;
 					tableOfContents.onCheckChanged = helpEditor.trackCheckChanged;
+					helpEditor.addControls();
 					//$('#vsplitter').split({orientation:'vertical', limit:10 , position: '30%' });
 				};
 				$().ready(function() {
@@ -56,31 +49,7 @@
 	</head>
 	<body onload="loaded()" style="margin:0px;padding:0px;" onhashchange="helpServer.onHashChange()">
 		<div style="width:100%;height:160px;" >
-			<div id="header" style="width:300px;height:160px;float:left;"></div>						
-			<div style="height:160px;width:100%;position:absolute;left:300px;top:0px;background:#2c3e50;">
-				<div style="height:10pt;"></div>
-				<div style="float:left;width:107pt;" id="checkedStatus">No Items Checked</div>
-				<button id="Deselect" onclick="helpEditor.Deselect()">Deselect</button>&nbsp;Tags&nbsp;
-				<input id="tagNames"></input>
-				<button id="ApplyTags" onclick="helpEditor.ApplyTags()">Apply Tags</button>&nbsp;Group&nbsp;
-				<input id="groupName"></input>
-				<button id="ApplyGroup" onclick="helpEditor.ApplyGroup()">Apply Group</button>&nbsp;Notes&nbsp;
-				<input id="notes"></input>
-				<button id="SaveNote" onclick="helpEditor.SaveNote()">Save Notes</button>
-				<br/>
-				<div style="height:5pt;"></div>Page Path &nbsp;
-				<input id="pagePath" style="width:5in"></input>
-				Status &nbsp;
-				<select id="statusName" >
- 				  <option value="">None</option>
-				  <option value="pending">Pending</option>
-				  <option value="reject">Reject</option>
-				  <option value="accept">Accept</option>
-				</select>
-				<button id="ApplyStatus" onclick="helpEditor.ApplyStatus()">Apply Status</button>
-				<button onclick="helpEditor.refreshHelpTopics()" id="refreshButton" >Refresh ...</button>
-				<button onclick="tableOfContents.advanceNextTOC()" >Next</button>
-			</div>
+			<div id="header" style="height:160px;float:left;"></div>						
 		</div>
 		<div style="position: fixed; background: ThreeDFace; top: 0; bottom: 0; right: 0; width: 1px;"></div>
 		<div id="vsplitter" style="position: absolute;top: 160px;left: 0px;right: 0px;bottom: 0px; " >		

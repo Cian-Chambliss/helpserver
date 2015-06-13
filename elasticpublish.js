@@ -1,7 +1,7 @@
 /**
  * Publish the plaintext of the help to elastic search...
  */
-module.exports = function (config, callback) {
+module.exports = function (config, callback ) {
   var async = require('async');
   var plainTextPath = config.generated + "plaintext/";
   var inputPublish = plainTextPath + "publish.json";
@@ -55,7 +55,13 @@ module.exports = function (config, callback) {
                 callbackLoop();
               } else {
                 var metadataInst = fo.metadata;
+                var tags = null;
+                var status =null;
                 if( metadataInst ) {
+                   if( metadataInst.tags )
+                      tags = metadataInst.tags;
+                   if( metadataInst.status )
+                      status = metadataInst.status;
                   // Treat all pages with status that is not accept, allow or accepted as under review
                   if(  metadataInst.status && metadataInst.status.substr(0,1).toLowerCase() != "a" ) {
                       if( metadataInst.group ) {
@@ -66,12 +72,13 @@ module.exports = function (config, callback) {
                   }
                 } else {
                   metadataInst = null;
-                }
-                
+                }                
                 var bodyContent = {
                     title: fo.title,
                     path: fo.path,
                     content: content,
+                    tags: tags,
+                    status: status,
                     metadata: metadataInst                  
                 };
                 if( fo.toc )
