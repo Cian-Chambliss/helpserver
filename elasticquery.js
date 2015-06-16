@@ -21,6 +21,8 @@ module.exports = function (config, pattern, callback, startAt, maximum) {
     }
   } else if (config.filter) {
     if( config.filter.missing && config.filter.missing.field )
+       queryDef = { filtered : { filter: config.filter } };   
+    else if( config.filter.exists && config.filter.exists.field )
        queryDef = { filtered : { filter: config.filter } };        
     else
        queryDef = { match: config.filter };

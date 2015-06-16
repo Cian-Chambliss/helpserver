@@ -9,7 +9,7 @@ module.exports = function (config) {
   };
   var fs = require('fs');
   var path = require('path');
-  var appDir = path.dirname(require.main.filename) + '/';
+  var appDir =replaceAll( path.dirname(require.main.filename) , "\\","/") + '/';
   var modulePath = appDir + 'node_modules/helpserver/';
   var configurations = {}; // Child configurations (filters & permissions added to views)
   var configurationObjects = {}; // Child configuration objects
@@ -28,6 +28,7 @@ module.exports = function (config) {
           // Next try the module asset folder
           fs.readFile(modulePath + 'assets/' + name, "utf8", function (err, data) {
             if (err) {
+              console.log('cant read asset '+modulePath + 'assets/' + name)
               callback(err, null);
             } else {
               assets[name] = data;
@@ -262,7 +263,7 @@ module.exports = function (config) {
     } else if (extension == "css" || extension == "svg") {
       var helpServerFile = relativePath.lastIndexOf("helpserver-");
       if (helpServerFile > -1) {
-        loadAssetUTF8(relativePath.substr(helpServerFile), function (err, data) {
+        loadAssetUTF8( relativePath.substr(helpServerFile), function (err, data) {
           if (err) {
             console.log(modulePath + 'assets/' + relativePath.substr(helpServerFile));
             callback(err, null);
@@ -278,7 +279,7 @@ module.exports = function (config) {
               relativePath = relativePath.substring(endPath + 1);
             loadAssetUTF8(relativePath, function (err, data) {
               if (err) {
-                console.log(modulePath + 'assets/' + relativePath.substr(helpServerFile));
+                console.log( modulePath + 'assets/' + relativePath.substr(helpServerFile));
                 callback(err, null);
               } else {
                 callback(null, data, extension);
@@ -291,11 +292,20 @@ module.exports = function (config) {
       }
     } else if (extension == "js") {
       var helpServerFile = relativePath.lastIndexOf("helpserver-");
-      if (helpServerFile > -1) {
+      if (helpServerFile > -1) {        
         fs.readFile(modulePath + 'assets/' + relativePath.substr(helpServerFile), "utf8", function (err, data) {
           if (err) {
-            console.log(modulePath + 'assets/' + relativePath.substr(helpServerFile));
-            callback(err, null);
+            var endPath = relativePath.indexOf('/');
+            if (endPath >= 0)
+              relativePath = relativePath.substring(endPath + 1);
+            loadAssetUTF8(relativePath, function (err, data) {
+              if (err) {
+                console.log( modulePath + 'assets/' + relativePath.substr(helpServerFile));
+                callback(err, null);
+              } else {
+                callback(null, data, extension);
+              }
+            });
           } else {
             callback(null, data, "js");
           }
@@ -496,6 +506,7 @@ module.exports = function (config) {
   
   // refresh help from repo, and rebuild TOC 
   HelpServerUtil.prototype.refresh = function (callback) {
+    debugger;
     var rebuildContent = function (help) {
       var handler = function (err, result) {
         if (err) {
@@ -572,6 +583,7 @@ module.exports = function (config) {
   // Set metadata for am item
   HelpServerUtil.prototype.setmetadata = function (path, metadata, callback , batchMode) {
     var help = this;
+    debugger;
     try {
       if (path && path !== '/') {
         var relativePath = unescape(path.substring(1));
@@ -600,11 +612,12 @@ module.exports = function (config) {
               }
             }
             if (newData != data) {              
+              debugger;
               fs.writeFile(fn, newData, function () {
                 if (err) {
                   console.log('setmetadata write ' + err);
                   callback(metadata);
-                } else if( batchMode ) {
+                } else if( batchMode || metadata.norefresh ) {
                   callback(metadata);
                 } else {
                   help.refresh(function () {
@@ -656,12 +669,12 @@ module.exports = function (config) {
                 help.patchmetadata(mdata.path, mdata.metadata, function (result) {
                   outputArray.push({ path: path, set: result });
                   callbackLoop();
-                } , mdata.path !== lastCmd );
+                } , (mdata.path !== lastCmd || metadata.norefresh) );
               } else {
                 help.setmetadata(mdata.path, mdata.metadata, function (result) {
                   outputArray.push({ path: path, set: result });
                   callbackLoop();
-                } , mdata.path !== lastCmd );
+                } , ( mdata.path !== lastCmd || metadata.norefresh) );
               }
             }, function () {
                 callback(outputArray);
@@ -687,7 +700,7 @@ module.exports = function (config) {
       }
       help.setmetadata(path, data, function (result) {
         callback(data);
-      },batchMode);
+      },(batchMode || metadata.norefresh) );
     });
   };
 

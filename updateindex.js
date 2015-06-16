@@ -31,8 +31,13 @@ module.exports = function (config, callback) {
 	}
 	fs.readFile(inputFilesList, "utf8", function (err, listData) {
 		var list = JSON.parse(listData);
-		fs.readFile(outputFilesList, "utf8", function (err, listData) {
-			var times = JSON.parse(listData);
+		fs.readFile(outputFilesList, "utf8", function (err, listData2) {
+			var times = {};
+			try {
+			     times = JSON.parse(listData2);
+			} catch(err) {
+				;
+			}
 			var i;
 			var changed = [];
 			var timeSrc = {};

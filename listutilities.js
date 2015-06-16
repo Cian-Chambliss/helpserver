@@ -114,7 +114,7 @@ module.exports = function (config) {
 	ListUtilities.prototype.findNode = function (tree,name) {
 		var i;
 		for( i = 0 ; i < tree.length ; ++i )
-		    if( tree[i].title.toLowerCase() == name )
+		    if( tree[i].title.trim().toLowerCase() == name )
 				return i;
 		return -1;
 	}
@@ -127,7 +127,7 @@ module.exports = function (config) {
 				levels.splice(0,1);
 			}
 			if( levels.length > 0 ) {
-				var index = this.findNode(tree,levels[0].toLowerCase());
+				var index = this.findNode(tree,levels[0].trim().toLowerCase());
 				if( index >= 0 ) {
 					if( levels.length > 1 ) {
 						if( tree[index].children ) {
@@ -151,7 +151,7 @@ module.exports = function (config) {
 			var i;
 			for( i = 0 ; i < levels.length ; ++i ) {
 				if( levels[i] !== '' ) {
-					var index = this.findNode(tree,levels[i].toLowerCase());
+					var index = this.findNode(tree,levels[i].trim().toLowerCase());
 					if( index >= 0 ) {
 						if(  (i+1) == levels.length ) {
 							node = tree[index];
@@ -191,12 +191,13 @@ module.exports = function (config) {
 	}
 	
 	ListUtilities.prototype.addNode = function (tree,name,node) {
+		var topTree = tree;
 		if( name && node ) {
 			var levels = name.split('/');
 			var i;
 			for( i = 0 ; i < levels.length ; ++i ) {
 				if( levels[i] !== '' ) {
-					var index = this.findNode(tree,levels[i].toLowerCase());
+					var index = this.findNode(tree,levels[i].trim().toLowerCase());
 					if( index >= 0 ) {
 						if(  (i+1) == levels.length ) {
 							// Make sure title gets set (use case of new name)
@@ -223,12 +224,13 @@ module.exports = function (config) {
 						break;
 					} else {
 						var newItem = { title : levels[i] , children : [] };
-						tree.push(newItem);
+						tree.push(newItem);						
 						tree = newItem.children;
 					}
 				}
 			}	
 		}	
+		return topTree;
 	};
 	
 	// Move (or rename) a node ...
@@ -246,18 +248,19 @@ module.exports = function (config) {
 			var needToRemoveAndAdd = true;
 			// Same number of levels?
 			if( levels.length == newlevels.length ) {
-				var index = this.findNode(tree,levels[0].toLowerCase());
+				var index = this.findNode(tree,levels[0].trim().toLowerCase());
 				if( index >= 0 ) {
 					if( levels.length > 1 ) {
 						if( levels[0] === newlevels[0] ) {
 							// same? it might be a rename...
 							levels.splice(0,1);
 							newlevels.splice(0,1);							
-							this.moveNode(tree[index].children,levels.join('/'),newlevels.join('/'));
+							tree[index].children = this.moveNode(tree[index].children,levels.join('/'),newlevels.join('/'));
 							needToRemoveAndAdd = false;
 						}
 					} else {						
 						tree[index].title = newname;
+						tree = this.mergeNode( tree );
 						needToRemoveAndAdd = false;
 					}
 				}
@@ -266,13 +269,29 @@ module.exports = function (config) {
 				// At this point, we need to alter the structure - get the node, remove from hierarchy, then re-insert it.
 				var node = this.getNode(tree,name);
 				if( node ) {
-					this.removeNode(tree,name);
-					this.addNode(tree,newname,node);
+					tree = this.removeNode(tree,name);
+					tree = this.addNode(tree,newname,node);
 				}
 			}
 		}
 		return tree;
 	};
+	
+	/*
+	var checkDuplicates = function(tree,message) {
+		var i , j;
+		var result = false;
+		for( i = 0 ; i < tree.length-1 ; ++i ) {
+			for( j = i+1 ; j < tree.length ; ++j ) {
+				if( tree[i].title == tree[j].title ) {
+					result = true;
+					console.log('Dups at '+ tree[i].title+" for "+message);
+					break;
+				}
+			}
+		} 
+		return result;		
+	};*/
 	
 	// Convert a flat list of paths & titles into a 'tree'
 	ListUtilities.prototype.treeFromList = function (flatList) {
@@ -393,8 +412,9 @@ module.exports = function (config) {
 						currentBranch.toc = item.toc;
 					}
 				}
-			}
+			}			
 		}
+		
 		if( config.editTOC ) {
 			if( config.editTOC.remove ) {
 				// remove list
@@ -408,11 +428,11 @@ module.exports = function (config) {
 					tree = this.moveNode(tree,config.editTOC.move[i].from,config.editTOC.move[i].to);
 				}
 			}
-		}
-		tree = this.sortTree(tree);
+		}		
+		tree = this.sortTree(tree);			
 		if (hasSubToc) {
 			tree = this.expandSubToc(tree);
-		}
+		}		
 		return tree;
 	};
 
