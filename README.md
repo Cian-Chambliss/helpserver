@@ -349,6 +349,7 @@ help.status(function (stats) {
 
 ## Release History
 
+* 1.0.42 Fixed dupplicate name merge bug in virtual 'move' of toc entries.
 * 1.0.41 Added support for breadcrumbs - and generated TOC pages for folders that don't have an associated page. 
 * 1.0.40 Added replacePath option to allow basepath to be remapped (useful for crosssite access where path may come in with prefix other than filter)
 * 1.0.39 Added ability to override the prefix on search (so that we don't redirect page on search on cross-domain) - also, added default filter spec when using a service. 
