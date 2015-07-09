@@ -306,6 +306,7 @@ module.exports = function (config) {
 			var branch = tree;
 			var currentLevel;
 			var itemgroup = item.group;
+			var itempagename = item.pagename;
 			var lastLevel = levels.length;
 			if (item.toc) {
 				hasSubToc = true;
@@ -381,7 +382,13 @@ module.exports = function (config) {
 				}
 				if (!currentBranch) {
 					if (item.toc) {
-						branch.push({ title: currentLevel, path: item.path, toc: item.toc });
+						if( itempagename ) {
+							branch.push({ title: itempagename, path: item.path, toc: item.toc });
+						} else {
+							branch.push({ title: currentLevel, path: item.path, toc: item.toc });
+						}
+					} else  if( itempagename ) {
+						branch.push({ title: itempagename, path: item.path });
 					} else {
 						branch.push({ title: currentLevel, path: item.path });
 					}
@@ -389,6 +396,9 @@ module.exports = function (config) {
 					currentBranch.path = item.path;
 					if (item.toc) {
 						currentBranch.toc = item.toc;
+					}
+					if( itempagename ) {
+						currentBranch.title = itempagename;
 					}
 				}
 			} else if (levels.length > 0) {
@@ -402,7 +412,13 @@ module.exports = function (config) {
 				}
 				if (!currentBranch) {
 					if (item.toc) {
-						branch.push({ title: currentLevel, path: item.path, toc: item.toc });
+						if( itempagename ) {
+							branch.push({ title: itempagename, path: item.path, toc: item.toc });
+						} else {
+							branch.push({ title: currentLevel, path: item.path, toc: item.toc });
+						}
+					} else if( itempagename ) {
+						branch.push({ title: itempagename, path: item.path });
 					} else {
 						branch.push({ title: currentLevel, path: item.path });
 					}
@@ -411,6 +427,9 @@ module.exports = function (config) {
 					if (item.toc) {
 						currentBranch.toc = item.toc;
 					}
+					if( itempagename ) {
+						currentBranch.title = itempagename;
+					}					
 				}
 			}			
 		}

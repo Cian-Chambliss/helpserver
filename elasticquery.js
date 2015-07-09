@@ -53,13 +53,28 @@ module.exports = function (config, pattern, callback, startAt, maximum) {
         for (i = 0; i < srcArray.length; ++i) {
           var item = srcArray[i]._source;
           if (item.metadata && item.metadata.group) {
-            if (item.metadata.istopic) {
-              results.push({ title: item.title, path: item.path, group: item.metadata.group, istopic: item.metadata.istopic });
-            } else {
-              results.push({ title: item.title, path: item.path, group: item.metadata.group });
+            if (item.metadata && item.metadata.pagename ) {
+              if (item.metadata.istopic) {
+                results.push({ title: item.title, path: item.path, group: item.metadata.group, istopic: item.metadata.istopic , pagename : item.metadata.pagename });
+              } else {
+                results.push({ title: item.title, path: item.path, group: item.metadata.group , pagename : item.metadata.pagename });
+              }              
+            } else {              
+              if (item.metadata.istopic) {
+                results.push({ title: item.title, path: item.path, group: item.metadata.group, istopic: item.metadata.istopic });
+              } else {
+                results.push({ title: item.title, path: item.path, group: item.metadata.group });
+              }
             }
-          } else
-            results.push({ title: item.title, path: item.path });
+          } else {
+            if (item.metadata && item.metadata.pagename ) {
+              results.push({ title: item.title, path: item.path , pagename : item.metadata.pagename });
+            } else {
+              results.push({ title: item.title, path: item.path });
+            }
+          }            
+          
+            
           if( item.toc ) {
             results[ results.length - 1 ].toc = item.toc;
           }  

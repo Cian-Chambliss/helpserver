@@ -175,6 +175,7 @@ var helpEditor = {
 		var statusName = document.getElementById('statusName');
 		var pagePath = document.getElementById('pagePath');
 		var notes = document.getElementById('notes');
+		var pageName = document.getElementById('pageName');
 		var kw = document.getElementById('keywords');
 		var i;
 		helpEditor.currentMedataData = mdata;
@@ -201,6 +202,8 @@ var helpEditor = {
 			groupName.className = "";
 			notes.value = mdata.notes || "";
 			notes.className = "";
+			pageName.value = mdata.pagename || "";
+			pageName.className = "";
 			statusName.value = mdata.status || "";
 			statusName.className = "";
 			if( kw ) {
@@ -277,6 +280,8 @@ var helpEditor = {
 			'	  <option value="reject">Reject</option>',
 			'	  <option value="accept">Accept</option>',
 			'	</select>',			
+			'	Page Name &nbsp;',
+			'	<input id="pageName"  onkeyup="helpEditor.Changed(\'pageName\')" ></input>',
 			'	<br/>',
 			'	</div>Page Path &nbsp;',
 			'	<input id="pagePath" style="width:5in"></input>',
@@ -358,6 +363,19 @@ var helpEditor = {
 				 }				
 			}			
 			helpEditor.Changed(event.target.id+'label');
+			if( helpEditor.suggestPathHandler ) {
+				helpEditor.suggestPath = helpEditor.suggestPathHandler( helpEditor.keywordsChecked );
+				var spEle = document.getElementById("SuggestPath");
+				if( spEle ) {
+					if( helpEditor.suggestPath === '' ) {
+						spEle.style.display = "none";
+						spEle.innerHTML = "";
+					} else {				
+						spEle.style.display = "inline-block";							
+						spEle.innerHTML = "Set "+helpEditor.suggestPath;
+					}
+				}
+			}		
 		}
 	},
 	ApplyKeywords :  function() {
@@ -397,6 +415,7 @@ var helpEditor = {
 		var statusName = document.getElementById('statusName');
 		var pagePath = document.getElementById('pagePath');
 		var notes = document.getElementById('notes');
+		var pageName = document.getElementById('pageName');
 		var kw = document.getElementById('keywords');
 		var i;
 		var tagEdits = { pages: [], patch: true };
@@ -417,6 +436,10 @@ var helpEditor = {
 			if( notes.className != "" ) {
 				metadata.notes = notes.value;
 				dirty = true;
+			}
+			if( notes.pageName != "" ) {
+				metadata.pagename = pageName.value;
+				dirty = true;				 
 			}
 			if( statusName.className != "" ) {
 				metadata.status = statusName.value;
@@ -481,6 +504,7 @@ var helpEditor = {
 			groupName.className = "";
 			notes.className = "";
 			statusName.className = "";
+			pageName.className = "";
 			if( kw ) {
 				for( i = 0 ; i <  helpEditor.keywords.length ; ++i ) {
 					var keywordEle = document.getElementById("keyword"+helpEditor.keywords[i]);			

@@ -65,7 +65,13 @@ module.exports = function (config, callback ) {
                   // Treat all pages with status that is not accept, allow or accepted as under review
                   if(  metadataInst.status && metadataInst.status.substr(0,1).toLowerCase() != "a" ) {
                       if( metadataInst.group ) {
-                          metadataInst = { tags : "review" , group : metadataInst.group };
+                         if( metadataInst.pagename ) {
+                              metadataInst = { tags : "review" , group : metadataInst.group , "pagename" : metadataInst.pagename };
+                         } else {
+                              metadataInst = { tags : "review" , group : metadataInst.group };
+                         }
+                      } else if( metadataInst.pagename ) {
+                         metadataInst = { tags : "review" , "pagename" : metadataInst.pagename };
                       } else {
                           metadataInst = { tags : "review" };
                       }                      
