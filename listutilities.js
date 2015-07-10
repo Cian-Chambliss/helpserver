@@ -180,7 +180,7 @@ module.exports = function (config) {
 						if( tree[i].children ) {
 							tree[i].children = this.mergeNode( tree[i].children.concat(tree[j].children) );
 						} else {
-							tree[i].children = tree[j].children;	
+							tree[i].children = tree[j].children;
 						}
 					}
 					tree.splice(j,1);
@@ -447,6 +447,21 @@ module.exports = function (config) {
 					tree = this.moveNode(tree,config.editTOC.move[i].from,config.editTOC.move[i].to);
 				}
 			}
+			// Prune empty sections --
+			for( i = tree.length-1 ; i >= 0 ; --i ) {
+				if( !tree[i].path && !tree[i].toc && !tree[i].children ) {
+					tree.splice(i,1);
+				}
+			}
+			// Merge node named '/' into root ) (allows for '/' to be a placeholder for move folders to root)
+			for( i = 0 ; i <  tree.length ; ++i ) {
+				if( tree[i].title = '/' && !tree[i].path ) {
+					var addChildren = tree[i].children; 
+					tree.splice(i,1);
+					tree = tree.concat(addChildren);
+					break;
+				}
+			} 
 		}		
 		tree = this.sortTree(tree);			
 		if (hasSubToc) {
