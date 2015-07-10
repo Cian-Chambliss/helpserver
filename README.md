@@ -349,6 +349,7 @@ help.status(function (stats) {
 
 ## Release History
 
+* 1.0.43 Added pruning of empty branches after branches are moved + merge '/' folder at root into the root.
 * 1.0.42 Fixed dupplicate name merge bug in virtual 'move' of toc entries.
 * 1.0.41 Added support for breadcrumbs - and generated TOC pages for folders that don't have an associated page. 
 * 1.0.40 Added replacePath option to allow basepath to be remapped (useful for crosssite access where path may come in with prefix other than filter)

@@ -437,7 +437,7 @@ var helpEditor = {
 				metadata.notes = notes.value;
 				dirty = true;
 			}
-			if( notes.pageName != "" ) {
+			if( pageName.className != "" ) {
 				metadata.pagename = pageName.value;
 				dirty = true;				 
 			}
