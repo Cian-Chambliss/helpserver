@@ -195,6 +195,9 @@ cursor: default;
 -webkit-user-select: none;
 -ms-user-select: none;
 }
+#TOC  li {
+	margin:0px;
+}
 #TOC  li div {
 margin-left: 24px;
 padding: 4px;

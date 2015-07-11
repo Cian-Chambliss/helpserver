@@ -82,7 +82,7 @@ var helpServer = {
             elemHelpPage.innerHTML = htmlText;
             helpServer.helpFrameLoad();
             if( subElemId ) {
-                  var subEle = document.getElementByName(subElemId);
+                  var subEle = document.getElementsByName(subElemId);
                   if( subEle ) {
                       subEle[0].scrollIntoView();
                   }
