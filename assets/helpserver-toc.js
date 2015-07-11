@@ -425,6 +425,8 @@ var tableOfContents = {
 		var elementName = tableOfContents.getBreadcrumbs();
 		if( elementName && elementName != '' ) {
 			var breadCrumbMarkup = "";
+			elementName = elementName.replace('#','/');
+			elementName = elementName.replace('#','/');
 			var levels = elementName.split('/');
 			var i , j;
 			for( i = 1 ; i < (levels.length-1) ; ++i ) {
@@ -434,7 +436,11 @@ var tableOfContents = {
 				for( j = 1 ; j <= i ; ++j ) {
 					breadCrumbMarkup += "/" + levels[j];					
 				}
-				breadCrumbMarkup += "')\">"+levels[i]+"</a>";
+				var leveltext = levels[i];
+				if( leveltext.length > 5 && leveltext.substring(leveltext.length-5).toLowerCase() == ".html") {
+					leveltext = leveltext.substring(0,leveltext.length-5);					
+				}
+				breadCrumbMarkup += "')\">"+leveltext+"</a>";
 			}
 			var cleanPageName = helpServer.cleanupHelpFilename( levels[levels.length-1] );
 			/*var dotPos = cleanPageName.lastIndexOf('.');
