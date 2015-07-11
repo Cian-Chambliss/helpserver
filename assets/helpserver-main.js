@@ -39,29 +39,59 @@ var helpServer = {
   },
   loadHelpDiv: function (path) {
     if( helpServer.lastLoadedDiv != path ) {
-      var elemHelpPage = document.getElementById('help');      
+      var elemHelpPage = document.getElementById('help');
+      var lastLoadedWas = helpServer.lastLoadedDiv || "";
       helpServer.lastLoadedDiv = path;
-      elemHelpPage.innerHTML = "Loading " + path + "...";
       var xmlhttp = new XMLHttpRequest();
-      xmlhttp.onload = function () {
-        if (this.status == 200) {
-          var htmlText = xmlhttp.responseText;
-          var lowText = htmlText.toLowerCase();
-          var bodyAt = lowText.indexOf('<body');
-          if (bodyAt >= 0) {
-            var endBodyAt = lowText.indexOf('</body');
-            if (endBodyAt >= 0) {
-              htmlText = "<div" + htmlText.substring(bodyAt + 5, endBodyAt) + "</div>";
+      var subElemPos = path.lastIndexOf('#');
+      var subElemId = null;
+      var pageToGet =  path;
+      
+      if( subElemPos > 0 ) {
+            // Only focus on
+            pageToGet = pageToGet.substring(0,subElemPos);
+            subElemId = path.substring(subElemPos+1);            
+            var lastLoadedHash = lastLoadedWas.lastIndexOf('#');
+            if( lastLoadedHash > 0 )
+                lastLoadedWas = lastLoadedWas.substring(0,lastLoadedHash);
+            if( lastLoadedWas ==  pageToGet ) {
+                pageToGet = null;            
+                if( subElemId ) {
+                    var subEle = document.getElementsByName(subElemId);
+                    if( subEle ) {
+                        subEle[0].scrollIntoView();
+                    }
+                }
             }
+      }
+      if( pageToGet ) {
+        elemHelpPage.innerHTML = "Loading " + path + "...";
+        xmlhttp.onload = function () {
+          if (this.status == 200) {
+            var htmlText = xmlhttp.responseText;
+            var lowText = htmlText.toLowerCase();
+            var bodyAt = lowText.indexOf('<body');
+            if (bodyAt >= 0) {
+              var endBodyAt = lowText.indexOf('</body');
+              if (endBodyAt >= 0) {
+                htmlText = "<div" + htmlText.substring(bodyAt + 5, endBodyAt) + "</div>";
+              }
+            }
+            var baseTagElement = document.getElementById("baseTag");
+            baseTagElement.href = helpServer.baseTagHost+"/help" + path;
+            elemHelpPage.innerHTML = htmlText;
+            helpServer.helpFrameLoad();
+            if( subElemId ) {
+                  var subEle = document.getElementByName(subElemId);
+                  if( subEle ) {
+                      subEle[0].scrollIntoView();
+                  }
+             }             
           }
-          var baseTagElement = document.getElementById("baseTag");
-          baseTagElement.href = helpServer.baseTagHost+"/help" + path;
-          elemHelpPage.innerHTML = htmlText;
-          helpServer.helpFrameLoad();
-        }
-      };
-      xmlhttp.open("GET", "/help" + path, true);
-      xmlhttp.send('');
+        };
+        xmlhttp.open("GET", "/help" + pageToGet, true);
+        xmlhttp.send('');
+      }
     }
   },
   getSrcPath: function (src) {
