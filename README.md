@@ -349,7 +349,8 @@ help.status(function (stats) {
 
 ## Release History
 
-* 1.0.43 Fixed embedded TOC in help pages to work with the single page DIV loading
+* 1.0.45 Added slight indent to TOC style + fixed breadcrumb display for subtoc 
+* 1.0.44 Fixed embedded TOC in help pages to work with the single page DIV loading
 * 1.0.43 Added pruning of empty branches after branches are moved + merge '/' folder at root into the root.
 * 1.0.42 Fixed dupplicate name merge bug in virtual 'move' of toc entries.
 * 1.0.41 Added support for breadcrumbs - and generated TOC pages for folders that don't have an associated page. 
