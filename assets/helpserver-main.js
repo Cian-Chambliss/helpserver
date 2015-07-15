@@ -391,7 +391,27 @@ var helpServer = {
       }
     }
   },
+  removeNumericPrefix:  function (title) {
+  		var length = 1;
+  		while (length < title.length) {
+  			var chr = title.substr(length, 1);
+  			if ('0' <= chr && chr <= '9') {
+  				++length;
+  			} else if (chr == '_') {
+  				++length;
+  				var newtitle = title.substring(length);
+  				if (newtitle && newtitle != '')
+  					title = newtitle;
+  				break;
+  			} else {
+  				break;
+  			}
+  		}
+  		return title;
+  	},
 	cleanupHelpFilename : function (txt) {
+    if( txt.substring(0,1) == '_' )
+  	     txt = helpServer.removeNumericPrefix(txt);
 		if( helpServer.config.escapes ) {
       var replaceAll = function (str, find, replace) {
         while (str.indexOf(find) >= 0)

@@ -349,6 +349,7 @@ help.status(function (stats) {
 
 ## Release History
 
+* 1.0.47 Cleanup of handling for copy entries to root (elimiate levels of tree) 
 * 1.0.46 CSS style sheet changes to cause helperserver_toc to be hidden.
 * 1.0.45 Added slight indent to TOC style + fixed breadcrumb display for subtoc 
 * 1.0.44 Fixed embedded TOC in help pages to work with the single page DIV loading

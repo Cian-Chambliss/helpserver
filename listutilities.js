@@ -228,7 +228,7 @@ module.exports = function (config) {
 						tree = newItem.children;
 					}
 				}
-			}	
+			}
 		}	
 		return topTree;
 	};
@@ -242,35 +242,62 @@ module.exports = function (config) {
 			if( levels.length > 0 && levels[0] === '' ) {
 				levels.splice(0,1);
 			}
+			if(  levels.length > 0 ) {
+				if( levels[levels.length-1] == '' ) {
+					levels.splice(levels.length-1,1);
+					if( levels.join() == '' )
+					    name = '';
+				}
+			}
 			if( newlevels.length > 0 && newlevels[0] === '' ) {
 				newlevels.splice(0,1);
 			}
+			if(  newlevels.length > 0 ) {
+				if( newlevels[newlevels.length-1] == '' ) {
+					newlevels.splice(newlevels.length-1,1);
+					if( newlevels.join() == '' )
+					    newname = '';
+				}
+			}
 			var needToRemoveAndAdd = true;
 			// Same number of levels?
-			if( levels.length == newlevels.length ) {
-				var index = this.findNode(tree,levels[0].trim().toLowerCase());
-				if( index >= 0 ) {
-					if( levels.length > 1 ) {
-						if( levels[0] === newlevels[0] ) {
-							// same? it might be a rename...
-							levels.splice(0,1);
-							newlevels.splice(0,1);							
-							tree[index].children = this.moveNode(tree[index].children,levels.join('/'),newlevels.join('/'));
+			if( levels.length > 0 ) {
+				if( levels.length == newlevels.length ) {
+					var index = this.findNode(tree,levels[0].trim().toLowerCase());
+					if( index >= 0 ) {
+						if( levels.length > 1 ) {
+							if( levels[0] === newlevels[0] ) {
+								// same? it might be a rename...
+								levels.splice(0,1);
+								newlevels.splice(0,1);							
+								tree[index].children = this.moveNode(tree[index].children,levels.join('/'),newlevels.join('/'));
+								needToRemoveAndAdd = false;
+							}
+						} else {
+							if( newname.substring(0,1) == '/' && newname.length > 1 ) {
+								tree[index].title = newname.substring(1);
+							} else {
+								tree[index].title = newname;
+							}
+							tree = this.mergeNode( tree );
 							needToRemoveAndAdd = false;
 						}
-					} else {						
-						tree[index].title = newname;
-						tree = this.mergeNode( tree );
-						needToRemoveAndAdd = false;
 					}
-				}
-			} 
+				} 
+			}
 			if( needToRemoveAndAdd ) {
 				// At this point, we need to alter the structure - get the node, remove from hierarchy, then re-insert it.
 				var node = this.getNode(tree,name);
 				if( node ) {
 					tree = this.removeNode(tree,name);
-					tree = this.addNode(tree,newname,node);
+					if( newname ) {
+						tree = this.addNode(tree,newname,node);						
+					} else if( node.children ) {
+						var i;
+						for( i = 0 ; i < node.children.length ; ++i ) {
+						   tree = this.addNode(tree,node.children[i].title,node.children[i]);
+						}												
+					}
 				}
 			}
 		}
@@ -447,21 +474,26 @@ module.exports = function (config) {
 					tree = this.moveNode(tree,config.editTOC.move[i].from,config.editTOC.move[i].to);
 				}
 			}
+			// Merge node named '/' into root ) (allows for '/' to be a placeholder for move folders to root)
+			//for( j = 0 ; j <  tree.length ; ++j ) {
+			//	if( tree[j].title = '/' && !tree[j].path ) {
+			//		var addChildren = tree[j].children; 
+			//		tree.splice(j,1);
+			//		tree = tree.concat(addChildren);
+			//		break;
+			//	}
+			//} 
 			// Prune empty sections --
 			for( i = tree.length-1 ; i >= 0 ; --i ) {
 				if( !tree[i].path && !tree[i].toc && !tree[i].children ) {
 					tree.splice(i,1);
+				} else if( !tree[i].path && !tree[i].toc ) {
+					if( tree[i].children.length == 0 )
+						 tree.splice(i,1);
+				} else if( !tree[i].children ) {
+					console.log("Warning - empty branch detected "+tree[i].title);
 				}
 			}
-			// Merge node named '/' into root ) (allows for '/' to be a placeholder for move folders to root)
-			for( i = 0 ; i <  tree.length ; ++i ) {
-				if( tree[i].title = '/' && !tree[i].path ) {
-					var addChildren = tree[i].children; 
-					tree.splice(i,1);
-					tree = tree.concat(addChildren);
-					break;
-				}
-			} 
 		}		
 		tree = this.sortTree(tree);			
 		if (hasSubToc) {
