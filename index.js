@@ -165,7 +165,8 @@ module.exports = function (config) {
           repoSource: configDef.repoSource ? configDef.repoSource : config.repoSource,
           isAdmin: configDef.isAdmin ? configDef.isAdmin : config.isAdmin,
           responseHeader: configDef.responseHeader ? configDef.responseHeader : config.responseHeader ,
-          editTOC: configDef.editTOC ? configDef.editTOC : config.editTOC
+          editTOC: configDef.editTOC ? configDef.editTOC : config.editTOC,
+          topPage:  configDef.topPage ? configDef.topPage : config.topPage
         };
         // Collect all the filters - first occurence of every type (this is for building refresh lists)...
         if (configDef.filter_name && configDef.filter && !filters[configDef.filter_name]) {
@@ -434,7 +435,7 @@ module.exports = function (config) {
 
           var tree = lu.treeFromList(results);          
           lu.createIndexPages(tree,topicsPath,cfg.filter_name+".html");
-          var treeUL = lu.treeToUL(tree);
+          var treeUL = lu.treeToUL(tree.children);
 
           console.log('Saving filtered list...');
 

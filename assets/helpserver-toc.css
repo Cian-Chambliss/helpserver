@@ -198,11 +198,13 @@ cursor: default;
 #TOC  li {
 margin:0px;
 margin-left:5px;
+font: 14px tahoma, arial;
 }
 #TOC  li div {
 margin-left: 24px;
 padding: 4px;
 position: relative;
+font: 14px tahoma, arial;
 }
 #TOC  li div:hover {
 background: rgba(44,62,80,.25);

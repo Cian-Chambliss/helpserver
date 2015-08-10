@@ -111,7 +111,10 @@ module.exports = function (config, data, page, callbackPage) {
 					if (tocDiv >= 0) {
 						if (tocDepth > 0) {
 							var parentTree = tocStack[tocDepth - 1];
-							parentTree[parentTree.length - 1].children = tocStack[tocDepth];
+							if( parentTree.length > 0 ) 
+							{
+								parentTree[parentTree.length - 1].children = tocStack[tocDepth];
+							}
 						} else {
 							subTOC = tocStack[0];
 						}

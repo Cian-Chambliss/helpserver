@@ -14,6 +14,7 @@ var helpServer = {
   checkedItems: [],
   onCheckChanged: null,
   followNavigation: null,
+  defaultPage : null ,
   findMetadata: function (el) {
     for (var i = 0; i < el.childNodes.length; i++) {
       var node = el.childNodes[i];
@@ -64,6 +65,8 @@ var helpServer = {
                 }
             }
       }
+      if( !pageToGet && helpServer.defaultPage )
+          pageToGet = helpServer.defaultPage; 
       if( pageToGet ) {
         elemHelpPage.innerHTML = "Loading " + path + "...";
         xmlhttp.onload = function () {
@@ -425,7 +428,19 @@ var helpServer = {
 			}
 		}
 		return txt;
-	}  
+	},  
+  setDefaultPage: function(path) {
+    if( helpServer.defaultPage != path ) {
+      if( path === "" )
+          path = null; 
+      helpServer.defaultPage = path; 
+      var path = "";
+      if (window.location.hash)
+        path = window.location.hash.substring(1);
+      if( path === "" )  
+          helpServer.loadHelpDiv(path);
+    }
+  }
 };
 
 

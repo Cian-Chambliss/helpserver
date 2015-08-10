@@ -498,8 +498,14 @@ module.exports = function (config) {
 		tree = this.sortTree(tree);			
 		if (hasSubToc) {
 			tree = this.expandSubToc(tree);
-		}		
-		return tree;
+		}
+		if( config.topPage ) {
+			var topPagePath = config.topPage;
+			if( topPagePath.substring(0,1) !== "/" )
+			    topPagePath = "/" + topPagePath;
+			return { title : "/" , path : topPagePath , children : tree };
+		}
+		return { title : "/" , children : tree };
 	};
 
 	// Convert a 'tree' into ul list html

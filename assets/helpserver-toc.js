@@ -314,7 +314,7 @@ var tableOfContents = {
 			ulList += "</ul>\n";
 			return ulList;
 		};
-		this.tocEle.innerHTML = buildTree(this.tocData, true);
+		this.tocEle.innerHTML = buildTree(this.tocData.children, true);
 		if (window.location.hash != '') {
 			var path = window.location.hash.substring(1);
 			tableOfContents.setSelectedPage(path);
@@ -335,7 +335,10 @@ var tableOfContents = {
 		xmlhttp.onload = function () {
 			if (this.status == 200) {
 				tableOfContents.tocData = JSON.parse(xmlhttp.responseText);
-				tableOfContents.repopulateFromData();
+				tableOfContents.repopulateFromData();				
+			    if( tableOfContents.tocData.path ) {
+					  helpServer.setDefaultPage( tableOfContents.tocData.path );					
+				}				
 			}
 		};
 		xmlhttp.open("GET", command, true);
