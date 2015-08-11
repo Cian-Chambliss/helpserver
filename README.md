@@ -59,6 +59,54 @@ help page contains this
 ```
 
 Then helpserver will add child tags of 'Intro', 'Api' with children 'Query' and 'Retrieve Metadata' for the help page.
+
+## The 'editTOC' page
+
+The editToc setting points to a help page in the help folder that will be displayed on the documentation page when no sections are selected.
+
+Using helperserver_toc in the top level page changes the structure at the top - in addition to an id, the anchor tags in the **li** tags support 
+an attribute of 'helpserver_folder' to include branches of the tree.
+
+For example, if you had a folder structure of your help system like this:
+
+```
+/help/Guide
+/help/Tutorial
+/help/Tutorial/Hello World
+/help/Tutorial/Complex Application
+/help/API
+/help/API/Client-Side
+/help/API/Server-Side
+```  
+And a main help page called "main.html" that was assigned through having the "editToc" set to "main.html" in the settings file.
+The leaf nodes of the ui/li tree that have helpserver_folder will get populated with the specified branch of help - if there are folder beneath a level,
+the folders will be added recursively.
+  
+```html
+contents of /help/main.html
+<div class="helperserver_toc" >
+   <ul>
+     <li><a href="#/Guide" helpserver_folder="/Guide" >Guide</a> </li>
+     <li><a href="#/Tutorial" helpserver_folder="/Tutorial" >Tutorials</a> </li>
+     <li><a href="#/API">API</a>
+       <ul>
+          <li><a href="#/API/Client-Side"  helpserver_folder="/API/Client-Side">Client Side API</a> </li>
+          <li><a href="#/API/Server-Side"  helpserver_folder="/API/Server0-Side">Server Side API</a> </li>
+       </ul>     
+     </li>
+   </ul>
+</div>
+<h1 name="/Guide" >Guide</h1>
+The guide will give you an overview of the features.
+<h1 name="/Tutorial" >Tutorials</h1>
+The Tutorials will provide hands on experience with the product.
+<h1 name="/API" >Client and Server side API</h1>
+There are different APIs for the client side and the server side.
+<h1 name="/Client-Side" >Client Side API</h1>
+API's that you can program on the client side using HTML5 & javascript
+<h1 name="/Server-Side" >Server Side API</h1>
+API's you can use of the Server side for business logic
+```
   
   
 ## API
@@ -153,6 +201,7 @@ The helpserver class requires some initialization parameters, which include
  - webhookSecret: (optional) secret for webhook.
  - configurations : (optional) - different filters / handlers.
    * In the example at the bottom, the help page path is /novice/main  and /expert/main for displaying easy pages, or easy+expert pages,  admin allows refresh and setmetadata calls, which are otherwise not authorized.
+ - topPage : (optional) - Top page to display when nothing is selected in the table of contents.  (a helperserver_toc section can be used to redefine the top level of the table of contents for documentation).   
  - editTOC : (optional) - remove or move branches from the table of contents.
    * remove - array of strings.
    * move - Move (or rename) a branch, useful for array of objects with properties "from" and "to".  
@@ -349,6 +398,7 @@ help.status(function (stats) {
 
 ## Release History
 
+* 1.0.48 Added setting for top level 'overview' of table of contents. 
 * 1.0.47 Cleanup of handling for copy entries to root (elimiate levels of tree) 
 * 1.0.46 CSS style sheet changes to cause helperserver_toc to be hidden.
 * 1.0.45 Added slight indent to TOC style + fixed breadcrumb display for subtoc 
