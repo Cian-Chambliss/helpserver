@@ -59,13 +59,20 @@ var helpServer = {
                 pageToGet = null;            
                 if( subElemId ) {
                     var subEle = document.getElementsByName(subElemId);
-                    if( subEle ) {
+                    if( subEle && subEle.length > 0 ) {
                         subEle[0].scrollIntoView();
+                    } else {
+                        setTimeout(function() {
+                          // in case DOM was not ready...
+                          var subEle = document.getElementsByName(subElemId);
+                          if( subEle && subEle.length > 0 ) {
+                              subEle[0].scrollIntoView();
+                          }                         
+                        },500);
                     }
                 }
             }
-      }
-      if( !pageToGet && helpServer.defaultPage )
+      } else if( !pageToGet && helpServer.defaultPage )
           pageToGet = helpServer.defaultPage; 
       if( pageToGet ) {
         elemHelpPage.innerHTML = "Loading " + path + "...";

@@ -61,6 +61,7 @@ module.exports = function (config, data, page, callbackPage) {
 		var tocDiv = -1;
 		var tocDepth = -1;
 		var tocHash = null;
+		var childBranch = null;
 		var subTOC = null;
 		var tocStack = [];
 
@@ -75,6 +76,9 @@ module.exports = function (config, data, page, callbackPage) {
 						}
 					} else if( attribs.href.substr(0,11) != 'javascript:' ) {
 						deps.href.push(normalizeREF(page.path,attribs.href));
+					}
+					if( attribs.helpserver_folder ) {						
+						childBranch = attribs.helpserver_folder;
 					}
 				} else if (name === "img" && attribs.src) {
 					deps.images.push(normalizeREF(page.path,attribs.src));
@@ -96,9 +100,16 @@ module.exports = function (config, data, page, callbackPage) {
 			ontext: function (text) {
 				if (config.search)
 					plainText += stringJs(stringJs(text).decodeHTMLEntities().s);
-				if (tocHash) {
-					tocStack[tocDepth].push({ title: stringJs(text).decodeHTMLEntities().s, hash: tocHash });
+				if (tocHash || childBranch ) {
+					if (tocHash && childBranch ) {
+  						tocStack[tocDepth].push({ title: stringJs(text).decodeHTMLEntities().s, hash: tocHash , childBranch : childBranch });
+					} else if( childBranch ) {
+  						tocStack[tocDepth].push({ title: stringJs(text).decodeHTMLEntities().s, childBranch : childBranch });
+					} else {
+						tocStack[tocDepth].push({ title: stringJs(text).decodeHTMLEntities().s, hash: tocHash });
+					}
 					tocHash = null;
+					childBranch = null;
 				}
 			},
 			onclosetag: function (name) {

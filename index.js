@@ -166,7 +166,8 @@ module.exports = function (config) {
           isAdmin: configDef.isAdmin ? configDef.isAdmin : config.isAdmin,
           responseHeader: configDef.responseHeader ? configDef.responseHeader : config.responseHeader ,
           editTOC: configDef.editTOC ? configDef.editTOC : config.editTOC,
-          topPage:  configDef.topPage ? configDef.topPage : config.topPage
+          topPage:  configDef.topPage ? configDef.topPage : config.topPage,
+          topPageMetadata: null
         };
         // Collect all the filters - first occurence of every type (this is for building refresh lists)...
         if (configDef.filter_name && configDef.filter && !filters[configDef.filter_name]) {
@@ -418,7 +419,8 @@ module.exports = function (config) {
       async.eachSeries(filterNames, function (filterName, callbackLoop) {
         var cfg = filters[filterName];
         console.log('Generate filter for ' + filterName);
-        elasticquery(cfg, '', function (err, results) {
+        
+        var handleQueryResults = function (err, results) {
           if (err) {
             rememberErr = err;
             callbackLoop();
@@ -469,7 +471,19 @@ module.exports = function (config) {
               });
             });
           });
-        }, 0, 100000);
+        };
+        if( cfg.topPage && !cfg.topPageMetadata ) {
+            var manifestFile = config.generated + "manifest/_" + replaceAll(unescape(cfg.topPage), '/', '_').replace(".html", ".json");
+            fs.readFile(manifestFile, function (err, data) {
+              if( err )
+                 console.log("Error reading "+manifestFile);
+              if( !err && data && data !== "" )
+                 cfg.topPageMetadata = JSON.parse(data);
+               elasticquery(cfg, '', handleQueryResults , 0, 100000);
+            });
+        } else { 
+            elasticquery(cfg, '', handleQueryResults , 0, 100000);
+        }
       }, function () {
           if (rememberErr)
             callback(rememberErr, null);

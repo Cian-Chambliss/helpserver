@@ -303,7 +303,51 @@ module.exports = function (config) {
 		}
 		return tree;
 	};
-	
+	// This function will alter a tree structure to match the 'toc' structure - if path is missing, toc entry will be a leaf
+	ListUtilities.prototype.EditTreeUsingTOC = function  (tree,toc,topPage) {
+		var newTree = toc;
+		var listUtil = this;
+		var decorateNewTree = function (items) {
+			var i;
+			for( i = 0 ; i < items.length ; ++i ) {
+				if( items[i].hash ) {
+					items[i].path = "/"+topPage;
+				}
+				if( items[i].children ) {
+				   if( items[i].childBranch )
+				      console.log( "Child branch "+items[i].childBranch+" is not on a leaf - ignored." );
+				   decorateNewTree(items[i].children);
+				} else if( items[i].childBranch ) {
+					var levels = items[i].childBranch.trim().toLowerCase().split('/');
+					var j;
+					var treeNode = tree;
+					for( j = 0 ; j < levels.length ; ++j ) {
+						if( levels[j].length > 0 ) {
+							var treeNodeIndex = listUtil.findNode(treeNode,levels[j]);
+							if( treeNodeIndex >= 0 ) {
+							    treeNode = treeNode[treeNodeIndex].children;
+						    } else {
+								treeNode = null;
+								console.log("Not found  "+levels[j]);
+							    break;
+							}
+						}
+					}
+					if( treeNode ) {
+						items[i].children = treeNode;
+						console.log("Added child folder "+items[i].childBranch);
+					} else {
+						console.log("Missing child folder "+items[i].childBranch);
+					}
+					items[i].ignoreBreadcrumbs = true;
+					delete  items[i].childBranch;
+				}
+			}
+		};
+		decorateNewTree(newTree);
+		//tocStack[tocDepth].push({ title: stringJs(text).decodeHTMLEntities().s, hash: tocHash , childBranch : childBranch });
+		return newTree;		
+	};	
 	/*
 	var checkDuplicates = function(tree,message) {
 		var i , j;
@@ -474,15 +518,6 @@ module.exports = function (config) {
 					tree = this.moveNode(tree,config.editTOC.move[i].from,config.editTOC.move[i].to);
 				}
 			}
-			// Merge node named '/' into root ) (allows for '/' to be a placeholder for move folders to root)
-			//for( j = 0 ; j <  tree.length ; ++j ) {
-			//	if( tree[j].title = '/' && !tree[j].path ) {
-			//		var addChildren = tree[j].children; 
-			//		tree.splice(j,1);
-			//		tree = tree.concat(addChildren);
-			//		break;
-			//	}
-			//} 
 			// Prune empty sections --
 			for( i = tree.length-1 ; i >= 0 ; --i ) {
 				if( !tree[i].path && !tree[i].toc && !tree[i].children ) {
@@ -503,6 +538,13 @@ module.exports = function (config) {
 			var topPagePath = config.topPage;
 			if( topPagePath.substring(0,1) !== "/" )
 			    topPagePath = "/" + topPagePath;
+			if( config.topPageMetadata && config.topPageMetadata.toc ) {
+				// TBD hack the tree....
+				console.log("Page content re-organized using TOC from "+config.topPage );
+				tree = this.EditTreeUsingTOC(tree,config.topPageMetadata.toc,config.topPage);
+			} else {
+				console.log("Top page "+config.topPage+" has no TOC");
+			}
 			return { title : "/" , path : topPagePath , children : tree };
 		}
 		return { title : "/" , children : tree };
