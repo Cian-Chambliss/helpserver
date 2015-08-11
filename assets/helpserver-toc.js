@@ -301,7 +301,12 @@ var tableOfContents = {
 					ulList += "<li class=\"leaf\" >";
 				}
 				if (res[i].path) {
-					if (res[i].hash)
+					if(	res[i].ignoreBreadcrumbs ) {
+						if (res[i].hash)
+							ulList += "<div id=\"" + res[i].path + "#" + res[i].hash + "\" ignoreBreadcumbs=\"true\" >" + res[i].title + "</div>";
+						else
+							ulList += "<div id=\"" + res[i].path + "\" ignoreBreadcumbs=\"true\" >" + res[i].title + "</div>";
+				    } else if (res[i].hash)
 						ulList += "<div id=\"" + res[i].path + "#" + res[i].hash + "\">" + res[i].title + "</div>";
 					else
 						ulList += "<div id=\"" + res[i].path + "\">" + res[i].title + "</div>";
@@ -400,6 +405,7 @@ var tableOfContents = {
 			 && elem.parentElement.parentElement 
 			 && elem.parentElement.parentElement.previousElementSibling
 			 && elem.parentElement.parentElement.previousElementSibling.id
+			 && elem.parentElement.parentElement.previousElementSibling.getAttribute("ignoreBreadcumbs") !== "true" 
 			  ) {
 				 var prefix = elem.parentElement.parentElement.previousElementSibling.id;
 				 var extnPos = prefix.lastIndexOf('.');
@@ -410,7 +416,7 @@ var tableOfContents = {
 						 prefix = tableOfContents.getBreadcrumbsLow(elem.parentElement.parentElement.previousElementSibling);
 					 } 
 				 } 
-			     fullPath = prefix + "/" + fullPath;
+		     	fullPath = prefix + "/" + fullPath;
 			}
 		}
 		return fullPath;

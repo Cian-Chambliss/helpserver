@@ -342,9 +342,9 @@ module.exports = function (config) {
 					} else {
 						console.log("Missing child folder "+items[i].childBranch);
 					}
-					items[i].ignoreBreadcrumbs = true;
 					delete  items[i].childBranch;
 				}
+				items[i].ignoreBreadcrumbs = true;
 			}
 		};
 		decorateNewTree(newTree);
