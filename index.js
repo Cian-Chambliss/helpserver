@@ -905,6 +905,14 @@ module.exports = function (config) {
           res.send(JSON.stringify([{ 'error': err }]));
         } else {
           hlp.onSendExpress(res);
+          var i = 0;
+          if( data.length > 0 ) {
+            var ListUtilities = require('./listutilities');
+            var lu = new ListUtilities(config);
+            for( i = 0 ; i < data.length ; ++i ) {
+               data[i].title = lu.removeDigitPrefix(data[i].title); 
+            }
+          }
           res.send(JSON.stringify(data));
         }
       } , offset , limit );

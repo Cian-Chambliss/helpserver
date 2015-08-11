@@ -40,6 +40,9 @@ module.exports = function (config) {
 		}
 		return title;
 	};
+	ListUtilities.prototype.removeDigitPrefix = function (title) {
+		return removeNumericPrefix(title);
+	};
 	ListUtilities.prototype.sortTree = function (tree) {
 		var i = 0;
 		for (i = 0; i < tree.length; ++i) {
