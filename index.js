@@ -472,7 +472,7 @@ module.exports = function (config) {
             });
           });
         };
-        if( cfg.topPage && !cfg.topPageMetadata ) {
+        if( cfg.topPage ) {
             var manifestFile = config.generated + "manifest/_" + replaceAll(unescape(cfg.topPage), '/', '_').replace(".html", ".json");
             fs.readFile(manifestFile, function (err, data) {
               if( err )

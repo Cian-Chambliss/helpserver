@@ -65,12 +65,14 @@ Then helpserver will add child tags of 'Intro', 'Api' with children 'Query' and 
 The editToc setting points to a help page in the help folder that will be displayed on the documentation page when no sections are selected.
 
 Using helperserver_toc in the top level page changes the structure at the top - in addition to an id, the anchor tags in the **li** tags support 
-an attribute of 'helpserver_folder' to include branches of the tree.
+an attribute of 'helpserver_folder' to include branches of the tree.  another optional attribute called helperserver_flatten will automatically flatten 
+folders with 'helperserver_flatten' or fewer entries.
 
 For example, if you had a folder structure of your help system like this:
 
 ```
 /help/Guide
+/help/Guide/HasOnePage
 /help/Tutorial
 /help/Tutorial/Hello World
 /help/Tutorial/Complex Application
@@ -81,12 +83,16 @@ For example, if you had a folder structure of your help system like this:
 And a main help page called "main.html" that was assigned through having the "editToc" set to "main.html" in the settings file.
 The leaf nodes of the ui/li tree that have helpserver_folder will get populated with the specified branch of help - if there are folder beneath a level,
 the folders will be added recursively.
-  
+
+The helperserver_flatten=1 on the Guide ensures that the folder HasOnePage (which in this example contains a single help page) will be removed from the
+table of contents and treated as a sibling of the other pages in Guide.  Not surprisingly, if we used  helperserver_flatten=2, then a folder with two of
+fewer help pages would have been 'flattened' into the parent level.
+
 ```html
 contents of /help/main.html
 <div class="helperserver_toc" >
    <ul>
-     <li><a href="#/Guide" helpserver_folder="/Guide" >Guide</a> </li>
+     <li><a href="#/Guide" helpserver_folder="/Guide" helperserver_flatten="1" >Guide</a> </li>
      <li><a href="#/Tutorial" helpserver_folder="/Tutorial" >Tutorials</a> </li>
      <li><a href="#/API">API</a>
        <ul>
@@ -398,6 +404,7 @@ help.status(function (stats) {
 
 ## Release History
 
+* 1.0.49 Added support for new helperserver_flatten function, don't cache the metadata for the top level page (always re-read).
 * 1.0.48 Added setting for top level 'overview' of table of contents. 
 * 1.0.47 Cleanup of handling for copy entries to root (elimiate levels of tree) 
 * 1.0.46 CSS style sheet changes to cause helperserver_toc to be hidden.

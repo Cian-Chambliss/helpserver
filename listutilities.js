@@ -306,6 +306,48 @@ module.exports = function (config) {
 		}
 		return tree;
 	};
+	ListUtilities.prototype.FlattenBranches = function  (tree,childrenFlatten) {
+		var flatTree = [];
+		var i;
+		if( tree.length <= childrenFlatten ) {
+			// If count of entries is under the threshhold, lets re-order the tree 
+			for( i = 0 ; i < tree.length ; ++i ) {
+				if( tree[i].children && !tree[i].path ) {
+					// Merge parents without content into the tree...
+					flatTree = flatTree.concat( this.FlattenBranches(tree[i].children,childrenFlatten));
+				} else {
+					flatTree.push(tree[i]);
+				}		
+			}
+			tree = flatTree;
+		} else {
+			// Else recurse...
+			var needFlattenPass = false;
+			for( i = 0 ; i < tree.length ; ++i ) {
+				if( tree[i].children ) {
+					tree[i].children = this.FlattenBranches(tree[i].children,childrenFlatten);
+					if( !tree[i].path ) {
+						if( tree[i].children.length <= childrenFlatten ) {
+							needFlattenPass = true;
+						}						
+					}
+				}
+			}
+			// And if we find children that can be merged up, do so... 
+			if( needFlattenPass ) {
+				for( i = 0 ; i < tree.length ; ++i ) {
+					if( tree[i].children && tree[i].children.length <= childrenFlatten && !tree[i].path ) {
+						// Merge parents without content into the tree...
+						flatTree = flatTree.concat( this.FlattenBranches(tree[i].children,childrenFlatten));
+					} else {
+						flatTree.push(tree[i]);
+					}		
+				}
+				tree = flatTree;				
+			}
+		}
+		return tree;
+	}
 	// This function will alter a tree structure to match the 'toc' structure - if path is missing, toc entry will be a leaf
 	ListUtilities.prototype.EditTreeUsingTOC = function  (tree,toc,topPage) {
 		var newTree = toc;
@@ -337,7 +379,11 @@ module.exports = function (config) {
 						}
 					}
 					if( treeNode ) {
-						items[i].children = treeNode;
+						if( items[i].childFlatten ) {
+							items[i].children = listUtil.FlattenBranches(treeNode,items[i].childFlatten);
+						} else {
+							items[i].children = treeNode;
+						}
 						console.log("Added child folder "+items[i].childBranch);
 					} else {
 						console.log("Missing child folder "+items[i].childBranch);

@@ -62,6 +62,7 @@ module.exports = function (config, data, page, callbackPage) {
 		var tocDepth = -1;
 		var tocHash = null;
 		var childBranch = null;
+		var childFlattenValue = null;
 		var subTOC = null;
 		var tocStack = [];
 
@@ -79,7 +80,12 @@ module.exports = function (config, data, page, callbackPage) {
 					}
 					if( attribs.helpserver_folder ) {						
 						childBranch = attribs.helpserver_folder;
-					}
+						if( attribs.helpserver_flatten ) {
+							childFlattenValue = parseInt(attribs.helpserver_flatten);
+							if( childFlattenValue === NaN )
+							    childFlattenValue = null;
+						}
+					}					
 				} else if (name === "img" && attribs.src) {
 					deps.images.push(normalizeREF(page.path,attribs.src));
 				} else if (name === "div") {
@@ -102,14 +108,21 @@ module.exports = function (config, data, page, callbackPage) {
 					plainText += stringJs(stringJs(text).decodeHTMLEntities().s);
 				if (tocHash || childBranch ) {
 					if (tocHash && childBranch ) {
-  						tocStack[tocDepth].push({ title: stringJs(text).decodeHTMLEntities().s, hash: tocHash , childBranch : childBranch });
+						if( childFlattenValue && childFlattenValue > 0 ) 
+							tocStack[tocDepth].push({ title: stringJs(text).decodeHTMLEntities().s, hash: tocHash , childBranch : childBranch , childFlatten : childFlattenValue });
+						else
+  							tocStack[tocDepth].push({ title: stringJs(text).decodeHTMLEntities().s, hash: tocHash , childBranch : childBranch });
 					} else if( childBranch ) {
-  						tocStack[tocDepth].push({ title: stringJs(text).decodeHTMLEntities().s, childBranch : childBranch });
+						if( childFlattenValue && childFlattenValue > 0 )
+  							tocStack[tocDepth].push({ title: stringJs(text).decodeHTMLEntities().s, childBranch : childBranch , childFlatten : childFlattenValue });
+					     else		  
+  							tocStack[tocDepth].push({ title: stringJs(text).decodeHTMLEntities().s, childBranch : childBranch });
 					} else {
 						tocStack[tocDepth].push({ title: stringJs(text).decodeHTMLEntities().s, hash: tocHash });
 					}
 					tocHash = null;
 					childBranch = null;
+					childFlattenValue = null;
 				}
 			},
 			onclosetag: function (name) {
