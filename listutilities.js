@@ -325,6 +325,18 @@ module.exports = function (config) {
 			var needFlattenPass = false;
 			for( i = 0 ; i < tree.length ; ++i ) {
 				if( tree[i].children ) {
+					if( !tree[i].path ) {
+						// propogate deep titles on singletons to the top node
+						if( tree[i].children.length == 1 ) {
+						    var singleTon = tree[i].children[0];
+							if( !singleTon.path && singleTon.children ) {
+								while( singleTon.children.length == 1 && !singleTon.children[0].path ) {
+									singleTon = singleTon.children[0];
+								}
+								tree[i].title = singleTon.title; 
+							}							
+						}
+					}
 					tree[i].children = this.FlattenBranches(tree[i].children,childrenFlatten);
 					if( !tree[i].path ) {
 						if( tree[i].children.length <= childrenFlatten ) {

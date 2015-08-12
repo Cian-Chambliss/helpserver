@@ -404,6 +404,7 @@ help.status(function (stats) {
 
 ## Release History
 
+* 1.0.50 Changed helperserver_flatten to propogate the deepest 'singleton' title - this removes unused 'general' titles. 
 * 1.0.49 Added support for new helperserver_flatten function, don't cache the metadata for the top level page (always re-read).
 * 1.0.48 Added setting for top level 'overview' of table of contents. 
 * 1.0.47 Cleanup of handling for copy entries to root (elimiate levels of tree) 
