@@ -338,9 +338,30 @@ module.exports = function (config) {
       acceptEncoding = '';
     }
     // If caller accepts 'deflated' files
-    if (acceptEncoding.match(/\bdeflate\b/)) {
-      // .. First look for .gz file
-      fs.readFile(filename + '.gz', function (err, data) {
+    if (acceptEncoding.match(/\bgzip\b/)) {
+      fs.readFile(filename + '.gzip', function (err, data) {
+        if (!err) {
+          callback(err, data, 'gzip');
+        } else {
+          // fallback to the source file
+          if (acceptEncoding.match(/\bdeflate\b/)) {
+                // .. First look for .deflate file
+                fs.readFile(filename + '.deflate', function (err, data) {
+                  if (!err) {
+                    callback(err, data, 'deflate');
+                  } else {
+                    // fallback to the source file
+                    fs.readFile(filename, 'utf8', function (err, data) {
+                      callback(err, data, null);
+                    });
+                  }
+                });
+              }
+        }
+      });
+    } else if (acceptEncoding.match(/\bdeflate\b/)) {
+      // .. First look for .deflate file
+      fs.readFile(filename + '.deflate', function (err, data) {
         if (!err) {
           callback(err, data, 'deflate');
         } else {
@@ -450,20 +471,30 @@ module.exports = function (config) {
             treeUL = templateData.replace("{{placeholder}}", treeUL);
             fs.writeFile(cfg.generated + cfg.filter_name + cfg.htmlfile, treeUL, function (err) {
               zlib.deflate(treeUL, function (err, packeddata) {
-                fs.writeFile(cfg.generated + cfg.filter_name + cfg.htmlfile + '.gz', packeddata, function (err) {
+                fs.writeFile(cfg.generated + cfg.filter_name + cfg.htmlfile + '.deflate', packeddata, function (err) {
                   if (err) {
                     rememberErr = err;
                     callbackLoop();
                     return;
                   }
                   var jsonString = JSON.stringify(tree);
+                  console.log('Zipping json...');
                   fs.writeFile(cfg.generated + cfg.filter_name + cfg.structurefile, jsonString, function (err) {
                     zlib.deflate(jsonString, function (err, packeddata2) {
-                      fs.writeFile(cfg.generated + cfg.filter_name + cfg.structurefile + ".gz", packeddata2, function (err) {
+                      console.log('DEFLATE...');
+                      fs.writeFile(cfg.generated + cfg.filter_name + cfg.structurefile + ".deflate", packeddata2, function (err) {
                         if (err) {
                           rememberErr = err;
                         }
-                        callbackLoop();
+                        zlib.gzip(jsonString, function (err, packeddata3) {
+                             console.log('GZIP...');
+                             fs.writeFile(cfg.generated + cfg.filter_name + cfg.structurefile + ".gzip", packeddata3, function (err) {
+                                if (err) {
+                                  rememberErr = err;
+                                }
+                                 callbackLoop();
+                             });
+                        });
                       });
                     });
                   });
