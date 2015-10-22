@@ -63,9 +63,10 @@ module.exports = function (config, data, page, callbackPage) {
 		var tocHash = null;
 		var childBranch = null;
 		var childFlattenValue = null;
+		var tocAbsolutePath = null;
 		var subTOC = null;
 		var tocStack = [];
-
+		
 		var parser = new htmlparser.Parser({
 			onopentag: function (name, attribs) {
 				if (name === "a" && attribs.href) {
@@ -75,6 +76,8 @@ module.exports = function (config, data, page, callbackPage) {
 								tocHash = attribs.href.substring(1);
 							}
 						}
+					} else if (attribs.href.substring(0, 1) == '/' ) {
+						tocAbsolutePath = attribs.href;
 					} else if( attribs.href.substr(0,11) != 'javascript:' ) {
 						deps.href.push(normalizeREF(page.path,attribs.href));
 					}
@@ -113,14 +116,22 @@ module.exports = function (config, data, page, callbackPage) {
 						else
   							tocStack[tocDepth].push({ title: stringJs(text).decodeHTMLEntities().s, hash: tocHash , childBranch : childBranch });
 					} else if( childBranch ) {
-						if( childFlattenValue && childFlattenValue > 0 )
-  							tocStack[tocDepth].push({ title: stringJs(text).decodeHTMLEntities().s, childBranch : childBranch , childFlatten : childFlattenValue });
-					     else		  
-  							tocStack[tocDepth].push({ title: stringJs(text).decodeHTMLEntities().s, childBranch : childBranch });
+						if( tocAbsolutePath ) {
+							if( childFlattenValue && childFlattenValue > 0 ) 
+								tocStack[tocDepth].push({ title: stringJs(text).decodeHTMLEntities().s, path: tocAbsolutePath , childBranch : childBranch , childFlatten : childFlattenValue });
+							else
+								tocStack[tocDepth].push({ title: stringJs(text).decodeHTMLEntities().s, path: tocAbsolutePath , childBranch : childBranch });
+						} else {
+							if( childFlattenValue && childFlattenValue > 0 )
+								tocStack[tocDepth].push({ title: stringJs(text).decodeHTMLEntities().s, childBranch : childBranch , childFlatten : childFlattenValue });
+							else		  
+								tocStack[tocDepth].push({ title: stringJs(text).decodeHTMLEntities().s, childBranch : childBranch });
+						}						 
 					} else {
 						tocStack[tocDepth].push({ title: stringJs(text).decodeHTMLEntities().s, hash: tocHash });
 					}
 					tocHash = null;
+					tocAbsolutePath = null;
 					childBranch = null;
 					childFlattenValue = null;
 				}

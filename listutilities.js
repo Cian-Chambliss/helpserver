@@ -482,6 +482,15 @@ module.exports = function (config) {
 					branch = currentBranch.children;
 				}
 			}
+			// Lets skip index.html - these should be brought to the parent node...
+			if( item.path.indexOf("/index.html") > 0 ) {
+				if( currentBranch ) {
+					if( !currentBranch.path ) {
+						currentBranch.path = item.path;
+					}
+				}
+				continue;
+			}			
 			if (itemgroup) {
 				var itemGroups = itemgroup.split('/');
 				var ig;

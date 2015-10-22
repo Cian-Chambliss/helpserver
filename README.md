@@ -404,6 +404,7 @@ help.status(function (stats) {
 
 ## Release History
 
+* 1.0.52 Added filtering of index.html, which is assumed to represent the 'parent' (i.e. folder) node.
 * 1.0.51 Added support for both gzip & deflate (microsoft edge doesn't appear to work with deflate even though it has the accept header) 
 * 1.0.50 Changed helperserver_flatten to propogate the deepest 'singleton' title - this removes unused 'general' titles. 
 * 1.0.49 Added support for new helperserver_flatten function, don't cache the metadata for the top level page (always re-read).
