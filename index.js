@@ -15,7 +15,8 @@ module.exports = function (config) {
   var configurationObjects = {}; // Child configuration objects
   var filters = {};
   var assets = {};
-  var defaultFilter = config.defaultFilter || '_all'; 
+  var defaultFilter = config.defaultFilter || '_all';
+  var serverHealth = { refreshCount : 0 , busyInRefresh : false , gitResult : "None" , gitPullCount : 0 , whoCalled : "" }; 
 
   var loadAssetUTF8 = function (name, callback) {
     if (assets[name]) {
@@ -578,8 +579,11 @@ module.exports = function (config) {
       updatesource(config, function (err, result) {
         if (err) {
           console.log('Update did not work ' + err);
+          serverHealth.gitResult = 'Update did not work ' + err;
         } else {
           console.log('Update succeeded!');
+          serverHealth.gitResult = 'Update succeeded!';
+          serverHealth.gitPullCount++;
           rebuildContent(help);
         }
       });
@@ -950,12 +954,15 @@ module.exports = function (config) {
     },
 
     "refresh": function (hlp, path, req, res) {
-      if (hlp.isAdmin()) {
+      if (hlp.isAdmin() || req.connection.remoteAddress == "::ffff:127.0.0.1" ) {
         if (req.method == 'POST') {
+          serverHealth.refreshCount++;
           if (!global.refresh_locked) {
+            serverHealth.busyInRefresh = true;
             global.refresh_locked = true;
             hlp.refresh(function (err, result) {
               global.refresh_locked = false;
+              serverHealth.busyInRefresh = false;
               res.end("complete");
             });
           } else {
@@ -973,12 +980,12 @@ module.exports = function (config) {
           });
         }
       } else {
-        res.status(401).send('Not authorized');
+        res.status(401).send('Not authorized from '+req.connection.remoteAddress);
       }
     },
     "metadata": function (hlp, path, req, res) {
       if (req.method == 'POST') {
-        if (hlp.isAdmin()) {
+        if (hlp.isAdmin() ) {
           if (req.body) {
             hlp.setmetadata(path, req.body, function (data) {
               hlp.onSendExpress(res);
@@ -1002,6 +1009,12 @@ module.exports = function (config) {
           res.type('json');
           hlp.onSendExpress(res);
           res.send(JSON.stringify( { escapes : config.escapes , keywords : config.keywords }));
+    },
+    "diag": function(hlp, path, req, res) {
+          res.type('json');
+          hlp.onSendExpress(res);
+          serverHealth.whoCalled = req.connection.remoteAddress;
+          res.send(JSON.stringify( serverHealth ));      
     }
   };
    
