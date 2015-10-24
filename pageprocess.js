@@ -36,17 +36,19 @@ module.exports = function (config, data, page, callbackPage) {
 	}
 	if (config.metadata) {
 		var textData = data;
-		if (!textData.indexOf)
+		if( !textData.indexOf || !textData.substr )
 			textData = textData.toString('utf8');
 		var metadataAt = textData.indexOf('<!---HELPMETADATA:');
 		if (metadataAt > -1) {
-			var metadataJson = textData.substr(metadataAt + 18);
-			var metadataEnd = metadataJson.indexOf('--->');
-			if (metadataEnd > -1)
-				metadataJson = metadataJson.substring(0, metadataEnd);
-			try {
-				page.metadata = JSON.parse(metadataJson);
-			} catch (err) {
+			if( textData.substr ) {
+				var metadataJson = textData.substr(metadataAt + 18);
+				var metadataEnd = metadataJson.indexOf('--->');
+				if (metadataEnd > -1)
+					metadataJson = metadataJson.substring(0, metadataEnd);
+				try {
+					page.metadata = JSON.parse(metadataJson);
+				} catch (err) {
+				}
 			}
 		}
 		if (page.metadata)
