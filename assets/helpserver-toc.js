@@ -11,6 +11,7 @@ var tableOfContents = {
 	tocData: null,
 	onCheckChanged: null,
 	disableScrollTo: null,
+	useLocalToc: null ,
 	setSelectedPage: function (navToId) {
 		var navTo = document.getElementById(navToId);
 		if (!navTo) {
@@ -49,6 +50,36 @@ var tableOfContents = {
 					navTo.scrollIntoView();
 			}
 			tableOfContents.populateBreadcrumbs();
+		} else if( !navTo ) {
+			// Lets check for change of TOC...
+			if( helpServer.pageHasLocalTOC ) {								
+				if( tableOfContents.useLocalToc != navToId ) {
+					var priorHelpServerToc = tableOfContents.useLocalToc;
+					tableOfContents.useLocalToc = navToId;					
+					var xmlhttp = new XMLHttpRequest();
+					xmlhttp.onload = function () {
+						if (this.status == 200) {
+							var jsonText = xmlhttp.responseText;
+							var localToc = {children:JSON.parse(jsonText)};
+							tableOfContents.completeLocalToc(localToc,navToId);
+							tableOfContents.repopulateFromData(localToc);
+						} else {
+							helpServer.pageHasLocalTOC = false;
+							tableOfContents.useLocalToc = null;
+							if( priorHelpServerToc && tableOfContents.tocData ) {
+								tableOfContents.repopulateFromData(tableOfContents.tocData);
+							}
+						}
+					};
+					xmlhttp.open("GET", "/structure" + navToId, true);
+					xmlhttp.send('');
+				}
+			} else {
+				if( tableOfContents.useLocalToc && tableOfContents.tocData ) {
+					tableOfContents.useLocalToc = null;
+					tableOfContents.repopulateFromData(tableOfContents.tocData);
+				}
+			}
 		}
 	},
 	tocLoaded: function () {
@@ -193,7 +224,7 @@ var tableOfContents = {
 						}
 					}
 					for (i = 0; i < resultList.length; ++i) {
-						html += "<a href=\"" + prefix + resultList[i].path + "\" target=\"_top\">" + resultList[i].title + "</a>";
+						html += "<a href=\"" + prefix + resultList[i].path + "\" target=\"_top\" id=\"search_"+resultList[i].path+"\">" + resultList[i].title + "</a>";
 					}
 					tableOfContents.searchMode = true;
 					var headerEle = document.getElementById('header');
@@ -290,36 +321,39 @@ var tableOfContents = {
 			}
 		}
 	},
-	repopulateFromData: function () {
+	repopulateFromData: function (_tocData) {
 		var buildTree = function (res, isOpen) {
-			var ulList = isOpen ? "<ul>\n" : "<ul style=\"display:none\">\n";
-			var i;
-			for (i = 0; i < res.length; ++i) {
-				if (res[i].children) {
-					ulList += "<li branch=\"true\" class=\"closed\" >";
-				} else {
-					ulList += "<li class=\"leaf\" >";
-				}
-				if (res[i].path) {
-					if(	res[i].ignoreBreadcrumbs ) {
-						if (res[i].hash)
-							ulList += "<div id=\"" + res[i].path + "#" + res[i].hash + "\" ignoreBreadcumbs=\"true\" >" + res[i].title + "</div>";
+			if( res && res.length ) {
+				var ulList = isOpen ? "<ul>\n" : "<ul style=\"display:none\">\n";
+				var i;
+				for (i = 0; i < res.length; ++i) {
+					if (res[i].children) {
+						ulList += "<li branch=\"true\" class=\"closed\" >";
+					} else {
+						ulList += "<li class=\"leaf\" >";
+					}
+					if (res[i].path) {
+						if(	res[i].ignoreBreadcrumbs ) {
+							if (res[i].hash)
+								ulList += "<div id=\"" + res[i].path + "#" + res[i].hash + "\" ignoreBreadcumbs=\"true\" >" + res[i].title + "</div>";
+							else
+								ulList += "<div id=\"" + res[i].path + "\" ignoreBreadcumbs=\"true\" >" + res[i].title + "</div>";
+						} else if (res[i].hash)
+							ulList += "<div id=\"" + res[i].path + "#" + res[i].hash + "\">" + res[i].title + "</div>";
 						else
-							ulList += "<div id=\"" + res[i].path + "\" ignoreBreadcumbs=\"true\" >" + res[i].title + "</div>";
-				    } else if (res[i].hash)
-						ulList += "<div id=\"" + res[i].path + "#" + res[i].hash + "\">" + res[i].title + "</div>";
-					else
-						ulList += "<div id=\"" + res[i].path + "\">" + res[i].title + "</div>";
-				} else
-					ulList += "<div>" + res[i].title + "</div>";
-				if (res[i].children)
-					ulList += buildTree(res[i].children, false);
-				ulList += "</li>\n"
+							ulList += "<div id=\"" + res[i].path + "\">" + res[i].title + "</div>";
+					} else
+						ulList += "<div>" + res[i].title + "</div>";
+					if (res[i].children)
+						ulList += buildTree(res[i].children, false);
+					ulList += "</li>\n"
+				}
+				ulList += "</ul>\n";
+				return ulList;
 			}
-			ulList += "</ul>\n";
-			return ulList;
+			return "";
 		};
-		this.tocEle.innerHTML = buildTree(this.tocData.children, true);
+		this.tocEle.innerHTML = buildTree(_tocData.children, true);
 		if (window.location.hash != '') {
 			var path = window.location.hash.substring(1);
 			tableOfContents.setSelectedPage(path);
@@ -340,7 +374,7 @@ var tableOfContents = {
 		xmlhttp.onload = function () {
 			if (this.status == 200) {
 				tableOfContents.tocData = JSON.parse(xmlhttp.responseText);
-				tableOfContents.repopulateFromData();				
+				tableOfContents.repopulateFromData(tableOfContents.tocData);
 			    if( tableOfContents.tocData.path ) {
 					  helpServer.setDefaultPage( tableOfContents.tocData.path );					
 				}				
@@ -348,6 +382,22 @@ var tableOfContents = {
 		};
 		xmlhttp.open("GET", command, true);
 		xmlhttp.send('');
+	},
+	completeLocalToc: function(_tocData,navToId) {
+		var processTree = function (res) {
+			if( res && res.length ) {
+				var i;
+				for (i = 0; i < res.length; ++i) {
+					if( !res[i].path )
+						res[i].path = navToId;
+					if( res[i].children)
+						processTree(res[i].children);
+				}
+			}
+		};
+		if( !_tocData.path )
+			_tocData.path = navToId;
+		processTree(_tocData.children);
 	},
 	selectCurrentTOC: function () {
 		if (tableOfContents.lastSelection) {

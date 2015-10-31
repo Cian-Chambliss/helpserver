@@ -15,6 +15,8 @@ var helpServer = {
   onCheckChanged: null,
   followNavigation: null,
   defaultPage : null ,
+  lastSearchSelected: null,
+  pageHasLocalTOC: false,
   findMetadata: function (el) {
     for (var i = 0; i < el.childNodes.length; i++) {
       var node = el.childNodes[i];
@@ -76,6 +78,7 @@ var helpServer = {
           pageToGet = helpServer.defaultPage; 
       if( pageToGet ) {
         elemHelpPage.innerHTML = "Loading " + path + "...";
+        helpServer.pageHasLocalTOC = false;
         xmlhttp.onload = function () {
           if (this.status == 200) {
             var htmlText = xmlhttp.responseText;
@@ -90,6 +93,11 @@ var helpServer = {
             var baseTagElement = document.getElementById("baseTag");
             baseTagElement.href = helpServer.baseTagHost+"/help" + path;
             elemHelpPage.innerHTML = htmlText;
+            var getLocalHelpToc = elemHelpPage.getElementsByClassName("helpserver_toc");
+            if( getLocalHelpToc && getLocalHelpToc.length > 0 ) {
+                helpServer.pageHasLocalTOC = true;
+                tableOfContents.setSelectedPage(path);
+            }
             helpServer.helpFrameLoad();
             if( subElemId ) {
                   var subEle = document.getElementsByName(subElemId);
@@ -252,6 +260,19 @@ var helpServer = {
   },
   onHashChange: function () {
     this.navigateToFragment();
+    if( window.location.hash.substr(0,1) == '#' ) {
+       var searchId = "search_"+window.location.hash.substr(1);
+       var searchSource = document.getElementById(searchId);
+       if( searchSource ) {
+           if( helpServer.lastSearchSelected && helpServer.lastSearchSelected != searchId ) {
+             var lastSearchSource = document.getElementById(helpServer.lastSearchSelected);
+             if( lastSearchSource )
+                 lastSearchSource.className = "";
+           }
+           searchSource.className = "searchSelected";
+           helpServer.lastSearchSelected = searchId;
+       }
+    }
   },
   helpFrameLoad: function () {
     var helpEle = document.getElementById('help');

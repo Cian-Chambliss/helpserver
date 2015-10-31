@@ -275,3 +275,7 @@ display: inline;
 color: #338;
 text-decoration: none;	
 }
+
+.searchSelected {
+	background-color: yellow;
+}
