@@ -267,7 +267,7 @@ var helpServer = {
            if( helpServer.lastSearchSelected && helpServer.lastSearchSelected != searchId ) {
              var lastSearchSource = document.getElementById(helpServer.lastSearchSelected);
              if( lastSearchSource )
-                 lastSearchSource.className = "";
+                 lastSearchSource.className = "searchUnselected";
            }
            searchSource.className = "searchSelected";
            helpServer.lastSearchSelected = searchId;

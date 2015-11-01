@@ -276,6 +276,14 @@ color: #338;
 text-decoration: none;	
 }
 
+.searchUnselected {
+font: 14px tahoma, arial;
+margin: 0px;
+padding: 0px;		
+}
 .searchSelected {
-	background-color: yellow;
+font: 14px tahoma, arial;
+margin: 0px;
+padding: 0px;
+background-color: yellow;
 }

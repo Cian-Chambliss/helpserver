@@ -404,6 +404,7 @@ help.status(function (stats) {
 
 ## Release History
 
+* 1.0.56 Cosmetic fixes  + pages with local TOC get local breadcrumbs 
 * 1.0.55 Added local table of contents and added selection of search items. 
 * 1.0.53 Added a server health endpoint called 'diag' (determine if updates are received and if busy processing updates).
 * 1.0.52 Added filtering of index.html, which is assumed to represent the 'parent' (i.e. folder) node.

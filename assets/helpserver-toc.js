@@ -12,6 +12,7 @@ var tableOfContents = {
 	onCheckChanged: null,
 	disableScrollTo: null,
 	useLocalToc: null ,
+	localTocData : null ,
 	setSelectedPage: function (navToId) {
 		var navTo = document.getElementById(navToId);
 		if (!navTo) {
@@ -60,9 +61,9 @@ var tableOfContents = {
 					xmlhttp.onload = function () {
 						if (this.status == 200) {
 							var jsonText = xmlhttp.responseText;
-							var localToc = {children:JSON.parse(jsonText)};
-							tableOfContents.completeLocalToc(localToc,navToId);
-							tableOfContents.repopulateFromData(localToc);
+							tableOfContents.localTocData = {children:JSON.parse(jsonText)};
+							tableOfContents.completeLocalToc(tableOfContents.localTocData,navToId);
+							tableOfContents.repopulateFromData(tableOfContents.localTocData);
 						} else {
 							helpServer.pageHasLocalTOC = false;
 							tableOfContents.useLocalToc = null;
@@ -224,7 +225,7 @@ var tableOfContents = {
 						}
 					}
 					for (i = 0; i < resultList.length; ++i) {
-						html += "<a href=\"" + prefix + resultList[i].path + "\" target=\"_top\" id=\"search_"+resultList[i].path+"\">" + resultList[i].title + "</a>";
+						html += "<a href=\"" + prefix + resultList[i].path + "\" target=\"_top\" id=\"search_"+resultList[i].path+"\" class=\"searchUnselected\" >" + resultList[i].title + "</a>";
 					}
 					tableOfContents.searchMode = true;
 					var headerEle = document.getElementById('header');
@@ -484,40 +485,61 @@ var tableOfContents = {
 		var elementName = tableOfContents.getBreadcrumbs();
 		if( elementName && elementName != '' ) {
 			var breadCrumbMarkup = "";
-			elementName = elementName.replace('#','/');
-			elementName = elementName.replace('#','/');
-			var levels = elementName.split('/');
-			var i , j;
-			for( i = 1 ; i < (levels.length-1) ; ++i ) {
-				if( i > 1 )
-				   breadCrumbMarkup += " / "; 				
-				breadCrumbMarkup += "<a onclick=\"tableOfContents.clickBreadCrumbs('";
-				for( j = 1 ; j <= i ; ++j ) {
-					breadCrumbMarkup += "/" + levels[j];					
+			var cleanPageName = "";
+			var levels = [];
+			if( tableOfContents.useLocalToc ) {
+			   breadCrumbMarkup += " / ";
+			    var buildLocalBreadcrumb = function( topics ) {
+					var i;
+					for( i = 0 ; i < topics.length ; ++i ) {
+						if( ("#"+topics[i].path + "#" + topics[i].hash) == document.location.hash ) {
+							cleanPageName = topics[i].title;
+							return topics[i].title;
+						} else if( topics[i].children && topics[i].children.length > 0 ) {
+							var branch = buildLocalBreadcrumb(topics[i].children);
+							if( branch ) {
+								return  "<a onclick=\"tableOfContents.clickBreadCrumbs('"+(topics[i].path + "#" + topics[i].hash)+"')\">"+ topics[i].title + "</a> / " + branch;
+							}
+						} 
+					}
+				   return null;
+			    }
+				var childPtr = buildLocalBreadcrumb( tableOfContents.localTocData.children );
+				if( childPtr ) {
+					breadCrumbMarkup += childPtr;
+				}			
+			} else {
+				elementName = elementName.replace('#','/');
+				elementName = elementName.replace('#','/');
+				var i , j;
+				levels = elementName.split('/');
+				for( i = 1 ; i < (levels.length-1) ; ++i ) {
+					if( i > 1 )
+					breadCrumbMarkup += " / "; 				
+					breadCrumbMarkup += "<a onclick=\"tableOfContents.clickBreadCrumbs('";
+					for( j = 1 ; j <= i ; ++j ) {
+						breadCrumbMarkup += "/" + levels[j];
+					}
+					var leveltext = levels[i];
+					if( leveltext.length > 5 && leveltext.substring(leveltext.length-5).toLowerCase() == ".html") {
+						leveltext = leveltext.substring(0,leveltext.length-5);					
+					}
+					breadCrumbMarkup += "')\">"+leveltext+"</a>";
 				}
-				var leveltext = levels[i];
-				if( leveltext.length > 5 && leveltext.substring(leveltext.length-5).toLowerCase() == ".html") {
-					leveltext = leveltext.substring(0,leveltext.length-5);					
-				}
-				breadCrumbMarkup += "')\">"+leveltext+"</a>";
-			}
-			var cleanPageName = helpServer.cleanupHelpFilename( levels[levels.length-1] );
-			/*var dotPos = cleanPageName.lastIndexOf('.');
-			if( dotPos > 0 )
-			    cleanPageName =cleanPageName.substr(0,dotPos);
-			*/
-			if( levels.length > 1 ) {
-				var lastLevel = levels[levels.length-2];
-				if( lastLevel.toLowerCase() == cleanPageName.substr(0,lastLevel.length).toLowerCase() ) {
-					var newName = cleanPageName.substr(lastLevel.length);
-					if( newName.length > 1 ) {
-						var sepChr = newName.substr(0,1);
-						if( sepChr == '.' || sepChr == ' ' || sepChr == ':' ) {
-							cleanPageName = newName.trim();
-						}						
+				cleanPageName = helpServer.cleanupHelpFilename( levels[levels.length-1] );
+				if( levels.length > 1 ) {
+					var lastLevel = levels[levels.length-2];
+					if( lastLevel.toLowerCase() == cleanPageName.substr(0,lastLevel.length).toLowerCase() ) {
+						var newName = cleanPageName.substr(lastLevel.length);
+						if( newName.length > 1 ) {
+							var sepChr = newName.substr(0,1);
+							if( sepChr == '.' || sepChr == ' ' || sepChr == ':' ) {
+								cleanPageName = newName.trim();
+							}						
+						}
 					}
 				}
-			}
+			}			
 			breadCrumbs.innerHTML = breadCrumbMarkup;
 			titleElem.innerHTML = cleanPageName; 
 		}		
