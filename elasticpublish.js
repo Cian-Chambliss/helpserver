@@ -53,7 +53,7 @@ module.exports = function (config, callback ) {
                 console.log('deleted item '+fo.path+' '+error+"\n\n");
                 publishStats.published++;
                 callbackLoop();
-              } else {
+              } else {               
                 var metadataInst = fo.metadata;
                 var tags = null;
                 var status =null;
@@ -79,33 +79,91 @@ module.exports = function (config, callback ) {
                 } else {
                   metadataInst = null;
                 }                
-                var bodyContent = {
-                    title: fo.title,
-                    path: fo.path,
-                    content: content,
-                    tags: tags,
-                    status: status,
-                    metadata: metadataInst                  
-                };
-                if( fo.toc )
-                  bodyContent.toc = fo.toc;
-                client.create({
-                  index: helpSystemIndex,
-                  type: helpSystemType,
-                  id: fo.path,
-                  body: bodyContent
-                }, function (error) {
-                    bar.tick();
-                    if (error) {
-                      unpublished.push(fo);
-                      publishStats.errors++;
-                      publishStats.errorList.push(error);
-                      callbackLoop();
-                    } else {
-                      publishStats.published++;
-                      callbackLoop();
-                    }
-                  });
+                if( content.substring(0,21) == "#HELPSERVER-TOC-ENTRY" ) {
+                  var helpEntries = content.split('\n');
+                  helpEntries.splice(0,1);
+                  var countDown =  helpEntries.length;
+                  async.eachSeries(helpEntries, function (helpEntry, callbackLoop2) {
+                    var fnb = fn.replace(".txt","");
+                    var helpEntryParts = helpEntry.split("\t");
+                    var helpEntryHash = helpEntryParts[0];
+                    var helpEntryTitle = helpEntryParts[0];
+                    if( helpEntryParts.length > 1 )
+                       helpEntryTitle = helpEntryParts[1];
+                    fs.readFile(plainTextPath + fnb + "__"+helpEntryHash+".txt", "utf8", function (err, subcontent) {
+                      if( err ) {
+                          // Countdown to the last element pushed...
+                          --countDown;
+                          callbackLoop2();
+                          if( countDown == 0 )
+                             callbackLoop();                        
+                      } else {
+                          client.delete({
+                            index: helpSystemIndex,
+                            type: helpSystemType,
+                            id: fo.path + "#" + helpEntryHash,
+                          }, function (error, response) {
+                            var bodyContent = {
+                                title: fo.title + " / " +helpEntryTitle,
+                                path: fo.path + "#" + helpEntryHash,
+                                content: subcontent,
+                                tags: tags,
+                                status: status,
+                                metadata: metadataInst                  
+                            };
+                            client.create({
+                              index: helpSystemIndex,
+                              type: helpSystemType,
+                              id: fo.path + "#" + helpEntryHash,
+                              body: bodyContent
+                            }, function (error) {
+                                bar.tick();
+                                if (error) {
+                                  unpublished.push(fo);
+                                  publishStats.errors++;
+                                  publishStats.errorList.push(error);
+                                } else {
+                                  publishStats.published++;
+                                }
+                                // Countdown to the last element pushed...
+                                --countDown;
+                                callbackLoop2();
+                                if( countDown == 0 )
+                                    callbackLoop();
+                              });                        
+                          });
+                      }
+                      });                    
+                  });                                  
+                } else {                
+                  var bodyContent = {
+                      title: fo.title,
+                      path: fo.path,
+                      content: content,
+                      tags: tags,
+                      status: status,
+                      metadata: metadataInst                  
+                  };
+                  if( fo.toc )
+                    bodyContent.toc = fo.toc;
+                  client.create({
+                    index: helpSystemIndex,
+                    type: helpSystemType,
+                    id: fo.path,
+                    body: bodyContent
+                  }, function (error) {
+                      bar.tick();
+                      if (error) {
+                        unpublished.push(fo);
+                        publishStats.errors++;
+                        publishStats.errorList.push(error);
+                        callbackLoop();
+                      } else {
+                        publishStats.published++;
+                        callbackLoop();
+                      }
+                    });
+                }
               }
             });
         });

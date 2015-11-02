@@ -58,6 +58,8 @@ module.exports = function (config, data, page, callbackPage) {
 		var htmlparser = require("htmlparser2");
 		var deps = { href: [], images: [] };
 		var plainText = "";
+		var pendingPlaintextSection = null;
+		var multiPage = {};
 		var stringJs = require('string');
 		var divDepth = 0;
 		var tocDiv = -1;
@@ -68,29 +70,68 @@ module.exports = function (config, data, page, callbackPage) {
 		var tocAbsolutePath = null;
 		var subTOC = null;
 		var tocStack = [];
-		
+		var findInToc = function(tocItem,name) {
+			var i;
+			for( i = 0 ; i < tocItem.length ; ++i ) {
+				if( tocItem[i].hash && tocItem[i].hash == name )
+					return tocItem[i];
+				if( tocItem[i].children ) {
+					var result = findInToc(tocItem[i].children,name);
+					if( result )
+						return result;
+				}
+			}
+		    return null;	
+		};		
+		var pathInToc = function(tocItem,name) {
+			var i;
+			for( i = 0 ; i < tocItem.length ; ++i ) {
+				if( tocItem[i].hash && tocItem[i].hash == name )
+					return tocItem[i].title;
+				if( tocItem[i].children ) {
+					var result = pathInToc(tocItem[i].children,name);
+					if( result ) 
+						return tocItem[i].title + " / " + result;
+				}
+			}
+		    return null;	
+		}
 		var parser = new htmlparser.Parser({
 			onopentag: function (name, attribs) {
-				if (name === "a" && attribs.href) {
-					if (attribs.href.substring(0, 1) == '#' ) {
-						if (tocDepth >= 0) {
-							if (attribs.href) {
-								tocHash = attribs.href.substring(1);
+				if (name === "a" ) {
+					if( attribs.href) {
+						if (attribs.href.substring(0, 1) == '#' ) {
+							if (tocDepth >= 0) {
+								if (attribs.href) {
+									tocHash = attribs.href.substring(1);
+								}
+							}
+						} else if (attribs.href.substring(0, 1) == '/' ) {
+							tocAbsolutePath = attribs.href;
+						} else if( attribs.href.substr(0,11) != 'javascript:' ) {
+							deps.href.push(normalizeREF(page.path,attribs.href));
+						}
+						if( attribs.helpserver_folder ) {						
+							childBranch = attribs.helpserver_folder;
+							if( attribs.helpserver_flatten ) {
+								childFlattenValue = parseInt(attribs.helpserver_flatten);
+								if( childFlattenValue === NaN )
+									childFlattenValue = null;
 							}
 						}
-					} else if (attribs.href.substring(0, 1) == '/' ) {
-						tocAbsolutePath = attribs.href;
-					} else if( attribs.href.substr(0,11) != 'javascript:' ) {
-						deps.href.push(normalizeREF(page.path,attribs.href));
 					}
-					if( attribs.helpserver_folder ) {						
-						childBranch = attribs.helpserver_folder;
-						if( attribs.helpserver_flatten ) {
-							childFlattenValue = parseInt(attribs.helpserver_flatten);
-							if( childFlattenValue === NaN )
-							    childFlattenValue = null;
-						}
-					}					
+					if(	subTOC ) {
+						if (attribs.name ) {
+							var item = findInToc(subTOC,attribs.name);
+							if( item && item.hash ) {
+								if( pendingPlaintextSection && plainText.length > 0 ) {
+									multiPage[pendingPlaintextSection] = plainText;
+								}
+								plainText = "";
+								pendingPlaintextSection = item.hash;								
+							}
+						}						
+					}
 				} else if (name === "img" && attribs.src) {
 					deps.images.push(normalizeREF(page.path,attribs.src));
 				} else if (name === "div") {
@@ -162,6 +203,9 @@ module.exports = function (config, data, page, callbackPage) {
 		});
 		parser.write(data);
 		parser.end();
+		if( pendingPlaintextSection && plainText.length > 0 ) {
+			multiPage[pendingPlaintextSection] = plainText;
+		}		
 		if (config.dependencies) {
 			page.dependencies = deps;
 			if (deps.href.length > 0 || deps.images.length > 0)
@@ -173,24 +217,52 @@ module.exports = function (config, data, page, callbackPage) {
 			haveConfigData = true;
 		}
 		if (config.search) {
-			var plainTextPath = config.generated + "plaintext/";
-			var fs = require('fs');
-			ofn = ofn.replace(".html", ".txt");
-			plainText = replaceAll(plainText, "\r", " ");
-			plainText = replaceAll(plainText, "\n", " ");
-			plainText = replaceAll(plainText, "\t", " ");
-			plainText = replaceAll(plainText, "             ", " ");
-			plainText = replaceAll(plainText, "  ", " ");
-			plainText = replaceAll(plainText, "  ", " ");
-			fs.writeFile(plainTextPath + ofn, plainText, function (err) {
-				if (haveConfigData) {
-					fs.writeFile(manifestFile, JSON.stringify(page, null, "  "), function (err2) {
-						callbackPage(err, ofn);
-					});
-				} else {
-					callbackPage(err, ofn);
+			if( pendingPlaintextSection ) {
+				var plainTextPath = config.generated + "plaintext/";
+				var fs = require('fs');
+				var ofnBase = ofn.replace(".html", "");
+				var countDown  = 0;
+				var hashList = "#HELPSERVER-TOC-ENTRY"
+				for (var prop in multiPage) {
+					hashList += "\n" + prop + "\t" + pathInToc(subTOC,prop);
+					++countDown;
 				}
-			});
+				fs.writeFile(plainTextPath + ofnBase + ".txt" , hashList ,  function (err) {
+					for (var prop in multiPage) {
+						fs.writeFile(plainTextPath + ofnBase + "__" + prop + ".txt" , multiPage[prop], function (err) {
+							--countDown;
+							if( countDown == 0 ) {
+								if (haveConfigData) {
+									fs.writeFile(manifestFile, JSON.stringify(page, null, "  "), function (err2) {
+										callbackPage(err, ofn);
+									});
+								} else {
+									callbackPage(err, ofn);
+								}
+							}
+						});
+					}
+					});					  
+			} else {			
+				var plainTextPath = config.generated + "plaintext/";
+				var fs = require('fs');
+				ofn = ofn.replace(".html", ".txt");
+				plainText = replaceAll(plainText, "\r", " ");
+				plainText = replaceAll(plainText, "\n", " ");
+				plainText = replaceAll(plainText, "\t", " ");
+				plainText = replaceAll(plainText, "             ", " ");
+				plainText = replaceAll(plainText, "  ", " ");
+				plainText = replaceAll(plainText, "  ", " ");
+				fs.writeFile(plainTextPath + ofn, plainText, function (err) {
+					if (haveConfigData) {
+						fs.writeFile(manifestFile, JSON.stringify(page, null, "  "), function (err2) {
+							callbackPage(err, ofn);
+						});
+					} else {
+						callbackPage(err, ofn);
+					}
+				});
+			}
 		} else {
 			if (haveConfigData) {
 				fs.writeFile(manifestFile, JSON.stringify(page, null, "  "), function (err) {
