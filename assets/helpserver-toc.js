@@ -224,8 +224,60 @@ var tableOfContents = {
 							}
 						}
 					}
-					for (i = 0; i < resultList.length; ++i) {
-						html += "<a href=\"" + prefix + resultList[i].path + "\" target=\"_top\" id=\"search_"+resultList[i].path+"\" class=\"searchUnselected\" >" + resultList[i].title + "</a>";
+					if( resultList.length > 0 ) {
+						var j;
+						var checkRepeats = true;
+						while( checkRepeats ) {
+							checkRepeats = false;
+							for (i = 0; i < resultList.length; ++i) {
+								var levelSep = resultList[i].title.indexOf(" / ");
+								if( levelSep > 0 ) {
+									var compareBranch = resultList[i].title.substring(0,levelSep+3);
+									var repeatSection = false;
+									var indentLevel = 1;
+									if( resultList[i].indent ) {
+										indentLevel += resultList[i].indent;
+									} else {
+										if( resultList[i].path.indexOf("#") > 0 )
+										    repeatSection = true;
+									}									
+									for (j = i+1; j < resultList.length; ++j) {
+										if( resultList[j].title.substring(0,levelSep+3) == compareBranch ) {
+											resultList[j].title = resultList[j].title.substring(levelSep+3);
+											resultList[j].indent = indentLevel;
+											repeatSection = true;
+										} else {
+											break;
+										}
+									}
+									if( repeatSection ) {
+										var parentTitleHtml = "<div class=\"searchParentDiv\"";
+										if( resultList[i].indent ) {
+										    parentTitleHtml += " style=\"padding-left:"+(resultList[i].indent*4)+"pt;\" ";	
+										}
+										parentTitleHtml += " >"+ resultList[i].title.substring(0,levelSep)+"</div>";
+										
+										if( resultList[i].parentTitle ) {
+											resultList[i].parentTitle += parentTitleHtml;
+										} else {
+											resultList[i].parentTitle = parentTitleHtml;
+										} 
+										resultList[i].title = resultList[i].title.substring(levelSep+3);
+										resultList[i].indent = indentLevel;
+										checkRepeats = true;
+										break;
+									}
+								}
+							}	
+						}
+					}
+					for (i = 0; i < resultList.length; ++i) {	
+						if( resultList[i].parentTitle )
+						   html += resultList[i].parentTitle;						   
+						html += "<a href=\"" + prefix + resultList[i].path + "\" target=\"_top\" id=\"search_"+resultList[i].path+"\" class=\"searchUnselected\" "
+						if( resultList[i].indent )
+						    html += " style=\"padding-left:"+(resultList[i].indent*4)+"pt;\" ";
+						html += ">" + resultList[i].title + "</a>";
 					}
 					tableOfContents.searchMode = true;
 					var headerEle = document.getElementById('header');

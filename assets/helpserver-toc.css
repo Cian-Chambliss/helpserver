@@ -287,3 +287,11 @@ margin: 0px;
 padding: 0px;
 background-color: yellow;
 }
+
+.searchParentDiv {
+font: 15px tahoma, arial bold;
+margin: 0px;
+padding: 0px;
+color: gray;
+background-color: lightgray;	
+}
