@@ -338,6 +338,8 @@ module.exports = function (config) {
 						}
 					}
 					tree[i].children = this.FlattenBranches(tree[i].children,childrenFlatten);
+					if( tree[i].children && tree[i].children.length < 1 )
+					    delete tree[i].children;
 					if( !tree[i].path ) {
 						if( tree[i].children.length <= childrenFlatten ) {
 							needFlattenPass = true;
@@ -393,6 +395,8 @@ module.exports = function (config) {
 					if( treeNode ) {
 						if( items[i].childFlatten ) {
 							items[i].children = listUtil.FlattenBranches(treeNode,items[i].childFlatten);
+							if( items[i].children && items[i].children.length < 1 )
+							     delete items[i].children; 
 						} else {
 							items[i].children = treeNode;
 						}
