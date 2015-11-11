@@ -404,6 +404,7 @@ help.status(function (stats) {
 
 ## Release History
 
+* 1.0.60 Added support for XSLT - source pages that are XML get remapped using the config.xslt file (stored in assets) 
 * 1.0.59 Added structuring to the search for entries inside a page (avoids repitition on multiple hits in a page) 
 * 1.0.58 Added logic to prune empty child lists. 
 * 1.0.57 Pages with 'SubTOC' now get individual elastic search records for each 'section'.  

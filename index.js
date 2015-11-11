@@ -103,6 +103,9 @@ module.exports = function (config) {
     if (!config.hasOwnProperty('xslt')) {
       config.xslt = '';
     }
+    if (!config.hasOwnProperty('altTocs')) {
+      config.altTocs = [];
+    }
     if (!config.hasOwnProperty('templatefile')) {
       config.templatefile = modulePath + "toctemplate.html";
     }
@@ -136,6 +139,7 @@ module.exports = function (config) {
         search: config.search,
         escapes: config.escapes,
         xslt: config.xslt,
+        altTocs: config.altTocs,
         templatefile: config.templatefile,
         structurefile: config.structurefile,
         htmlfile: config.htmlfile,
@@ -163,6 +167,7 @@ module.exports = function (config) {
           filter: configDef.filter ? configDef.filter : config.filter,
           escapes: configDef.escapes ? configDef.escapes : config.escapes,
           xslt: configDef.xslt ? configDef.xslt : config.xslt,
+          altTocs: configDef.altTocs ? configDef.altTocs : config.altTocs,
           templatefile: configDef.templatefile ? configDef.templatefile : config.templatefile,
           structurefile: configDef.structurefile ? configDef.structurefile : config.structurefile,
           htmlfile: configDef.htmlfile ? configDef.htmlfile : config.htmlfile,
@@ -339,7 +344,7 @@ module.exports = function (config) {
         );
     }
   };
-
+  
   var readOptimizedFile = function (filename, acceptEncoding, callback) {
     if (!acceptEncoding) {
       acceptEncoding = '';
@@ -395,6 +400,18 @@ module.exports = function (config) {
   HelpServerUtil.prototype.gettreejson = function (page, acceptEncoding, callback) {
     readOptimizedFile(this.config.generated + (this.config.filter_name ? this.config.filter_name : defaultFilter) + this.config.structurefile, acceptEncoding, callback);
   };
+  
+  HelpServerUtil.prototype.getAltToc = function (page,acceptEncoding, callback) {
+      var extensionPos = page.lastIndexOf('.');
+      if( extensionPos > 0 ) {
+        if( page.substring(extensionPos).toLowerCase() == '.json' ) {
+            page = page.substring(0,extensionPos)+"/";
+        }
+      }
+      var generatedTopic = config.generated + replaceAll(page,"/","_") +  (this.config.filter_name ? this.config.filter_name : defaultFilter) + "tree.json";
+      readOptimizedFile(generatedTopic, acceptEncoding, callback);
+  };
+
    
   // Generate table of contents and optionally populate the search engine with plaintext version of the data
   HelpServerUtil.prototype.generate = function (callback) {
@@ -418,6 +435,7 @@ module.exports = function (config) {
   HelpServerUtil.prototype.generateFiltered = function (callback) {
     var filterNames = [];
     var rememberErr = null;
+    var i;
 
     if (!callback) {
       callback = function (err, result) {
@@ -431,7 +449,10 @@ module.exports = function (config) {
 
     // Get all the 'filters' that we need to regenerate...
     for (var configName in filters) {
-      filterNames.push(configName);
+      filterNames.push({filterName:configName,altToc:null});
+      for(i = 0 ; i < config.altTocs.length ; ++i ) {
+        filterNames.push({filterName:configName,altToc:config.altTocs[i]});      
+      }
     }
 
     // look through all the filters...
@@ -442,11 +463,11 @@ module.exports = function (config) {
       var ListUtilities = require('./listutilities');
       var topicsPath = config.generated + "topics/";
 
-      console.log('Generateing filters');
+      console.log('Generating filters');
 
-      async.eachSeries(filterNames, function (filterName, callbackLoop) {
-        var cfg = filters[filterName];
-        console.log('Generate filter for ' + filterName);
+      async.eachSeries(filterNames, function (filterEntry, callbackLoop) {
+        var cfg = filters[filterEntry.filterName];
+        console.log('Generate filter for ' + filterEntry.filterName);
         
         var handleQueryResults = function (err, results) {
           if (err) {
@@ -462,8 +483,8 @@ module.exports = function (config) {
               return 1;
             return 0;
           });
-
-          var tree = lu.treeFromList(results);          
+ 
+          var tree = lu.treeFromList(results,filterEntry.altToc);
           lu.createIndexPages(tree,topicsPath,cfg.filter_name+".html");
           var treeUL = lu.treeToUL(tree.children);
 
@@ -476,9 +497,16 @@ module.exports = function (config) {
               return;
             }
             treeUL = templateData.replace("{{placeholder}}", treeUL);
-            fs.writeFile(cfg.generated + cfg.filter_name + cfg.htmlfile, treeUL, function (err) {
+            var filterFilebaseName = cfg.generated + cfg.filter_name + cfg.htmlfile;
+            var filterStuctureName = cfg.generated + cfg.filter_name + cfg.structurefile;
+            if( filterEntry.altToc ) {
+                 var altTocClean = replaceAll(filterEntry.altToc,'/','_')
+                 filterFilebaseName = cfg.generated + altTocClean + cfg.filter_name + cfg.htmlfile;
+                 filterStuctureName = cfg.generated + altTocClean + cfg.filter_name + cfg.structurefile;
+            }
+            fs.writeFile(filterFilebaseName, treeUL, function (err) {
               zlib.deflate(treeUL, function (err, packeddata) {
-                fs.writeFile(cfg.generated + cfg.filter_name + cfg.htmlfile + '.deflate', packeddata, function (err) {
+                fs.writeFile(filterFilebaseName + '.deflate', packeddata, function (err) {
                   if (err) {
                     rememberErr = err;
                     callbackLoop();
@@ -486,16 +514,16 @@ module.exports = function (config) {
                   }
                   var jsonString = JSON.stringify(tree);
                   console.log('Zipping json...');
-                  fs.writeFile(cfg.generated + cfg.filter_name + cfg.structurefile, jsonString, function (err) {
+                  fs.writeFile(filterStuctureName, jsonString, function (err) {
                     zlib.deflate(jsonString, function (err, packeddata2) {
                       console.log('DEFLATE...');
-                      fs.writeFile(cfg.generated + cfg.filter_name + cfg.structurefile + ".deflate", packeddata2, function (err) {
+                      fs.writeFile(filterStuctureName + ".deflate", packeddata2, function (err) {
                         if (err) {
                           rememberErr = err;
                         }
                         zlib.gzip(jsonString, function (err, packeddata3) {
                              console.log('GZIP...');
-                             fs.writeFile(cfg.generated + cfg.filter_name + cfg.structurefile + ".gzip", packeddata3, function (err) {
+                             fs.writeFile(filterStuctureName + ".gzip", packeddata3, function (err) {
                                 if (err) {
                                   rememberErr = err;
                                 }
@@ -932,6 +960,28 @@ module.exports = function (config) {
         }
       });
     },
+    "altToc": function (hlp, path, req, res) {
+      var acceptEncoding = req.headers['accept-encoding'];
+      var userAgent = req.headers['user-agent'];
+      if( userAgent.indexOf("Trident/") > 0 )
+         acceptEncoding = null;       
+      hlp.getAltToc(path,acceptEncoding, function (err, data, encoding) {
+        if (err) {
+          hlp.onSendExpress(res);
+          res.send(err);
+        } else {
+          if (encoding) {
+            res.set({ 'Content-Encoding': encoding, 'Content-Type': 'text/json; charset=utf-8' });
+            hlp.onSendExpress(res);
+            res.send(data);
+          } else {
+            res.type('html');
+            hlp.onSendExpress(res);
+            res.send(data);
+          }
+        }
+      });
+    },
 
     "search": function (hlp, path, req, res) {
       var offset = 0;
@@ -1014,7 +1064,7 @@ module.exports = function (config) {
     "config": function (hlp, path, req, res) {
           res.type('json');
           hlp.onSendExpress(res);
-          res.send(JSON.stringify( { escapes : config.escapes , keywords : config.keywords }));
+          res.send(JSON.stringify( { escapes : config.escapes , keywords : config.keywords , altTocs : config.altTocs }));
     },
     "diag": function(hlp, path, req, res) {
           res.type('json');

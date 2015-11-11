@@ -13,6 +13,7 @@ var tableOfContents = {
 	disableScrollTo: null,
 	useLocalToc: null ,
 	localTocData : null ,
+	altTocs: {} ,
 	setSelectedPage: function (navToId) {
 		var navTo = document.getElementById(navToId);
 		if (!navTo) {
@@ -52,8 +53,41 @@ var tableOfContents = {
 			}
 			tableOfContents.populateBreadcrumbs();
 		} else if( !navTo ) {
+			var i;
+			var deepestAltToc = null;
+			if( helpServer.config.altTocs && helpServer.config.altTocs.length > 0 ) {
+				for( i = 0 ; i < helpServer.config.altTocs.length ; ++i ) {
+					 var prefix = helpServer.config.altTocs[i];
+					 if( navToId.substring(0,prefix.length).toLowerCase() == prefix.toLowerCase() ) {
+						 if( !deepestAltToc )
+						 	deepestAltToc = prefix;
+						 else if( deepestAltToc.length < prefix.length )
+						 	deepestAltToc = prefix;	 
+					 }
+				}
+			}	
 			// Lets check for change of TOC...
-			if( helpServer.pageHasLocalTOC ) {								
+			if( deepestAltToc && tableOfContents.useLocalToc != deepestAltToc ) {
+				var priorHelpServerToc = tableOfContents.useLocalToc;
+				tableOfContents.useLocalToc = priorHelpServerToc;					
+				var xmlhttp = new XMLHttpRequest();
+				xmlhttp.onload = function () {
+					if (this.status == 200) {
+						var jsonText = xmlhttp.responseText;
+						tableOfContents.localTocData = JSON.parse(jsonText);
+						tableOfContents.completeLocalToc(tableOfContents.localTocData,navToId);
+						tableOfContents.repopulateFromData(tableOfContents.localTocData);
+					} else {
+						helpServer.pageHasLocalTOC = false;
+						tableOfContents.useLocalToc = null;
+						if( priorHelpServerToc && tableOfContents.tocData ) {
+							tableOfContents.repopulateFromData(tableOfContents.tocData);
+						}
+					}
+				};
+				xmlhttp.open("GET", "/altToc" + deepestAltToc, true);
+				xmlhttp.send('');					
+			} else if( helpServer.pageHasLocalTOC ) {								
 				if( tableOfContents.useLocalToc != navToId ) {
 					var priorHelpServerToc = tableOfContents.useLocalToc;
 					tableOfContents.useLocalToc = navToId;					

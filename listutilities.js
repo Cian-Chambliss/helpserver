@@ -430,7 +430,7 @@ module.exports = function (config) {
 	};*/
 	
 	// Convert a flat list of paths & titles into a 'tree'
-	ListUtilities.prototype.treeFromList = function (flatList) {
+	ListUtilities.prototype.treeFromList = function (flatList,altToc) {
 		var tree = [];
 		var i, j, k;
 		var currentBranch;
@@ -578,8 +578,26 @@ module.exports = function (config) {
 				}
 			}			
 		}
-		
-		if( config.editTOC ) {
+		if( altToc && altToc.length ) {
+			// AltTocs are trimed from path
+			var findBranch = altToc.split('/');
+			var i;
+			if( tree.children )
+				tree = tree.children;
+			for( i = 1 ; i < findBranch.length-1 ; ++i ) {
+				var index = this.findNode(tree,findBranch[i].trim().toLowerCase());
+				if( index >= 0 ) {
+					tree = tree[index].children;
+					if( !tree )
+					   break;
+				} else {
+					tree = null;
+					break;
+				}	
+			}
+			if( !tree )
+			    tree = [];
+		} else if( config.editTOC ) {
 			if( config.editTOC.remove ) {
 				// remove list
 				for( i = 0 ; i < config.editTOC.remove.length ; ++i ) {

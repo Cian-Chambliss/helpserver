@@ -519,7 +519,8 @@ var helpServer = {
   navigateClosestTopic: function(topic) {
      var hint = "";
      //------------------ Special case
-     topic = topic.trim();
+     if( topic )
+        topic = topic.replace(/^\s+|\s+$/gm,'');
      var lastWordStart = topic.lastIndexOf(' ');
      if( lastWordStart > 0 ) {
          if( topic.substring(lastWordStart+1).toLowerCase() == "class" ) {
