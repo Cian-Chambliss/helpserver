@@ -322,7 +322,14 @@ var tableOfContents = {
 			this.searchIndex = -1;
 		}
 	},
+	trimExtraHash : function() {	
+		if( document.location.hash.lastIndexOf("#") > 1 ) {
+		     var hashes = document.location.hash.split("#");
+			 document.location.hash = "#"+hashes[1];
+		}
+	},
 	searchFirst: function () {
+		tableOfContents.trimExtraHash();
 		if (this.searchIndex > 0) {
 			this.searchIndex = 0;
 			this.setSearchBounds();
@@ -330,6 +337,7 @@ var tableOfContents = {
 		}
 	},
 	searchPrev: function () {
+		tableOfContents.trimExtraHash();
 		if (this.searchIndex > 0) {
 			--this.searchIndex;
 			this.setSearchBounds();
@@ -337,6 +345,7 @@ var tableOfContents = {
 		}
 	},
 	searchNext: function () {
+		tableOfContents.trimExtraHash();
 		if ((this.searchIndex + 1) < this.searchCount) {
 			++this.searchIndex;
 			this.setSearchBounds();
@@ -344,6 +353,7 @@ var tableOfContents = {
 		}
 	},
 	searchLast: function () {
+		tableOfContents.trimExtraHash();
 		if ((this.searchIndex + 1) < this.searchCount) {
 			this.searchIndex = this.searchCount - 1;
 			this.setSearchBounds();
@@ -514,7 +524,7 @@ var tableOfContents = {
 				 var extnPos = prefix.lastIndexOf('.');
 				 if( extnPos > 0 ) {
 					 var extn = prefix.substr(extn).toLowerCase();
-					 if( extn == ".html" || extn == ".md" ) {
+					 if( extn == ".html" || extn == ".md" || extn == ".xml" ) {
 						 // we have an actual page - need to recurse	
 						 prefix = tableOfContents.getBreadcrumbsLow(elem.parentElement.parentElement.previousElementSibling);
 					 } 

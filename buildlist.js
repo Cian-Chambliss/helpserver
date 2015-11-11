@@ -84,7 +84,7 @@ module.exports = function (config, callback) {
             var extensionPos = file.lastIndexOf('.');
             if (extensionPos > 0) {
               var extensionName = file.substring(extensionPos).toLowerCase();
-              if (extensionName == ".html" || extensionName == ".md") {
+              if (extensionName == ".html" || extensionName == ".md" || extensionName == ".xml" ) {
                 cleanName = cleanupName(html);
                 duplicateEntry = names.indexOf(cleanName);
                 pagePath = cleanupFileName(file);

@@ -17,6 +17,7 @@ var helpServer = {
   defaultPage : null ,
   lastSearchSelected: null,
   pageHasLocalTOC: false,
+  xslt: null,
   findMetadata: function (el) {
     for (var i = 0; i < el.childNodes.length; i++) {
       var node = el.childNodes[i];
@@ -40,6 +41,25 @@ var helpServer = {
       }
     }
   },
+  parseXML: function( data ) {
+		var xml, tmp;
+		if ( !data || typeof data !== "string" ) {
+			return null;
+		}
+		try {
+			if ( window.DOMParser ) { // Standard
+				tmp = new DOMParser();
+				xml = tmp.parseFromString( data , "text/xml" );
+			} else { // IE
+				xml = new ActiveXObject( "Microsoft.XMLDOM" );
+				xml.async = "false";
+				xml.loadXML( data );
+			}
+		} catch( e ) {
+			xml = undefined;
+		}
+		return xml;
+	},  
   loadHelpDiv: function (path) {
     if( helpServer.lastLoadedDiv != path ) {
       var elemHelpPage = document.getElementById('help');
@@ -77,8 +97,28 @@ var helpServer = {
       } else if( !pageToGet && helpServer.defaultPage )
           pageToGet = helpServer.defaultPage; 
       if( pageToGet ) {
+        var requiresXSLT = false;
         elemHelpPage.innerHTML = "Loading " + path + "...";
         helpServer.pageHasLocalTOC = false;
+        if( pageToGet.substring(pageToGet.lastIndexOf('.')).toLowerCase() == '.xml' ) {
+             requiresXSLT = true;
+             if( !helpServer.xslt ) {
+                  helpServer.xslt = {  definition : "" , xml : null , xsltProcessor : null };
+                  var xmlhttp2 = new XMLHttpRequest();
+                  xmlhttp2.onload = function () {
+                    if (this.status == 200) {
+                         helpServer.xslt.definition = xmlhttp2.responseText;
+                         helpServer.xslt.xml = helpServer.parseXML(helpServer.xslt.definition);
+                         if( helpServer.xslt.xml ) {
+                           helpServer.xslt.xsltProcessor = new XSLTProcessor();
+                           helpServer.xslt.xsltProcessor.importStylesheet(helpServer.xslt.xml);
+                         }
+                    }
+                  };
+                  xmlhttp2.open("GET", "/xslt" , true);
+                  xmlhttp2.send('');
+             }
+        }
         xmlhttp.onload = function () {
           if (this.status == 200) {
             var htmlText = xmlhttp.responseText;
@@ -92,7 +132,14 @@ var helpServer = {
             }
             var baseTagElement = document.getElementById("baseTag");
             baseTagElement.href = helpServer.baseTagHost+"/help" + path;
-            elemHelpPage.innerHTML = htmlText;
+            if( requiresXSLT && helpServer.xslt.xsltProcessor ) {
+                  var dataXML = helpServer.parseXML(htmlText);
+                	var resultDocument = helpServer.xslt.xsltProcessor.transformToFragment(dataXML, document);
+                  elemHelpPage.innerHTML = "";
+                  elemHelpPage.appendChild(resultDocument);
+            } else {
+                   elemHelpPage.innerHTML = htmlText;
+            }
             var getLocalHelpToc = elemHelpPage.getElementsByClassName("helpserver_toc");
             if( getLocalHelpToc && getLocalHelpToc.length > 0 ) {
                 helpServer.pageHasLocalTOC = true;
@@ -468,6 +515,32 @@ var helpServer = {
       if( path === "" )  
           helpServer.loadHelpDiv(path);
     }
+  },
+  navigateClosestTopic: function(topic) {
+     var hint = "";
+     //------------------ Special case
+     topic = topic.trim();
+     var lastWordStart = topic.lastIndexOf(' ');
+     if( lastWordStart > 0 ) {
+         if( topic.substring(lastWordStart+1).toLowerCase() == "class" ) {
+              var classMethods = document.location.hash.toLowerCase().lastIndexOf("/methods/");
+              if( classMethods > 0 ) {
+                  hint = document.location.hash.substring(1,classMethods)+"/definition";
+              }
+         }
+     }
+     //--------------------------------
+     
+     var xmlhttp = new XMLHttpRequest();
+     xmlhttp.onload = function () {
+        if (this.status == 200) {
+           if( xmlhttp.responseText != "" ) {
+             window.location.hash = "#"+xmlhttp.responseText;
+           }
+        }
+     };
+     xmlhttp.open("GET", "/topic?topic="+topic+"&from="+document.location.hash.substring(1)+"&hint="+hint, true);
+     xmlhttp.send();
   }
 };
 

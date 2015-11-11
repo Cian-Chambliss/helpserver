@@ -86,6 +86,7 @@ module.exports = function (config) {
       config.escapes = [
         { from: ".html", to: "" }
         , { from: ".md", to: "" }
+        , { from: ".xml", to: "" }
         , { from: "__STAR__", to: "*" }
         , { from: "__QUESTION__", to: "?" }
         , { from: "__SLASH__", to: "/" }
@@ -98,6 +99,9 @@ module.exports = function (config) {
         , { from: "__LT__", to: "<" }
         , { from: "__PIPE__", to: "|" }
       ];
+    }
+    if (!config.hasOwnProperty('xslt')) {
+      config.xslt = '';
     }
     if (!config.hasOwnProperty('templatefile')) {
       config.templatefile = modulePath + "toctemplate.html";
@@ -131,6 +135,7 @@ module.exports = function (config) {
         generated: config.generated,
         search: config.search,
         escapes: config.escapes,
+        xslt: config.xslt,
         templatefile: config.templatefile,
         structurefile: config.structurefile,
         htmlfile: config.htmlfile,
@@ -157,6 +162,7 @@ module.exports = function (config) {
           filter_name: configDef.filter_name ? configDef.filter_name : config.filter_name,
           filter: configDef.filter ? configDef.filter : config.filter,
           escapes: configDef.escapes ? configDef.escapes : config.escapes,
+          xslt: configDef.xslt ? configDef.xslt : config.xslt,
           templatefile: configDef.templatefile ? configDef.templatefile : config.templatefile,
           structurefile: configDef.structurefile ? configDef.structurefile : config.structurefile,
           htmlfile: configDef.htmlfile ? configDef.htmlfile : config.htmlfile,
@@ -246,7 +252,7 @@ module.exports = function (config) {
              callback(null, data, "html");
           }
       });
-    } else if (extension == "html" || extension == "htm") {
+    } else if (extension == "html" || extension == "htm" || extension == "xml") {
       fs.readFile(config.source + relativePath, "utf8", function (err, data) {
         if (err) {
           callback(err, null);
@@ -1015,7 +1021,85 @@ module.exports = function (config) {
           hlp.onSendExpress(res);
           serverHealth.whoCalled = req.connection.remoteAddress;
           res.send(JSON.stringify( serverHealth ));      
-    }
+    },
+    "xslt": function(hlp, path, req, res) {
+          if( config.xslt ) {
+            loadAssetUTF8(config.xslt, function (err, data) {
+              if (err) {
+                res.status(404).send('Not found');
+              } else {
+                res.type('html');
+                hlp.onSendExpress(res);
+                res.send(data);
+              }
+            });
+          } else {
+             res.status(404).send('Not found');
+          }
+     },
+     "topic": function (hlp, path, req, res) {      
+       var searchResultProcess = function(err, data) {
+            if( err ) {
+                hlp.onSendExpress(res);
+                res.send("");
+            } else {
+                // search through the data
+                var foundItem = null;
+                var i;
+                if( data.length > 1 ) {
+                   for( i = 0 ; i < data.length ; ++i ) {
+                     if( data[i].title.toLowerCase() == req.query.topic.toLowerCase() ) {
+                         foundItem = data[i];
+                     }                     
+                   }
+                   if( !foundItem ) 
+                      foundItem = data[0];
+                }
+                if(  foundItem ) {                    
+                    if( foundItem.hash ) {
+                        help.onSendExpress(res);
+                        res.send(foundItem.path+"#"+foundItem.hash);
+                    } else {
+                        help.onSendExpress(res);
+                        res.send(foundItem.path);
+                    }
+                } else {
+                    // TBD - show the 'not-found' page with results...
+                    help.onSendExpress(res);
+                    res.send("");
+                }
+            }
+       };      
+       if( req.query.hint) {
+            // Look for file match first (i.e. relative lookup)
+            var endOfPath = req.query.hint.lastIndexOf('/');
+            if( endOfPath > 0 ) {
+                fs.readdir(config.source+req.query.hint.substring(0,endOfPath), function (err, list) {
+                    var resolved = false;
+                    if( !err && list ) {
+                      var find = req.query.hint.substring(endOfPath+1).toLowerCase();
+                      if( list.length > 0 ) {
+                           var i;
+                           for( i = 0 ; i < list.length ; ++i ) {
+                               if( list[i].toLowerCase().indexOf(find) >= 0 ) {
+                                    resolved = true;
+                                    help.onSendExpress(res);
+                                    res.send(req.query.hint.substring(0,endOfPath)+"/"+list[i]);
+                                    break;
+                               }
+                           }
+                      }
+                    }
+                    if( !resolved )
+                        hlp.search( req.query.topic , searchResultProcess );  
+                });
+            } else {
+                hlp.search( req.query.topic , searchResultProcess );  
+            }
+       } else {
+            hlp.search( req.query.topic , searchResultProcess );
+       }               
+     }
   };
    
   // Express generic entry point

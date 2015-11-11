@@ -33,6 +33,9 @@ module.exports = function (config, data, page, callbackPage) {
 		if (!textData.indexOf)
 			textData = textData.toString('utf8');
 		data = marked(textData);
+	} else if (extension == '.xml') {
+		// use XSLT (if defined)
+		;
 	}
 	if (config.metadata) {
 		var textData = data;
