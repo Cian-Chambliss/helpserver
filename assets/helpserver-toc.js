@@ -77,7 +77,6 @@ var tableOfContents = {
 					if (this.status == 200) {
 						var jsonText = xmlhttp.responseText;
 						tableOfContents.localTocData = JSON.parse(jsonText);
-						tableOfContents.completeLocalToc(tableOfContents.localTocData,navToId);
 						tableOfContents.repopulateFromData(tableOfContents.localTocData);
 					} else {
 						helpServer.pageHasLocalTOC = false;
