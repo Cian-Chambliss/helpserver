@@ -13,6 +13,7 @@ var tableOfContents = {
 	disableScrollTo: null,
 	useLocalToc: null ,
 	localTocData : null ,
+	localFolderLevel: null ,
 	altTocs: {} ,
 	setSelectedPage: function (navToId) {
 		var navTo = document.getElementById(navToId);
@@ -69,7 +70,8 @@ var tableOfContents = {
 			// Lets check for change of TOC...
 			if( deepestAltToc && tableOfContents.useLocalToc != deepestAltToc ) {
 				var priorHelpServerToc = tableOfContents.useLocalToc;
-				tableOfContents.useLocalToc = priorHelpServerToc;					
+				tableOfContents.useLocalToc = deepestAltToc;					
+				tableOfContents.localFolderLevel = deepestAltToc;
 				var xmlhttp = new XMLHttpRequest();
 				xmlhttp.onload = function () {
 					if (this.status == 200) {
@@ -80,6 +82,7 @@ var tableOfContents = {
 					} else {
 						helpServer.pageHasLocalTOC = false;
 						tableOfContents.useLocalToc = null;
+						tableOfContents.localFolderLevel = null;
 						if( priorHelpServerToc && tableOfContents.tocData ) {
 							tableOfContents.repopulateFromData(tableOfContents.tocData);
 						}
@@ -90,7 +93,8 @@ var tableOfContents = {
 			} else if( helpServer.pageHasLocalTOC ) {								
 				if( tableOfContents.useLocalToc != navToId ) {
 					var priorHelpServerToc = tableOfContents.useLocalToc;
-					tableOfContents.useLocalToc = navToId;					
+					tableOfContents.useLocalToc = navToId;
+					tableOfContents.localFolderLevel = null;					
 					var xmlhttp = new XMLHttpRequest();
 					xmlhttp.onload = function () {
 						if (this.status == 200) {
@@ -583,7 +587,7 @@ var tableOfContents = {
 			var breadCrumbMarkup = "";
 			var cleanPageName = "";
 			var levels = [];
-			if( tableOfContents.useLocalToc ) {
+			if( tableOfContents.useLocalToc && !tableOfContents.localFolderLevel ) {
 			   breadCrumbMarkup += " / ";
 			    var buildLocalBreadcrumb = function( topics ) {
 					var i;
@@ -608,12 +612,22 @@ var tableOfContents = {
 				elementName = elementName.replace('#','/');
 				elementName = elementName.replace('#','/');
 				var i , j;
+				var startAt = 1;
 				levels = elementName.split('/');
-				for( i = 1 ; i < (levels.length-1) ; ++i ) {
-					if( i > 1 )
-					breadCrumbMarkup += " / "; 				
+				if( tableOfContents.useLocalToc && tableOfContents.localFolderLevel ) {
+					var removeLevels = tableOfContents.localFolderLevel.toLowerCase().split("/");
+					for( i = 1 ; i < (levels.length-1) && i < removeLevels.length ; ++i ) {
+						if( levels[i].toLowerCase() != removeLevels[i] )
+							break;
+						startAt = i + 1;
+					}
+				}
+				
+				for( i = startAt ; i < (levels.length-1) ; ++i ) {
+					if( i > startAt )
+						breadCrumbMarkup += " / "; 				
 					breadCrumbMarkup += "<a onclick=\"tableOfContents.clickBreadCrumbs('";
-					for( j = 1 ; j <= i ; ++j ) {
+					for( j = startAt ; j <= i ; ++j ) {
 						breadCrumbMarkup += "/" + levels[j];
 					}
 					var leveltext = levels[i];

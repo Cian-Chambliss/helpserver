@@ -78,6 +78,16 @@ module.exports = function (config, callback ) {
                   }
                 } else {
                   metadataInst = null;
+                }
+                if( config.defaultPathMetadata &&  config.defaultPathMetadata.length && !metadataInst ) {
+                   var i;
+                   for( i = 0 ; i < config.defaultPathMetadata.length ; ++i ) {
+                       var pathMetadata = config.defaultPathMetadata[i];  
+                       if( fo.path.substring(0,pathMetadata.name.length).toLowerCase() == pathMetadata.name.toLowerCase() ) {
+                           metadataInst = pathMetadata.metadata;
+                           break;
+                       }
+                   }
                 }                
                 if( content.substring(0,21) == "#HELPSERVER-TOC-ENTRY" ) {
                   var helpEntries = content.split('\n');

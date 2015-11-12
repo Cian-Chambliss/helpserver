@@ -106,6 +106,9 @@ module.exports = function (config) {
     if (!config.hasOwnProperty('altTocs')) {
       config.altTocs = [];
     }
+    if (!config.hasOwnProperty('defaultPathMetadata')) {
+      config.defaultPathMetadata = [];
+    }
     if (!config.hasOwnProperty('templatefile')) {
       config.templatefile = modulePath + "toctemplate.html";
     }
@@ -140,6 +143,7 @@ module.exports = function (config) {
         escapes: config.escapes,
         xslt: config.xslt,
         altTocs: config.altTocs,
+        defaultPathMetadata: config.defaultPathMetadata,
         templatefile: config.templatefile,
         structurefile: config.structurefile,
         htmlfile: config.htmlfile,
@@ -168,6 +172,7 @@ module.exports = function (config) {
           escapes: configDef.escapes ? configDef.escapes : config.escapes,
           xslt: configDef.xslt ? configDef.xslt : config.xslt,
           altTocs: configDef.altTocs ? configDef.altTocs : config.altTocs,
+          defaultPathMetadata:  configDef.defaultPathMetadata ? configDef.defaultPathMetadata : config.defaultPathMetadata,
           templatefile: configDef.templatefile ? configDef.templatefile : config.templatefile,
           structurefile: configDef.structurefile ? configDef.structurefile : config.structurefile,
           htmlfile: configDef.htmlfile ? configDef.htmlfile : config.htmlfile,
@@ -587,23 +592,28 @@ module.exports = function (config) {
   
   // refresh help from repo, and rebuild TOC 
   HelpServerUtil.prototype.refresh = function (callback) {
-    debugger;
     var rebuildContent = function (help) {
       var handler = function (err, result) {
         if (err) {
           callback(err, null);
-        } else if (config.search) {
-          var updateindex = require('./updateindex');
-          updateindex(config, callback);
         } else {
           callback(null, { updated: true });
         }
       };
       var buildlist = require('./buildlist');
       buildlist(config, function (err, result) {
-        help.generateFiltered(function (err2, result2) {
-          handler(err, result);
-        });
+        if (config.search) {
+          var updateindex = require('./updateindex');
+          updateindex(config, function() {
+             help.generateFiltered(function (err2, result2) {
+              handler(err, result);
+              }) 
+          });
+        } else {
+          help.generateFiltered(function (err2, result2) {
+            handler(err, result);
+          });
+        }
       });
     };
     // optional step 1 - update the content using git...
