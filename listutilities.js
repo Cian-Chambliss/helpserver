@@ -578,6 +578,7 @@ module.exports = function (config) {
 				}
 			}			
 		}
+		var currentTopPage = config.topPage;
 		if( altToc && altToc.length ) {
 			// AltTocs are trimed from path
 			var findBranch = altToc.split('/');
@@ -597,6 +598,7 @@ module.exports = function (config) {
 			}
 			if( !tree )
 			    tree = [];
+			currentTopPage = null;
 		} else if( config.editTOC ) {
 			if( config.editTOC.remove ) {
 				// remove list
@@ -626,16 +628,16 @@ module.exports = function (config) {
 		if (hasSubToc) {
 			tree = this.expandSubToc(tree);
 		}
-		if( config.topPage ) {
-			var topPagePath = config.topPage;
+		if( currentTopPage ) {
+			var topPagePath = currentTopPage;
 			if( topPagePath.substring(0,1) !== "/" )
 			    topPagePath = "/" + topPagePath;
 			if( config.topPageMetadata && config.topPageMetadata.toc ) {
 				// TBD hack the tree....
-				console.log("Page content re-organized using TOC from "+config.topPage );
-				tree = this.EditTreeUsingTOC(tree,config.topPageMetadata.toc,config.topPage);
+				console.log("Page content re-organized using TOC from "+currentTopPage );
+				tree = this.EditTreeUsingTOC(tree,config.topPageMetadata.toc,currentTopPage);
 			} else {
-				console.log("Top page "+config.topPage+" has no TOC");
+				console.log("Top page "+currentTopPage+" has no TOC");
 			}
 			return { title : "/" , path : topPagePath , children : tree };
 		}
