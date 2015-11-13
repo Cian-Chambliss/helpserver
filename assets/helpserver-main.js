@@ -103,7 +103,7 @@ var helpServer = {
         if( pageToGet.substring(pageToGet.lastIndexOf('.')).toLowerCase() == '.xml' ) {
              requiresXSLT = true;
              if( !helpServer.xslt ) {
-                  helpServer.xslt = {  definition : "" , xml : null , xsltProcessor : null };
+                  helpServer.xslt = {  definition : "" , xml : null , xsltProcessor : null , processXML : null };
                   var xmlhttp2 = new XMLHttpRequest();
                   xmlhttp2.onload = function () {
                     if (this.status == 200) {
@@ -112,6 +112,13 @@ var helpServer = {
                          if( helpServer.xslt.xml ) {
                            helpServer.xslt.xsltProcessor = new XSLTProcessor();
                            helpServer.xslt.xsltProcessor.importStylesheet(helpServer.xslt.xml);
+                           if( helpServer.xslt.processXML ) {
+                              var dataXML = helpServer.parseXML(helpServer.xslt.processXML);
+                              var resultDocument = helpServer.xslt.xsltProcessor.transformToFragment(dataXML, document);
+                              helpServer.xslt.processXML = null;
+                              elemHelpPage.innerHTML = "";
+                              elemHelpPage.appendChild(resultDocument);                              
+                           }
                          }
                     }
                   };
@@ -132,11 +139,16 @@ var helpServer = {
             }
             var baseTagElement = document.getElementById("baseTag");
             baseTagElement.href = helpServer.baseTagHost+"/help" + path;
-            if( requiresXSLT && helpServer.xslt.xsltProcessor ) {
-                  var dataXML = helpServer.parseXML(htmlText);
-                	var resultDocument = helpServer.xslt.xsltProcessor.transformToFragment(dataXML, document);
-                  elemHelpPage.innerHTML = "";
-                  elemHelpPage.appendChild(resultDocument);
+            if( requiresXSLT ) {
+                  if( helpServer.xslt.xsltProcessor ) {
+                      var dataXML = helpServer.parseXML(htmlText);
+                      var resultDocument = helpServer.xslt.xsltProcessor.transformToFragment(dataXML, document);
+                      elemHelpPage.innerHTML = "";
+                      elemHelpPage.appendChild(resultDocument);
+                  } else {
+                      elemHelpPage.innerHTML = "Waiting for XML processor to load...";
+                      helpServer.xslt.processXML = htmlText;
+                  }
             } else {
                    elemHelpPage.innerHTML = htmlText;
             }

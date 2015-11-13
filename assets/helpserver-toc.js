@@ -71,24 +71,29 @@ var tableOfContents = {
 			if( deepestAltToc && tableOfContents.useLocalToc != deepestAltToc ) {
 				var priorHelpServerToc = tableOfContents.useLocalToc;
 				tableOfContents.useLocalToc = deepestAltToc;					
-				tableOfContents.localFolderLevel = deepestAltToc;
-				var xmlhttp = new XMLHttpRequest();
-				xmlhttp.onload = function () {
-					if (this.status == 200) {
-						var jsonText = xmlhttp.responseText;
-						tableOfContents.localTocData = JSON.parse(jsonText);
-						tableOfContents.repopulateFromData(tableOfContents.localTocData);
-					} else {
-						helpServer.pageHasLocalTOC = false;
-						tableOfContents.useLocalToc = null;
-						tableOfContents.localFolderLevel = null;
-						if( priorHelpServerToc && tableOfContents.tocData ) {
-							tableOfContents.repopulateFromData(tableOfContents.tocData);
+				tableOfContents.localFolderLevel = deepestAltToc;				
+				tableOfContents.localTocData = tableOfContents.altTocs[deepestAltToc];
+				if( !tableOfContents.localTocData ) {				
+					tableOfContents.altTocs[deepestAltToc] = { children: [] };
+					var xmlhttp = new XMLHttpRequest();
+					xmlhttp.onload = function () {
+						if (this.status == 200) {
+							var jsonText = xmlhttp.responseText;
+							tableOfContents.localTocData = JSON.parse(jsonText);
+							tableOfContents.altTocs[deepestAltToc] = tableOfContents.localTocData;
+							tableOfContents.repopulateFromData(tableOfContents.localTocData);
+						} else {
+							helpServer.pageHasLocalTOC = false;
+							tableOfContents.useLocalToc = null;
+							tableOfContents.localFolderLevel = null;
+							if( priorHelpServerToc && tableOfContents.tocData ) {
+								tableOfContents.repopulateFromData(tableOfContents.tocData);
+							}
 						}
-					}
-				};
-				xmlhttp.open("GET", "/altToc" + deepestAltToc, true);
-				xmlhttp.send('');					
+					};
+					xmlhttp.open("GET", "/altToc" + deepestAltToc, true);
+					xmlhttp.send('');
+				}	
 			} else if( helpServer.pageHasLocalTOC ) {								
 				if( tableOfContents.useLocalToc != navToId ) {
 					var priorHelpServerToc = tableOfContents.useLocalToc;
@@ -120,9 +125,7 @@ var tableOfContents = {
 			}
 		}
 	},
-	tocLoaded: function () {
-		this.tocEle = document.getElementById("TOC");
-		this.tocEle.addEventListener("click", function (e) {
+	tocClickHandler: function (e) {
 			if (e.target) {
 				if (e.target.id == "TOC") {
 					return false;
@@ -211,7 +214,10 @@ var tableOfContents = {
 					}
 				}
 			}
-		});
+		},
+	tocLoaded: function () {
+		tableOfContents.tocEle = document.getElementById("TOC");
+		tableOfContents.tocEle.addEventListener("click", tableOfContents.tocClickHandler );
 		var eleHeader = document.getElementById('header');
 		if (eleHeader) {
 			eleHeader.innerHTML = [
@@ -422,46 +428,47 @@ var tableOfContents = {
 		}
 	},
 	repopulateFromData: function (_tocData) {
-		var buildTree = function (res, isOpen) {
-			if( res && res.length ) {
-				var ulList = isOpen ? "<ul>\n" : "<ul style=\"display:none\">\n";
-				var i;
-				for (i = 0; i < res.length; ++i) {
-					if (res[i].children) {
-						ulList += "<li branch=\"true\" class=\"closed\" >";
-					} else {
-						ulList += "<li class=\"leaf\" >";
-					}
-					if (res[i].path) {
-						if(	res[i].ignoreBreadcrumbs ) {
-							if (res[i].hash)
-								ulList += "<div id=\"" + res[i].path + "#" + res[i].hash + "\" ignoreBreadcumbs=\"true\" >" + res[i].title + "</div>";
+		if( tableOfContents.tocEle) {		
+			var buildTree = function (res, isOpen) {
+				if( res && res.length ) {
+					var ulList = isOpen ? "<ul>\n" : "<ul style=\"display:none\">\n";
+					var i;
+					for (i = 0; i < res.length; ++i) {
+						if (res[i].children) {
+							ulList += "<li branch=\"true\" class=\"closed\" >";
+						} else {
+							ulList += "<li class=\"leaf\" >";
+						}
+						if (res[i].path) {
+							if(	res[i].ignoreBreadcrumbs ) {
+								if (res[i].hash)
+									ulList += "<div id=\"" + res[i].path + "#" + res[i].hash + "\" ignoreBreadcumbs=\"true\" >" + res[i].title + "</div>";
+								else
+									ulList += "<div id=\"" + res[i].path + "\" ignoreBreadcumbs=\"true\" >" + res[i].title + "</div>";
+							} else if (res[i].hash)
+								ulList += "<div id=\"" + res[i].path + "#" + res[i].hash + "\">" + res[i].title + "</div>";
 							else
-								ulList += "<div id=\"" + res[i].path + "\" ignoreBreadcumbs=\"true\" >" + res[i].title + "</div>";
-						} else if (res[i].hash)
-							ulList += "<div id=\"" + res[i].path + "#" + res[i].hash + "\">" + res[i].title + "</div>";
-						else
-							ulList += "<div id=\"" + res[i].path + "\">" + res[i].title + "</div>";
-					} else
-						ulList += "<div>" + res[i].title + "</div>";
-					if (res[i].children)
-						ulList += buildTree(res[i].children, false);
-					ulList += "</li>\n"
+								ulList += "<div id=\"" + res[i].path + "\">" + res[i].title + "</div>";
+						} else
+							ulList += "<div>" + res[i].title + "</div>";
+						if (res[i].children)
+							ulList += buildTree(res[i].children, false);
+						ulList += "</li>\n"
+					}
+					ulList += "</ul>\n";
+					return ulList;
 				}
-				ulList += "</ul>\n";
-				return ulList;
+				return "";
+			};
+			tableOfContents.tocEle.innerHTML = buildTree(_tocData.children, true);
+			if (window.location.hash != '') {
+				var path = window.location.hash.substring(1);
+				tableOfContents.setSelectedPage(path);
 			}
-			return "";
-		};
-		this.tocEle.innerHTML = buildTree(_tocData.children, true);
-		if (window.location.hash != '') {
-			var path = window.location.hash.substring(1);
-			tableOfContents.setSelectedPage(path);
 		}
 	},
 	tocPopulate: function () {
-		this.tocLoaded();
-
+		this.tocLoaded();	
 		var parts = window.location.pathname.split('/');
 		var command = "/toc.json";
 		// Remember the path
@@ -474,9 +481,13 @@ var tableOfContents = {
 		xmlhttp.onload = function () {
 			if (this.status == 200) {
 				tableOfContents.tocData = JSON.parse(xmlhttp.responseText);
-				tableOfContents.repopulateFromData(tableOfContents.tocData);
-			    if( tableOfContents.tocData.path ) {
-					  helpServer.setDefaultPage( tableOfContents.tocData.path );					
+				if( tableOfContents.localTocData ) {
+				    tableOfContents.repopulateFromData(tableOfContents.localTocData );	
+				} else {
+					tableOfContents.repopulateFromData(tableOfContents.tocData);
+				    if( tableOfContents.tocData.path ) {
+						  helpServer.setDefaultPage( tableOfContents.tocData.path );					
+					}
 				}				
 			}
 		};
