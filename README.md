@@ -404,6 +404,7 @@ help.status(function (stats) {
 
 ## Release History
 
+* 1.0.66 Fixed logic that cleans up HTML (don't run this over XML content) 
 * 1.0.65 Fixed race conditions in the client side TOC and XML XSLT processing code.  
 * 1.0.63 Added support for altToc and folder level default metadata (in the config) 
 * 1.0.60 Added support for XSLT - source pages that are XML get remapped using the config.xslt file (stored in assets) 

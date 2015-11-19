@@ -128,14 +128,16 @@ var helpServer = {
         }
         xmlhttp.onload = function () {
           if (this.status == 200) {
-            var htmlText = xmlhttp.responseText;
-            var lowText = htmlText.toLowerCase();
-            var bodyAt = lowText.indexOf('<body');
-            if (bodyAt >= 0) {
-              var endBodyAt = lowText.indexOf('</body');
-              if (endBodyAt >= 0) {
-                htmlText = "<div" + htmlText.substring(bodyAt + 5, endBodyAt) + "</div>";
-              }
+            var htmlText = xmlhttp.responseText;            
+            if( !requiresXSLT ) {
+                var lowText = htmlText.toLowerCase();            
+                var bodyAt = lowText.indexOf('<body');
+                if (bodyAt >= 0) {
+                  var endBodyAt = lowText.indexOf('</body');
+                  if (endBodyAt >= 0) {
+                    htmlText = "<div" + htmlText.substring(bodyAt + 5, endBodyAt) + "</div>";
+                  }
+                }
             }
             var baseTagElement = document.getElementById("baseTag");
             baseTagElement.href = helpServer.baseTagHost+"/help" + path;
