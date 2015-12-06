@@ -671,48 +671,132 @@ module.exports = function (config) {
 			return ulList;
 		};
 		return buildTree(tree, true);
-	};
-	ListUtilities.prototype.createIndexPages = function (tree,basePath,suffix) {
-      var async = require('async');
-	  var indexBuild = [];
-	  var fs = require("fs");
-	  var lu = this;
- 	  var buildIndex = function(items,path) {
-		   var i;
-		   for( i = 0 ; i < items.length ; ++i ) {
-			   if( items[i].children && items[i].children.length > 0 ) {
-				   var pathName = path + (items[i].title || ""); 
-				   buildIndex( items[i].children , pathName + "/" );
-				   if( !items[i].path ) {
-				   		items[i].path = pathName ;
-				   } 
-				   indexBuild.push( { name : pathName , children : items[i].children } );
-			   }
-		   }
-	  };
-	  indexBuild.push( { name : "/" , children : tree } ); 
-	  buildIndex(tree,"/");
-	  		
-      async.eachSeries(indexBuild, function (indexEntry, callbackLoop) {
-		    var htmlText = "<div id='generatedTopics'>";
-			var i , j ;
-			var filename = lu.replaceAll( indexEntry.name , "/" , "_" );
-			for( i = 0 ; i < indexEntry.children.length ; ++i  ) {
-				 var pathName = indexEntry.children[i].path;
-				 if( !pathName ) {
-					 pathName = indexEntry.name + "/"+ indexEntry.children[i].title;
-				 }
-				 var extensionIndex = pathName.lastIndexOf('.');
-				 if( extensionIndex > 0 && pathName.substr(extensionIndex+1).indexOf('/') < 0 )
-					 htmlText += "<a href='"+  pathName +"' >" + indexEntry.children[i].title + "</a>\n";				 
-				 else				 
-					 htmlText += "<a href='"+  pathName +"' >" + indexEntry.children[i].title + "...</a>\n";				 
+	};	
+	ListUtilities.prototype.loadOrCreateIndexPage = function (config,path,flt,callback) {
+		// Create an index page on demand (if not found...)
+		var lu = this;
+        var generatedTopic = config.generated + "topics/" + this.replaceAll(path,"/","_") + (config.filter_name ? config.filter_name : '_all') + ".html";
+		var fs = require("fs");
+		fs.readFile(generatedTopic, "utf8", function (err, data) {
+			if( err ) {
+				// TBD - create (and load) the page just-in-time - using the table of contents....
+				var filterStuctureName = config.generated + flt + config.structurefile;
+				if( config.altTocs ) {
+					var i;
+					for(i = 0 ; i < config.altTocs.length ; ++i ) {
+						if( path.substring(0,config.altTocs[i].length).toLowerCase() == config.altTocs[i].toLowerCase() ) {
+							var altTocClean = lu.replaceAll(config.altTocs[i],'/','_');
+							filterStuctureName = config.generated + altTocClean + flt + config.structurefile;
+							break;
+						}
+					}					      
+				}
+				fs.readFile(filterStuctureName, "utf8", function (err, tocData) {
+					if( err ) {
+						console.log('TOC to generate page from was not found');
+						callback(new Error('Page not found!'), null);
+					} else {
+						var toc = JSON.parse(tocData);
+						var pageChildren = null;
+						var findPageChildren = function(children ) {
+						    if( children )	{
+								var i;
+								var lPath = path.toLowerCase();
+								for( i = 0 ; i < children.length ; ++i ) {
+									if( children[i].path ) {
+										var testPath = children[i].path.toLowerCase();
+										var lastPos = testPath.lastIndexOf('/');
+										if( lastPos > 0 ) {
+											testPath = testPath.substring(0,lastPos);
+											if( lPath.length <= testPath.length ) { 
+												if( testPath.substring(0,lPath.length) == lPath ) {
+													pageChildren = children;
+													break;
+												} else {
+													findPageChildren(children[i].children);
+													if( pageChildren )
+														break;
+												}
+											} else {
+												findPageChildren(children[i].children);
+												if( pageChildren )
+												    break;
+											}
+										} else {
+											findPageChildren(children[i].children);
+											if( pageChildren )
+												break;
+										}
+									} else {
+										findPageChildren(children[i].children);
+										if( pageChildren )
+											break;
+									}
+								}
+							}
+						};	
+						findPageChildren(toc.children);
+						if( pageChildren ) {
+							// good - We have a list of page, lets build an HTML
+							var async = require('async');
+							var htmlText = "<dl id='generatedTopics'>";
+							async.eachSeries(pageChildren, function(pageEntry,callbackLoop) {
+								var pathName = pageEntry.path;
+								if( !pathName ) {
+									pathName = path + "/"+ pageEntry.title;
+								}
+								var extensionIndex = pathName.lastIndexOf('.');
+								if( extensionIndex > 0 && pathName.substr(extensionIndex+1).indexOf('/') < 0 ) {									 
+									if( config.pageIndexer ) {
+										config.pageIndexer(config.source+pathName,function(data) {
+											if( data && data.definition ) {
+												htmlText += "<dt><a href='"+  pathName +"' >" + pageEntry.title + "</a></dt>\n<dd>"+ data.definition+"</dd>\n";
+												callbackLoop();														
+											} else {
+												htmlText += "<dt><a href='"+  pathName +"' >" + pageEntry.title + "</a></dt>\n";
+												callbackLoop();														
+											}
+										});
+									} else {
+										htmlText += "<dt><a href='"+  pathName +"' >" + pageEntry.title + "</a></dt>\n";
+										callbackLoop();
+									}				 
+								} else {				 
+									htmlText += "<dt><a href='"+  pathName +"' >" + pageEntry.title + "...</a></dt>\n";
+									callbackLoop();
+								}
+							},function() {
+								// Finished the page...
+								htmlText += "</dl>";			
+								fs.writeFile( generatedTopic , htmlText, function (err) {
+									callback(null, htmlText, "html");									
+								});								
+							});
+						} else {
+							console.log('path not found in TOC for '+path);
+							callback(new Error('Page not found!'), null);
+						}											
+					}					
+				});
+			} else {
+				callback(null, data, "html");
 			}
-			htmlText += "</div>";			
-			fs.writeFile( basePath + filename + suffix , htmlText, function (err) {
-				callbackLoop();
+		});
+	};
+	ListUtilities.prototype.cleanupIndexPages = function (config) {
+		var topicsPath = config.generated + "topics";
+		var fs = require("fs");			
+	    fs.readdir(topicsPath, function (err, list) {
+			var async = require('async');
+			async.eachSeries(list,function(item,callbackLoop) {
+				fs.unlink(topicsPath+"/"+item, function() {
+					if( err ) {
+						console.log("removing topic "+item+" error :"+err);
+					}
+					callbackLoop();					
+				});
 			});
-	  });	
+		});
 	};
 	return new ListUtilities();
 }

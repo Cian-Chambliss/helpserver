@@ -103,6 +103,11 @@ module.exports = function (config) {
     if (!config.hasOwnProperty('xslt')) {
       config.xslt = '';
     }
+    
+    if (!config.hasOwnProperty('pageIndexer')) {
+      config.pageIndexer = null;
+    }
+    
     if (!config.hasOwnProperty('altTocs')) {
       config.altTocs = [];
     }
@@ -142,6 +147,7 @@ module.exports = function (config) {
         search: config.search,
         escapes: config.escapes,
         xslt: config.xslt,
+        pageIndexer: config.pageIndexer,
         altTocs: config.altTocs,
         defaultPathMetadata: config.defaultPathMetadata,
         templatefile: config.templatefile,
@@ -153,7 +159,7 @@ module.exports = function (config) {
         repoSource: config.repoSource,
         isAdmin: config.isAdmin
       };
-    }  
+    }
        
     // Collect a filter if it is not already included    
     if (config.filter_name && config.filter && !filters[config.filter_name]) {
@@ -171,6 +177,7 @@ module.exports = function (config) {
           filter: configDef.filter ? configDef.filter : config.filter,
           escapes: configDef.escapes ? configDef.escapes : config.escapes,
           xslt: configDef.xslt ? configDef.xslt : config.xslt,
+          pageIndexer: configDef.pageIndexer ? configDef.pageIndexer : config.pageIndexer,
           altTocs: configDef.altTocs ? configDef.altTocs : config.altTocs,
           defaultPathMetadata:  configDef.defaultPathMetadata ? configDef.defaultPathMetadata : config.defaultPathMetadata,
           templatefile: configDef.templatefile ? configDef.templatefile : config.templatefile,
@@ -253,15 +260,9 @@ module.exports = function (config) {
       extension = page.substring(extensionPos + 1).toLowerCase();
     var relativePath = unescape(page.substring(1));
     if (!extension) {
-      var generatedTopic = config.generated + "topics/" + replaceAll(page,"/","_") + (this.config.filter_name ? this.config.filter_name : defaultFilter) + ".html";
-      fs.readFile(generatedTopic, "utf8", function (err, data) {
-          if( err ) {
-            console.log('Generated file '+generatedTopic+" is missing!\n");
-             callback(new Error('Page not found!'), null);
-          } else {
-             callback(null, data, "html");
-          }
-      });
+      var ListUtilities = require('./listutilities');
+      var lu = new ListUtilities(config);
+      lu.loadOrCreateIndexPage(this.config,decodeURI(page),(this.config.filter_name ? this.config.filter_name : defaultFilter),callback);
     } else if (extension == "html" || extension == "htm" || extension == "xml") {
       fs.readFile(config.source + relativePath, "utf8", function (err, data) {
         if (err) {
@@ -490,7 +491,6 @@ module.exports = function (config) {
           });
  
           var tree = lu.treeFromList(results,filterEntry.altToc);
-          lu.createIndexPages(tree,topicsPath,cfg.filter_name+".html");
           var treeUL = lu.treeToUL(tree.children);
 
           console.log('Saving filtered list...');
@@ -592,6 +592,11 @@ module.exports = function (config) {
   
   // refresh help from repo, and rebuild TOC 
   HelpServerUtil.prototype.refresh = function (callback) {
+    // Remove all generated pages....
+    var ListUtilities = require('./listutilities');
+    var lu = new ListUtilities(config);               
+    lu.cleanupIndexPages(config);
+    // generated pages will be rebuilt on demand...
     var rebuildContent = function (help) {
       var handler = function (err, result) {
         if (err) {
@@ -605,8 +610,8 @@ module.exports = function (config) {
         if (config.search) {
           var updateindex = require('./updateindex');
           updateindex(config, function() {
-             help.generateFiltered(function (err2, result2) {
-              handler(err, result);
+              help.generateFiltered(function (err2, result2) {
+                  handler(err, result);
               }) 
           });
         } else {
