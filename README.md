@@ -404,6 +404,7 @@ help.status(function (stats) {
 
 ## Release History
 
+* 1.0.69 Merge subtoc pages with top level page + remove need for help folder tags when just overriding the href. 
 * 1.0.68 Index page generation (for folder content) is now done on demand - refersh just cleans up the topics folder. 
 * 1.0.66 Fixed logic that cleans up HTML (don't run this over XML content) 
 * 1.0.65 Fixed race conditions in the client side TOC and XML XSLT processing code.  

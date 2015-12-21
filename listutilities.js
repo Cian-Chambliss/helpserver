@@ -369,7 +369,7 @@ module.exports = function (config) {
 		var decorateNewTree = function (items) {
 			var i;
 			for( i = 0 ; i < items.length ; ++i ) {
-				if( items[i].hash ) {
+				if( items[i].hash && !items[i].path ) {
 					items[i].path = "/"+topPage;
 				}
 				if( items[i].children ) {
