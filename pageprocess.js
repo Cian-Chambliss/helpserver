@@ -180,6 +180,22 @@ module.exports = function (config, data, page, callbackPage) {
 					tocAbsolutePath = null;
 					childBranch = null;
 					childFlattenValue = null;
+                } else if( tocAbsolutePath && tocDepth >= 0 ) {
+                    if(  childBranch ) { 
+						if( childFlattenValue && childFlattenValue > 0 ) 
+							tocStack[tocDepth].push({ title: stringJs(text).decodeHTMLEntities().s, path: tocAbsolutePath , childBranch : childBranch , childFlatten : childFlattenValue });
+						else
+                            tocStack[tocDepth].push({ title: stringJs(text).decodeHTMLEntities().s, path: tocAbsolutePath , childBranch : childBranch });
+                    } else {
+                        tocStack[tocDepth].push({ title: stringJs(text).decodeHTMLEntities().s, path: tocAbsolutePath });                        
+                    }
+					tocAbsolutePath = null;
+					childBranch = null;
+					childFlattenValue = null;
+                } else if( tocDepth >= 0 && (childBranch || childFlattenValue) ) {
+                    tocStack[tocDepth].push({ title: stringJs(text).decodeHTMLEntities().s });
+					childBranch = null;
+					childFlattenValue = null;
 				}
 			},
 			onclosetag: function (name) {
