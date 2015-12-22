@@ -404,8 +404,9 @@ help.status(function (stats) {
 
 ## Release History
 
+* 1.0.70 Fixed race condition in the client side code - if a page that has a subtoc that is included in the top level page, the subtoc was brought in because the anchor tag lookup failed.
 * 1.0.69 Merge subtoc pages with top level page + remove need for help folder tags when just overriding the href. 
-* 1.0.68 Index page generation (for folder content) is now done on demand - refersh just cleans up the topics folder. 
+* 1.0.68 Index page generation (for folder content) is now done on demand - refresh just cleans up the topics folder. 
 * 1.0.66 Fixed logic that cleans up HTML (don't run this over XML content) 
 * 1.0.65 Fixed race conditions in the client side TOC and XML XSLT processing code.  
 * 1.0.63 Added support for altToc and folder level default metadata (in the config) 

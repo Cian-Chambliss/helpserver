@@ -19,9 +19,11 @@ var tableOfContents = {
 		var navTo = document.getElementById(navToId);
 		if (!navTo) {
 			navToId = decodeURI(navToId);
-			navTo = document.getElementById(navToId);
+			navTo = document.getElementById(navToId);            
 		}
-		if (navTo && this.lastSelection != navTo) {
+        if( !navTo && !tableOfContents.tocData )
+            ; // race with TOC load
+		else if (navTo && this.lastSelection != navTo) {
 			if (this.lastSelection != null) {
 				if (this.lastSelection.className == "checkedselected") {
 					this.lastSelection.className = "checked";
@@ -499,7 +501,7 @@ var tableOfContents = {
 			if( res && res.length ) {
 				var i;
 				for (i = 0; i < res.length; ++i) {
-					if( !res[i].path )
+                    if( !res[i].path )
 						res[i].path = navToId;
 					if( res[i].children)
 						processTree(res[i].children);
