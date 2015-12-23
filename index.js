@@ -264,13 +264,20 @@ module.exports = function (config) {
       var lu = new ListUtilities(config);
       lu.loadOrCreateIndexPage(this.config,decodeURI(page),(this.config.filter_name ? this.config.filter_name : defaultFilter),callback);
     } else if (extension == "html" || extension == "htm" || extension == "xml") {
-      fs.readFile(config.source + relativePath, "utf8", function (err, data) {
-        if (err) {
-          callback(err, null);
-        } else {
-          callback(null, data, "html");
-        }
-      });
+      if( page.indexOf("/index.xml") > 0 ) {
+            // Make sure we have the 'expanded' version...
+            var ListUtilities = require('./listutilities');
+            var lu = new ListUtilities(config);
+            lu.loadOrCreateIndexPage(this.config,decodeURI(page),(this.config.filter_name ? this.config.filter_name : defaultFilter),callback);
+      }  else {
+            fs.readFile(config.source + relativePath, "utf8", function (err, data) {
+                if (err) {
+                callback(err, null);
+                } else {
+                callback(null, data, "html");
+                }
+            });
+      }
     } else if (extension == "md") {
       fs.readFile(config.source + relativePath, "utf8", function (err, data) {
         if (err) {
