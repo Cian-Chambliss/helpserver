@@ -582,12 +582,14 @@ module.exports = function (config) {
         if (altToc && altToc.length) {
             // AltTocs are trimed from path
             var findBranch = altToc.split('/');
+            var treeParent = null;
             var i;
             if (tree.children)
                 tree = tree.children;
             for (i = 1; i < findBranch.length - 1; ++i) {
                 var index = this.findNode(tree, findBranch[i].trim().toLowerCase());
                 if (index >= 0) {
+                    treeParent = tree[index]; 
                     tree = tree[index].children;
                     if (!tree)
                         break;
@@ -595,9 +597,32 @@ module.exports = function (config) {
                     tree = null;
                     break;
                 }
-            }
+            }            
             if (!tree)
                 tree = [];
+            else if( treeParent ) {
+                if( treeParent.path ) {
+                    var indexXMLPathPos = treeParent.path.indexOf("/index.xml");
+                    if( indexXMLPathPos > 0 ) {
+                        var parentXMLPath = treeParent.path.substring(0,indexXMLPathPos+1);
+                        // make sure that all subbranchs have an 'index.xml' - we autoGenerate this..
+                        var populateEmptyBranches = function(items,parentXMLPath) {
+                            if( items ) {
+                                var i = 0;
+                                for( i = 0 ; i < items.length ; ++i ) {
+                                    if( items[i].children ) {
+                                        if( !items[i].path ) {
+                                            items[i].path = parentXMLPath + items[i].title + "/index.xml";
+                                        }
+                                        populateEmptyBranches(items[i].children, parentXMLPath + items[i].title + "/" );
+                                    }
+                                }
+                            }
+                        };
+                        populateEmptyBranches(tree,parentXMLPath )
+                    }
+                }
+            }    
             currentTopPage = null;
         } else if (config.editTOC) {
             if (config.editTOC.remove) {
@@ -862,6 +887,8 @@ module.exports = function (config) {
                     fs.readFile(config.source + originalPath, "utf8", function (err, xmlData) {
                         if (err) {
                             console.log("Could not read template file " + originalPath);
+                            xmlTemplate = "<page><!--list:.--></page>"
+                            lists.push({ listDef: '.', fullPath: path , xml : '' });
                         } else {
                             var embeddedLists = xmlData.split('<!--list:')
                             if (embeddedLists.length > 1) {

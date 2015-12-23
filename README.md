@@ -404,6 +404,8 @@ help.status(function (stats) {
 
 ## Release History
 
+* 1.0.72 Alternate table of contents -Breadcrumb fixes and automatic-generation of index.xml. 
+* 1.0.71 Added XML Template overview (index.xml) file support, uses a &lt;!--list:.--&gt; placeholder tag.   
 * 1.0.70 Fixed race condition in the client side code - if a page that has a subtoc that is included in the top level page, the subtoc was brought in because the anchor tag lookup failed.
 * 1.0.69 Merge subtoc pages with top level page + remove need for help folder tags when just overriding the href. 
 * 1.0.68 Index page generation (for folder content) is now done on demand - refresh just cleans up the topics folder. 

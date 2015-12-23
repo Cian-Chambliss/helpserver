@@ -440,7 +440,7 @@ var tableOfContents = {
 							ulList += "<li branch=\"true\" class=\"closed\" >";
 						} else {
 							ulList += "<li class=\"leaf\" >";
-						}
+						}                       
 						if (res[i].path) {
 							if(	res[i].ignoreBreadcrumbs ) {
 								if (res[i].hash)
@@ -451,10 +451,11 @@ var tableOfContents = {
 								ulList += "<div id=\"" + res[i].path + "#" + res[i].hash + "\">" + res[i].title + "</div>";
 							else
 								ulList += "<div id=\"" + res[i].path + "\">" + res[i].title + "</div>";
-						} else
-							ulList += "<div>" + res[i].title + "</div>";
+						} else {
+   							ulList += "<div>" + res[i].title + "</div>";
+                        }
 						if (res[i].children)
-							ulList += buildTree(res[i].children, false);
+                            ulList += buildTree(res[i].children, false);
 						ulList += "</li>\n"
 					}
 					ulList += "</ul>\n";
@@ -486,7 +487,7 @@ var tableOfContents = {
 				if( tableOfContents.localTocData ) {
 				    tableOfContents.repopulateFromData(tableOfContents.localTocData );	
 				} else {
-					tableOfContents.repopulateFromData(tableOfContents.tocData);
+					tableOfContents.repopulateFromData(tableOfContents.tocData );
 				    if( tableOfContents.tocData.path ) {
 						  helpServer.setDefaultPage( tableOfContents.tocData.path );					
 					}
@@ -570,7 +571,14 @@ var tableOfContents = {
 			 && elem.parentElement.parentElement.previousElementSibling.id
 			 && elem.parentElement.parentElement.previousElementSibling.getAttribute("ignoreBreadcumbs") !== "true" 
 			  ) {
-				 var prefix = elem.parentElement.parentElement.previousElementSibling.id;
+				 var prefix = elem.parentElement.parentElement.previousElementSibling.id;                 
+                 var indexPagePos = prefix.indexOf('/index.xml');
+                 if( indexPagePos < 0 ) {
+                     indexPagePos = prefix.indexOf('/index.html');
+                 }
+                 if( indexPagePos > 0 ) {
+                     prefix = prefix.substring(0,indexPagePos);
+                 }
 				 var extnPos = prefix.lastIndexOf('.');
 				 if( extnPos > 0 ) {
 					 var extn = prefix.substr(extn).toLowerCase();
@@ -667,6 +675,20 @@ var tableOfContents = {
 		}		
 	},
 	clickBreadCrumbs: function(path) {
+        if( tableOfContents.localTocData && tableOfContents.localFolderLevel ) {
+            // Fix up the path...
+            if( path.substring(0,1) == '/' && tableOfContents.localFolderLevel.substring(tableOfContents.localFolderLevel.length-1) == '/' )
+                path = tableOfContents.localFolderLevel + path.substring(1);
+            else
+                path = tableOfContents.localFolderLevel + path;                
+            var navTo = document.getElementById(path);
+            if( !navTo ) {
+                navTo = document.getElementById(path+"/index.xml");
+                if( navTo ) {
+                    path += "/index.xml";
+                }
+            }
+        }
 		if (helpServer && helpServer.checkNavigation)
 			helpServer.checkNavigation(path, 'breadcrumbs');
 		else
