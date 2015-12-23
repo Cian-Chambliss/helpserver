@@ -680,6 +680,8 @@ module.exports = function (config) {
         var fs = require("fs");
         var indexTemplatePos = path.indexOf("/index.xml");
         var xmlTemplate = null;
+        var lists = [];
+
         if (indexTemplatePos > 0) {
             path = path.substring(0, indexTemplatePos);
             generatedTopic += ".xml";
@@ -707,9 +709,9 @@ module.exports = function (config) {
                             callback(new Error('Page not found!'), null);
                         } else {
                             var toc = JSON.parse(tocData);
-                            var pageChildren = null;
-                            var findPageChildren = function (children,lPath) {
+                            var findPageChildren = function (children, lPath) {
                                 if (children) {
+                                    var result = null;
                                     var i;
                                     for (i = 0; i < children.length; ++i) {
                                         if (children[i].path) {
@@ -719,60 +721,87 @@ module.exports = function (config) {
                                                 testPath = testPath.substring(0, lastPos);
                                                 if (lPath.length <= testPath.length) {
                                                     if (testPath.substring(0, lPath.length) == lPath) {
-                                                        if (children[i].children) {
-                                                            pageChildren = children[i].children;
-                                                            break;
+                                                        if (children[i].path.indexOf("/index.xml") == lPath.length && children[i].children) {
+                                                            return children[i].children;
+                                                        } else {
+                                                            return children;
                                                         }
-                                                    } else {
-                                                        findPageChildren(children[i].children,lPath);
-                                                        if (pageChildren)
-                                                            break;
                                                     }
-                                                } else {
-                                                    findPageChildren(children[i].children,lPath);
-                                                    if (pageChildren)
-                                                        break;
                                                 }
-                                            } else {
-                                                findPageChildren(children[i].children,lPath);
-                                                if (pageChildren)
-                                                    break;
                                             }
+                                        }
+                                    }
+                                    for (i = 0; i < children.length; ++i) {
+                                        result = findPageChildren(children[i].children, lPath);
+                                        if (result)
+                                            return result;
+                                    }
+                                    return null;
+                                }
+                            };
+                            var pageChildren = null;
+                            
+                            if (indexTemplatePos > 0) {
+                                // Build a complete list...
+                                if( lists.length > 0 ) {
+                                    var i;
+                                    for( i = 0 ; i < lists.length ; ++i ) {
+                                        var listPtr = findPageChildren(toc.children, lists[i].fullPath.toLowerCase());
+                                        lists[i].children = listPtr;
+                                        if( listPtr ) {
+                                            var j = 0;
+                                            for( j = 0 ; j < listPtr.length ; ++j ) {
+                                                listPtr[j].listParent = lists[i];
+                                            }
+                                            if( pageChildren ) {
+                                                pageChildren = pageChildren.concat(listPtr);
+                                            } else
+                                                pageChildren = listPtr;
                                         } else {
-                                            findPageChildren(children[i].children,lPath);
-                                            if (pageChildren)
-                                                break;
+                                           console.log('Warning: no children for '+lists[i].fullPath); 
                                         }
                                     }
                                 }
-                            };
-                            findPageChildren(toc.children,path.toLowerCase());
+                            } else {
+                                pageChildren = findPageChildren(toc.children, path.toLowerCase());
+                            }
+                            
                             if (pageChildren) {
                                 // good - We have a list of page, lets build an HTML
                                 var async = require('async');
                                 var htmlText = "<dl id='generatedTopics'>";
                                 if (indexTemplatePos > 0) {
-                                    htmlText = "<list><item><name-title>Name</name-title></item>\n";
+                                    if( xmlTemplate )
+                                        htmlText = xmlTemplate;
+                                    else    
+                                        htmlText = "";
                                 }
                                 async.eachSeries(pageChildren, function (pageEntry, callbackLoop) {
                                     var pathName = pageEntry.path;
                                     if (!pathName) {
-                                        pathName = path + "/" + pageEntry.title;
+                                        if( pageEntry.listParent ) {
+                                            pathName = pageEntry.listParent.fullPath + "/" + pageEntry.title;
+                                        } else {
+                                            pathName = path + "/" + pageEntry.title;
+                                        }
                                     }
                                     var extensionIndex = pathName.lastIndexOf('.');
                                     if (extensionIndex > 0 && pathName.substr(extensionIndex + 1).indexOf('/') < 0) {
                                         if (config.pageIndexer) {
                                             config.pageIndexer(config.source + pathName, function (data) {
                                                 if (data && data.definition) {
-                                                    if (indexTemplatePos > 0) {                                                        
-                                                        htmlText += "<item><name href=\""+pathName+"\">" + pageEntry.title + "</name><description>" + data.definition + "</description></item>\n";
+                                                    if (indexTemplatePos > 0) {
+                                                        var cleanDefinition = data.definition;
+                                                        if( cleanDefinition.indexOf('<') >= 0 || cleanDefinition.indexOf('>') >= 0 || cleanDefinition.indexOf('&') >= 0)
+                                                            cleanDefinition = "<![CDATA["+cleanDefinition+"]]>";                                                        
+                                                        pageEntry.listParent.xml += "<item><name href=\"" + pathName + "\">" + pageEntry.title + "</name><description>" + cleanDefinition + "</description></item>\n";
                                                     } else {
                                                         htmlText += "<dt><a href='" + pathName + "' >" + pageEntry.title + "</a></dt>\n<dd>" + data.definition + "</dd>\n";
                                                     }
                                                     callbackLoop();
                                                 } else {
                                                     if (indexTemplatePos > 0) {
-                                                        htmlText += "<item><name href=\""+pathName+"\">" + pageEntry.title + "</name></item>\n";
+                                                        pageEntry.listParent.xml += "<item><name href=\"" + pathName + "\">" + pageEntry.title + "</name></item>\n";
                                                     } else {
                                                         htmlText += "<dt><a href='" + pathName + "' >" + pageEntry.title + "</a></dt>\n";
                                                     }
@@ -781,7 +810,7 @@ module.exports = function (config) {
                                             });
                                         } else {
                                             if (indexTemplatePos > 0) {
-                                                htmlText += "<item><name href=\""+pathName+"\">" + pageEntry.title + "</name></item>\n";
+                                                pageEntry.listParent.xml += "<item><name href=\"" + pathName + "\">" + pageEntry.title + "</name></item>\n";
                                             } else {
                                                 htmlText += "<dt><a href='" + pathName + "' >" + pageEntry.title + "</a></dt>\n";
                                             }
@@ -789,7 +818,7 @@ module.exports = function (config) {
                                         }
                                     } else {
                                         if (indexTemplatePos > 0) {
-                                            htmlText += "<item><name href=\""+pathName+"\">" + pageEntry.title + "</name></item>\n";
+                                            pageEntry.listParent.xml += "<item><name href=\"" + pathName + "\">" + pageEntry.title + "</name></item>\n";
                                         } else {
                                             htmlText += "<dt><a href='" + pathName + "' >" + pageEntry.title + "...</a></dt>\n";
                                         }
@@ -797,14 +826,11 @@ module.exports = function (config) {
                                     }
                                 }, function () {
                                     // Finished the page...
-                                    if (indexTemplatePos > 0) {
-                                        htmlText += "</list>";
-                                        if( xmlTemplate ) {
-                                            htmlText = lu.replaceAll(xmlTemplate,'<!--list:.-->',htmlText);
-                                        } else {
-                                            htmlText = "<page>"+htmlText+"</page>";
-                                        }                                       
-                                        
+                                    if( lists.length > 0 ) {
+                                        var i;
+                                        for( i = 0 ; i < lists.length ; ++i ) {
+                                            htmlText = lu.replaceAll(htmlText, '<!--list:'+lists[i].listDef+'-->', "<list><item><name-title>Name</name-title></item>"+lists[i].xml+"</list>");
+                                        }
                                     } else {
                                         htmlText += "</dl>";
                                     }
@@ -817,8 +843,16 @@ module.exports = function (config) {
                                     });
                                 });
                             } else {
-                                console.log('path not found in TOC for ' + path);
-                                callback(new Error('Page not found!'), null);
+                                if (xmlTemplate) {
+                                    // No templates where expanded, but we have a page
+                                    if (xmlTemplate.indexOf('<!--list:') >= 0) {
+                                        console.log('Warning: embedded lists were not expanded for ' + path);
+                                    }
+                                    callback(null, xmlTemplate, "xml");
+                                } else {
+                                    console.log('path not found in TOC for ' + path);
+                                    callback(new Error('Page not found!'), null);
+                                }
                             }
                         }
                     });
@@ -826,9 +860,43 @@ module.exports = function (config) {
                 // Just generate the page...
                 if (indexTemplatePos > 0) {
                     fs.readFile(config.source + originalPath, "utf8", function (err, xmlData) {
-                        if( err ) {
-                            console.log("Could not read template file "+originalPath);
+                        if (err) {
+                            console.log("Could not read template file " + originalPath);
                         } else {
+                            var embeddedLists = xmlData.split('<!--list:')
+                            if (embeddedLists.length > 1) {
+                                var i;
+                                for (i = 1; i < embeddedLists.length; ++i) {
+                                    var endPath = embeddedLists[i].indexOf('-->');
+                                    if (endPath > 0) {
+                                        var relPath = embeddedLists[i].substring(0, endPath);
+                                        var j;
+                                        var listItem = null;
+                                        for (j = 0; j < lists.length; ++j) {
+                                            if (lists[j].listDef == relPath) {
+                                                listItem = lists[j];
+                                                break;
+                                            }
+                                        }
+                                        if (!listItem) {
+                                            var fullPath = path;
+                                            if (relPath.length > 0) {
+                                                if (relPath.substring(0, 1) == '.') {
+                                                    if (relPath.length > 1) {
+                                                        fullPath += relPath.substring(1);
+                                                    }
+                                                } else if (relPath.substring(0, 1) == '/') {
+                                                    fullPath += relPath;
+                                                } else {
+                                                    fullPath += "/" + relPath;
+                                                }
+                                            }
+                                            lists.push({ listDef: relPath, fullPath: fullPath , xml : '' });
+                                        }
+                                    }
+                                }
+                                console.log( 'Look for' + JSON.stringify(lists) );
+                            }
                             xmlTemplate = xmlData;
                         }
                         generatePage();
