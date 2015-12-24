@@ -19,7 +19,25 @@ var tableOfContents = {
 		var navTo = document.getElementById(navToId);
 		if (!navTo) {
 			navToId = decodeURI(navToId);
-			navTo = document.getElementById(navToId);            
+			navTo = document.getElementById(navToId);
+            if( !navTo) {
+                // If link is to folder - lets look for types of index pages...
+                if( navToId.lastIndexOf('.') > navToId.lastIndexOf('/') ) {
+                       navTo = document.getElementById(navToId+"/index.xml");
+                       if( navTo )
+                          navTo = navToId+"/index.xml";
+                       else {
+                           navTo = document.getElementById(navToId+"/index.html");
+                           if( navTo )
+                                navTo = navToId+"/index.html";
+                           else {
+                                navTo = document.getElementById(navToId+"/index.md");
+                                if( navTo )
+                                     navTo = navToId+"/index.md";
+                           }                                
+                       }   
+                }                
+            }            
 		}
         if( !navTo && !tableOfContents.tocData )
             ; // race with TOC load
