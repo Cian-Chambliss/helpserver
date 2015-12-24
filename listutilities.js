@@ -816,9 +816,9 @@ module.exports = function (config) {
                                         }
                                     }
                                     var extensionIndex = pathName.lastIndexOf('.');
-                                    var isFolder = false;
+                                    var isFolder = true;
                                     if (extensionIndex > 0 && pathName.substr(extensionIndex + 1).indexOf('/') < 0) 
-                                        isFolder = true;                                        
+                                        isFolder = false;                                        
                                     if (config.pageIndexer) {
                                         config.pageIndexer({ 
                                             filename : (config.source + pathName)

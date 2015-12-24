@@ -710,6 +710,16 @@ var tableOfContents = {
                     navTo = document.getElementById(path+"/index.xml");
                     if( navTo ) {
                         path += "/index.xml";
+                    } else {
+                        navTo = document.getElementById(path+"/index.html");                        
+                        if( navTo ) {
+                            path += "/index.html";
+                        } else {
+                            navTo = document.getElementById(path+"/index.md");                        
+                            if( navTo ) {
+                                path += "/index.md";
+                            }                            
+                        }
                     }
                 }
             }
