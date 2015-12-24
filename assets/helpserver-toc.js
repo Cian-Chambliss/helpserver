@@ -121,9 +121,9 @@ var tableOfContents = {
 				}
 			} else {                
 				if( tableOfContents.useLocalToc && tableOfContents.tocData ) {
-                    if( tableOfContents.useLocalToc == (navToId+"index.xml")
-                     || tableOfContents.useLocalToc == (navToId+"index.html")
-                     || tableOfContents.useLocalToc == (navToId+"index.md")
+                    if( (tableOfContents.useLocalToc+"index.xml") == navToId
+                     || (tableOfContents.useLocalToc+"index.html") == navToId
+                     || (tableOfContents.useLocalToc+"index.md") == navToId
                       )
                        ;
                     else {   
