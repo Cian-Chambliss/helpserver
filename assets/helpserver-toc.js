@@ -119,10 +119,17 @@ var tableOfContents = {
 					xmlhttp.open("GET", "/structure" + navToId, true);
 					xmlhttp.send('');
 				}
-			} else {
+			} else {                
 				if( tableOfContents.useLocalToc && tableOfContents.tocData ) {
-					tableOfContents.useLocalToc = null;
-					tableOfContents.repopulateFromData(tableOfContents.tocData);
+                    if( tableOfContents.useLocalToc == (navToId+"index.xml")
+                     || tableOfContents.useLocalToc == (navToId+"index.html")
+                     || tableOfContents.useLocalToc == (navToId+"index.md")
+                      )
+                       ;
+                    else {   
+					   tableOfContents.useLocalToc = null;
+					   tableOfContents.repopulateFromData(tableOfContents.tocData);
+                    }
 				}
 			}
 		}
@@ -642,6 +649,20 @@ var tableOfContents = {
 						startAt = i + 1;
 					}
 				}
+                if( tableOfContents.localTocData && tableOfContents.localTocData.path ) {
+                    var lastPathName = "Reference";
+                    var pathParts = tableOfContents.localTocData.path.split('/');
+                    if( pathParts.length > 1 ) {
+                        if( pathParts[pathParts.length-1].length > 0 ) {
+                            lastPathName = pathParts[pathParts.length-1];
+                            if( lastPathName == 'index.xml' || lastPathName == 'index.html' || lastPathName == 'index.md')
+                                lastPathName = pathParts[pathParts.length-2];
+                        } else if( pathParts[pathParts.length-2].length > 0 ) {
+                            lastPathName = pathParts[pathParts.length-2];
+                        }                        
+                    }                    
+                    breadCrumbMarkup = "<a onclick=\"tableOfContents.clickBreadCrumbs('/')\">"+lastPathName+"<a> / ";                     
+                }
 				
 				for( i = startAt ; i < (levels.length-1) ; ++i ) {
 					if( i > startAt )
@@ -677,15 +698,19 @@ var tableOfContents = {
 	clickBreadCrumbs: function(path) {
         if( tableOfContents.localTocData && tableOfContents.localFolderLevel ) {
             // Fix up the path...
-            if( path.substring(0,1) == '/' && tableOfContents.localFolderLevel.substring(tableOfContents.localFolderLevel.length-1) == '/' )
-                path = tableOfContents.localFolderLevel + path.substring(1);
-            else
-                path = tableOfContents.localFolderLevel + path;                
-            var navTo = document.getElementById(path);
-            if( !navTo ) {
-                navTo = document.getElementById(path+"/index.xml");
-                if( navTo ) {
-                    path += "/index.xml";
+            if( path == '/' && tableOfContents.localTocData.path ) {
+                path = tableOfContents.localTocData.path;
+            } else {
+                if( path.substring(0,1) == '/' && tableOfContents.localFolderLevel.substring(tableOfContents.localFolderLevel.length-1) == '/' )
+                    path = tableOfContents.localFolderLevel + path.substring(1);
+                else
+                    path = tableOfContents.localFolderLevel + path;                
+                var navTo = document.getElementById(path);
+                if( !navTo ) {
+                    navTo = document.getElementById(path+"/index.xml");
+                    if( navTo ) {
+                        path += "/index.xml";
+                    }
                 }
             }
         }

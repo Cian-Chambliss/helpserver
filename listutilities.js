@@ -579,10 +579,10 @@ module.exports = function (config) {
             }
         }
         var currentTopPage = config.topPage;
+        var treeParent = null;
         if (altToc && altToc.length) {
             // AltTocs are trimed from path
             var findBranch = altToc.split('/');
-            var treeParent = null;
             var i;
             if (tree.children)
                 tree = tree.children;
@@ -666,6 +666,8 @@ module.exports = function (config) {
             }
             return { title: "/", path: topPagePath, children: tree };
         }
+        if( treeParent && treeParent.path )   
+            return { title: "/", path : treeParent.path , children: tree };     
         return { title: "/", children: tree };
     };
 
