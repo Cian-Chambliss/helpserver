@@ -107,7 +107,12 @@ module.exports = function (config) {
     if (!config.hasOwnProperty('pageIndexer')) {
       config.pageIndexer = null;
     }
-    
+    if (!config.hasOwnProperty('wrapIndex')) {
+      config.wrapIndex = null;        
+    }
+    if (!config.hasOwnProperty('getDefaultIndexTemplate')) {
+      config.getDefaultIndexTemplate = null;
+    }
     if (!config.hasOwnProperty('altTocs')) {
       config.altTocs = [];
     }
@@ -148,6 +153,8 @@ module.exports = function (config) {
         escapes: config.escapes,
         xslt: config.xslt,
         pageIndexer: config.pageIndexer,
+        wrapIndex: config.wrapIndex,
+        getDefaultIndexTemplate: config.getDefaultIndexTemplate,
         altTocs: config.altTocs,
         defaultPathMetadata: config.defaultPathMetadata,
         templatefile: config.templatefile,
@@ -178,6 +185,8 @@ module.exports = function (config) {
           escapes: configDef.escapes ? configDef.escapes : config.escapes,
           xslt: configDef.xslt ? configDef.xslt : config.xslt,
           pageIndexer: configDef.pageIndexer ? configDef.pageIndexer : config.pageIndexer,
+          wrapIndex: configDef.wrapIndex ? configDef.wrapIndex : config.wrapIndex,
+          getDefaultIndexTemplate: configDef.getDefaultIndexTemplate ? configDef.getDefaultIndexTemplate : config.getDefaultIndexTemplate,
           altTocs: configDef.altTocs ? configDef.altTocs : config.altTocs,
           defaultPathMetadata:  configDef.defaultPathMetadata ? configDef.defaultPathMetadata : config.defaultPathMetadata,
           templatefile: configDef.templatefile ? configDef.templatefile : config.templatefile,
@@ -264,11 +273,24 @@ module.exports = function (config) {
       var lu = new ListUtilities(config);
       lu.loadOrCreateIndexPage(this.config,decodeURI(page),(this.config.filter_name ? this.config.filter_name : defaultFilter),callback);
     } else if (extension == "html" || extension == "htm" || extension == "xml") {
-      if( page.indexOf("/index.xml") > 0 ) {
-            // Make sure we have the 'expanded' version...
-            var ListUtilities = require('./listutilities');
-            var lu = new ListUtilities(config);
-            lu.loadOrCreateIndexPage(this.config,decodeURI(page),(this.config.filter_name ? this.config.filter_name : defaultFilter),callback);
+      if( page.indexOf("/index.") > 0 ) {
+           if( page.indexOf("/index.xml") > 0
+            || page.indexOf("/index.md") > 0 
+            || page.indexOf("/index.html") > 0
+           ) {
+                // Support <!--list--> generically 
+                var ListUtilities = require('./listutilities');
+                var lu = new ListUtilities(config);
+                lu.loadOrCreateIndexPage(this.config,decodeURI(page),(this.config.filter_name ? this.config.filter_name : defaultFilter),callback);
+           } else {
+                fs.readFile(config.source + relativePath, "utf8", function (err, data) {
+                    if (err) {
+                    callback(err, null);
+                    } else {
+                    callback(null, data, "html");
+                    }
+                });               
+           }
       }  else {
             fs.readFile(config.source + relativePath, "utf8", function (err, data) {
                 if (err) {
