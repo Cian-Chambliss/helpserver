@@ -148,7 +148,16 @@ var helpServer = {
         }
         xmlhttp.onload = function () {
           if (this.status == 200) {
-            var htmlText = xmlhttp.responseText;            
+            var htmlText = xmlhttp.responseText;
+            var basePathLocation = path;
+            if( htmlText.substring(0,9) == "<!--base:" ) {
+                var endOfComment = htmlText.indexOf('-->');
+                if( endOfComment > 0 ) {
+                    basePathLocation = htmlText.substring(9,endOfComment);
+                    htmlText = htmlText.substring(endOfComment+3);
+                }
+            }
+            
             if( !requiresXSLT ) {
                 var lowText = htmlText.toLowerCase();            
                 var bodyAt = lowText.indexOf('<body');
@@ -159,8 +168,8 @@ var helpServer = {
                   }
                 }
             }
-            var baseTagElement = document.getElementById("baseTag");
-            baseTagElement.href = helpServer.baseTagHost+"/help" + path;
+            var baseTagElement = document.getElementById("baseTag");            
+            baseTagElement.href = helpServer.baseTagHost+"/help" + basePathLocation;
             if( requiresXSLT ) {
                   if( helpServer.xslt.xsltProcessor ) {
                       var dataXML = helpServer.parseXML(htmlText);

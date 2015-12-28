@@ -404,6 +404,7 @@ help.status(function (stats) {
 
 ## Release History
 
+* 1.0.78 First cut at a reactive design for the main.html (and associated) help pages.
 * 1.0.77 Added support for pages that contain <!--redirect:<path>--> to allow for 'aliased' pages. 
 * 1.0.76 Generalize pageIndex function + fixed breadcrumb root for alternate TOCs.
 * 1.0.72 Alternate table of contents -Breadcrumb fixes and automatic-generation of index.xml. 
