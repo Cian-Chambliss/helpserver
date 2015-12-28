@@ -352,6 +352,7 @@ var helpServer = {
        }
     }
     document.body.classList.remove('search');
+    document.body.classList.remove('showTOC');
   },
   helpFrameLoad: function () {
     var helpEle = document.getElementById('help');
