@@ -101,30 +101,50 @@ var helpServer = {
         elemHelpPage.innerHTML = "Loading " + path + "...";
         helpServer.pageHasLocalTOC = false;
         if( pageToGet.substring(pageToGet.lastIndexOf('.')).toLowerCase() == '.xml' ) {
-             requiresXSLT = true;
-             if( !helpServer.xslt ) {
-                  helpServer.xslt = {  definition : "" , xml : null , xsltProcessor : null , processXML : null };
-                  var xmlhttp2 = new XMLHttpRequest();
-                  xmlhttp2.onload = function () {
-                    if (this.status == 200) {
-                         helpServer.xslt.definition = xmlhttp2.responseText;
-                         helpServer.xslt.xml = helpServer.parseXML(helpServer.xslt.definition);
-                         if( helpServer.xslt.xml ) {
-                           helpServer.xslt.xsltProcessor = new XSLTProcessor();
-                           helpServer.xslt.xsltProcessor.importStylesheet(helpServer.xslt.xml);
-                           if( helpServer.xslt.processXML ) {
-                              var dataXML = helpServer.parseXML(helpServer.xslt.processXML);
-                              var resultDocument = helpServer.xslt.xsltProcessor.transformToFragment(dataXML, document);
-                              helpServer.xslt.processXML = null;
-                              elemHelpPage.innerHTML = "";
-                              elemHelpPage.appendChild(resultDocument);                              
-                           }
-                         }
-                    }
-                  };
-                  xmlhttp2.open("GET", "/xslt" , true);
-                  xmlhttp2.send('');
-             }
+            var xsltLevel = 0;            
+            if( navigator.userAgent.indexOf("Edge/") >= 0 )
+               xsltLevel = 1;
+            else if( navigator.userAgent.indexOf("Chrome/") >= 0 ||  navigator.userAgent.indexOf("Safari/") >= 0 )
+               xsltLevel = 3;
+            else if( navigator.userAgent.indexOf("Firefox/") >= 0 )
+               xsltLevel = 2;
+               
+            if( xsltLevel > 2 ) {            
+                requiresXSLT = true;
+                if( !helpServer.xslt ) {
+                    helpServer.xslt = {  definition : "" , xml : null , useIEMethod : false ,  xsltProcessor : null , processXML : null };
+                    var xmlhttp2 = new XMLHttpRequest();
+                    xmlhttp2.onload = function () {
+                        if (this.status == 200) {
+                            helpServer.xslt.definition = xmlhttp2.responseText;
+                            helpServer.xslt.xml = helpServer.parseXML(helpServer.xslt.definition);
+                            if( helpServer.xslt.xml ) {
+                            if (window.ActiveXObject || helpServer.xslt.xml.responseType == "msxml-document") {
+                                helpServer.xslt.useIEMethod = true;
+                                if( helpServer.xslt.processXML ) {
+                                    var dataXML = helpServer.parseXML(helpServer.xslt.processXML);
+                                    elemHelpPage.innerHTML = dataXML.transformNode( helpServer.xslt.xml);
+                                }         
+                            } else {
+                                    helpServer.xslt.xsltProcessor = new XSLTProcessor();
+                                    helpServer.xslt.xsltProcessor.importStylesheet(helpServer.xslt.xml);
+                                    if( helpServer.xslt.processXML ) {
+                                        var dataXML = helpServer.parseXML(helpServer.xslt.processXML);
+                                        var resultDocument = helpServer.xslt.xsltProcessor.transformToFragment(dataXML, document);
+                                        helpServer.xslt.processXML = null;
+                                        elemHelpPage.innerHTML = "";
+                                        elemHelpPage.appendChild(resultDocument);                              
+                                    }
+                            }
+                            }
+                        }
+                    };
+                    xmlhttp2.open("GET", "/xslt" , true);
+                    xmlhttp2.send('');
+                }
+            } else {
+                pageToGet = pageToGet.replace('.xml','.xml_html');
+            }
         }
         xmlhttp.onload = function () {
           if (this.status == 200) {
@@ -147,6 +167,9 @@ var helpServer = {
                       var resultDocument = helpServer.xslt.xsltProcessor.transformToFragment(dataXML, document);
                       elemHelpPage.innerHTML = "";
                       elemHelpPage.appendChild(resultDocument);
+                  } else if( helpServer.xslt.useIEMethod ) {
+                      var dataXML = helpServer.parseXML(htmlText);
+                      elemHelpPage.innerHTML = dataXML.transformNode( helpServer.xslt.xml);                     
                   } else {
                       elemHelpPage.innerHTML = "Waiting for XML processor to load...";
                       helpServer.xslt.processXML = htmlText;

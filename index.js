@@ -113,6 +113,9 @@ module.exports = function (config) {
     if (!config.hasOwnProperty('getDefaultIndexTemplate')) {
       config.getDefaultIndexTemplate = null;
     }
+    if(!config.hasOwnProperty('translateXML') ) {
+        config.translateXML = null;
+    }
     if (!config.hasOwnProperty('altTocs')) {
       config.altTocs = [];
     }
@@ -155,6 +158,7 @@ module.exports = function (config) {
         pageIndexer: config.pageIndexer,
         wrapIndex: config.wrapIndex,
         getDefaultIndexTemplate: config.getDefaultIndexTemplate,
+        translateXML: config.translateXML,
         altTocs: config.altTocs,
         defaultPathMetadata: config.defaultPathMetadata,
         templatefile: config.templatefile,
@@ -187,6 +191,7 @@ module.exports = function (config) {
           pageIndexer: configDef.pageIndexer ? configDef.pageIndexer : config.pageIndexer,
           wrapIndex: configDef.wrapIndex ? configDef.wrapIndex : config.wrapIndex,
           getDefaultIndexTemplate: configDef.getDefaultIndexTemplate ? configDef.getDefaultIndexTemplate : config.getDefaultIndexTemplate,
+          translateXML: configDef.translateXML ? configDef.translateXML : config.translateXML,
           altTocs: configDef.altTocs ? configDef.altTocs : config.altTocs,
           defaultPathMetadata:  configDef.defaultPathMetadata ? configDef.defaultPathMetadata : config.defaultPathMetadata,
           templatefile: configDef.templatefile ? configDef.templatefile : config.templatefile,
@@ -272,6 +277,10 @@ module.exports = function (config) {
       var ListUtilities = require('./listutilities');
       var lu = new ListUtilities(config);
       lu.loadOrCreateIndexPage(this.config,decodeURI(page),(this.config.filter_name ? this.config.filter_name : defaultFilter),callback);
+    } else if (extension == "xml_html" && config.translateXML ) {
+      var ListUtilities = require('./listutilities');
+      var lu = new ListUtilities(config);
+      lu.loadOrCreateTranslatedPage(this.config,decodeURI(page),(this.config.filter_name ? this.config.filter_name : defaultFilter),callback);
     } else if (extension == "html" || extension == "htm" || extension == "xml") {
       if( page.indexOf("/index.") > 0 ) {
            if( page.indexOf("/index.xml") > 0
@@ -285,18 +294,39 @@ module.exports = function (config) {
            } else {
                 fs.readFile(config.source + relativePath, "utf8", function (err, data) {
                     if (err) {
-                    callback(err, null);
+                         callback(err, null);
                     } else {
-                    callback(null, data, "html");
+                         callback(null, data, "html");
                     }
                 });               
            }
       }  else {
             fs.readFile(config.source + relativePath, "utf8", function (err, data) {
                 if (err) {
-                callback(err, null);
+                    callback(err, null);
                 } else {
-                callback(null, data, "html");
+                    var redirectPos = -1;
+                    if( data.length < 1024 ) {
+                        // Look for refresh
+                        redirectPos = data.indexOf('<!--redirect:');
+                        if( redirectPos >= 0 ) {
+                                data = data.substring(redirectPos+13);
+                                redirectPos = data.indexOf('-->');
+                                if( redirectPos > 0 ) {
+                                    data = data.substring(0,redirectPos);                                         
+                                }
+                                fs.readFile(config.source + data, "utf8", function (err, dataredirect) {
+                                if (err) {
+                                    callback(err, null);
+                                } else {
+                                    callback(null, dataredirect, "html");
+                                }
+                                });                       
+                        }                             
+                    }
+                    if( redirectPos < 0 ) {
+                         callback(null, data, "html");
+                    }
                 }
             });
       }

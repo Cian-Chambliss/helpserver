@@ -948,6 +948,36 @@ module.exports = function (config) {
             }
         });
     };
+    ListUtilities.prototype.loadOrCreateTranslatedPage = function (config, path, flt, callback) {
+        // Perform server side xslt transformation
+        var lu = this;
+        var generatedTopic = config.generated + "topics/" + this.replaceAll(path, "/", "_") + (config.filter_name ? config.filter_name : '_all');
+        var fs = require("fs");
+        path = lu.replaceAll(path,".xml_html",".xml");
+        
+        fs.readFile(generatedTopic, "utf8", function (err, data) {
+            if (err) {
+                if( path.indexOf("/index.xml") > 0 ) {
+                    lu.loadOrCreateIndexPage(config,path,flt,function(err,data) {
+                       if( err ) {
+                           callback(err,null,null);
+                       } else {
+                          var generatedIndexFile = lu.replaceAll(generatedTopic,".xml_html",".xml")+".xml";
+                          config.translateXML( generatedIndexFile, generatedTopic ,function(err,data) {
+                              callback(err,data,"html");
+                          });
+                       }
+                    });
+                } else {
+                    config.translateXML(config.source + path,generatedTopic,function(err,data) {
+                        callback(err,data,"html");
+                    });
+                }
+            } else {
+                callback(null,data,"html");
+            }
+        });
+    }
     ListUtilities.prototype.cleanupIndexPages = function (config) {
         var topicsPath = config.generated + "topics";
         var fs = require("fs");

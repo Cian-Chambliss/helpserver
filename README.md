@@ -404,6 +404,8 @@ help.status(function (stats) {
 
 ## Release History
 
+* 1.0.77 Added support for pages that contain <!--redirect:<path>--> to allow for 'aliased' pages. 
+* 1.0.76 Generalize pageIndex function + fixed breadcrumb root for alternate TOCs.
 * 1.0.72 Alternate table of contents -Breadcrumb fixes and automatic-generation of index.xml. 
 * 1.0.71 Added XML Template overview (index.xml) file support, uses a &lt;!--list:.--&gt; placeholder tag.   
 * 1.0.70 Fixed race condition in the client side code - if a page that has a subtoc that is included in the top level page, the subtoc was brought in because the anchor tag lookup failed.
