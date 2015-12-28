@@ -1,4 +1,4 @@
-#header {
+#xheader {
 position: absolute;
 top: 0px;
 left: 0px;
@@ -25,48 +25,48 @@ padding: 3px;
 border-radius: 2px;	
 }
 
-#TOC {
+#xTOC {
 }
 
-#searchResults {
+#xsearchResults {
 display: none;
 }
 
-#header #searchClearButton {
+#xheader #xsearchClearButton {
 display: none;
 }
 
-#header.searchActive #searchClearButton {
+#xheader.searchActive #xsearchClearButton {
 display: inline-block;
 }
 
-.searchActive #TOC {
+.xsearchActive #TOC {
 display: none;
 }
 
-.searchActive #searchResults {
+.xsearchActive #xsearchResults {
 display: block;
 }
 
-#header.searchActive #searchNav {
+#xheader.searchActive #xsearchNav {
 visibility: visible;
 text-align: center;
 }
 
-body {
+xbody {
 font: 14px tahoma, arial;
 margin: 0px;
 padding: 0px;
 }
 
-#sideBar {
+#xsideBar {
 position: absolute;
 top: 0px;
 left: 0px;
 width: 300px;
 border-right: 1px solid #ddd;
 }
-#search {
+#xsearch {
 z-index: 2;
 position: absolute;
 top: 0px;
@@ -77,19 +77,19 @@ color: #b6b6b6;
 background: #2c3e50;
 border-right: 1px solid #485767;
 }
-#searchNav {
+#xsearchNav {
 margin: 2px 6px;
 }
-#searchBox {
+#xsearchBox {
 background: rgba(255,255,255,.1);
 border: 1px solid rgba(255,255,255,.1);
 border-radius: 4px;
 margin: 2px 6px;
 }
-#searchInput {
+#xsearchInput {
 padding-right: 40px;
 }
-#searchInput input {
+#xsearchInput input {
 font: 14px tahoma, arial;
 color: #fff;
 background: transparent;
@@ -99,7 +99,7 @@ padding-left: 8px;
 width: 100%;
 outline: none;
 }
-#search button {
+#xsearch button {
 margin: 0px;
 height: 32px;
 width: 32px;
@@ -107,59 +107,59 @@ background-color: transparent;
 border: none;
 outline: none;
 }
-#search button[disabled] {
+#xsearch button[disabled] {
 opacity: .5;
 }
-#searchButton {
+#xsearchButton {
 float: right;
 background: url(search.svg) center no-repeat;
 }
-#searchClearButton {
+#xsearchClearButton {
 float: right;
 background: url(searchClose.svg) center no-repeat;
 }
-#search #searchClearButton {
+#xsearch #xsearchClearButton {
 display: none;
 }
-#searchNavFirst {
+#xsearchNavFirst {
 position: absolute;
 left: 0px;
 background: url(searchNavFirst.svg) center no-repeat;
 }
-#searchNavPrev {
+#xsearchNavPrev {
 position: absolute;
 left: 32px;
 background: url(searchNavPrev.svg) center no-repeat;
 }
-#searchNavNext {
+#xsearchNavNext {
 position: absolute;
 right: 32px;
 background: url(searchNavNext.svg) center no-repeat;
 }
-#searchNavLast {
+#xsearchNavLast {
 position: absolute;
 right: 0px;
 background: url(searchNavLast.svg) center no-repeat;
 }
-#search #searchNav {
+#xsearch #xsearchNav {
 visibility: hidden;
 height: 32px;
 }
-#search.searchActive #searchClearButton {
+#xsearch.searchActive #xsearchClearButton {
 display: inline-block;
 }
-.searchActive #searchInput {
+.xsearchActive #xsearchInput {
 padding-right: 72px;
 }
-#search.searchActive #searchNav {
+#xsearch.searchActive #xsearchNav {
 visibility: visible;
 text-align: center;
 }
-#searchNavCount {
+#xsearchNavCount {
 padding: 7px;
 }
 
-#breadcrumbs {
+#xbreadcrumbs {
 position: absolute;
 bottom: 10px;
 left: 320px;
@@ -167,16 +167,16 @@ font-size: 14px;
 color: #999;
 }
 
-#breadcrumbs a {
+#xbreadcrumbs a {
 	text-decoration: none;
 	color: #ffffff;
 }
 
-#breadcrumbs a:hover {
+#xbreadcrumbs a:hover {
 	text-decoration: underline;	
 }
 
-#pageTitle {
+#xpageTitle {
 position: absolute;
 top: 10px;
 left: 320px;
@@ -243,20 +243,20 @@ color: #fff;
 background: rgba(44,62,80,.85);
 }
 
-#searchResults {
+#xsearchResults {
 background: rgba(44,62,80,.075);
 }
-#searchResults a {
+#xsearchResults a {
 display: block;
 padding: 4px;
 color: #000;
 text-decoration: none;
 }
-#searchResults a:hover {
+#xsearchResults a:hover {
 background: rgba(44,62,80,.25);
 }
 
-#body {
+#xbody {
 margin-left: 300px;
 border-left: 1px solid #ddd;
 }
@@ -285,7 +285,7 @@ padding: 0px;
 font: 14px tahoma, arial;
 margin: 0px;
 padding: 0px;
-background-color: yellow;
+background-color: rgba(0,128,255,.25)
 }
 
 .searchParentDiv {
@@ -294,4 +294,8 @@ margin: 0px;
 padding: 0px;
 color: gray;
 background-color: lightgray;	
+}
+
+.helpserver_toc {
+    display: none;
 }

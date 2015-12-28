@@ -213,7 +213,7 @@ var tableOfContents = {
 							if (helpServer && helpServer.checkNavigation)
 								helpServer.checkNavigation(navToId, 'toc');
 							else
-								window.parent.helpServer.checkNavigation(navToId, 'toc');
+								window.parent.helpServer.checkNavigation(navToId, 'toc');                            
 						} else {
 							if (tableOfContents.lastSelection != null) {
 								if (tableOfContents.lastSelection.className == "checkedselected") {
@@ -227,7 +227,7 @@ var tableOfContents = {
 								e.target.className = "checkedselected";
 							} else {
 								e.target.className = "selected";
-							}
+							}                            
 						}
 					}
 				} else if (e.target.nodeName == "LI" && e.target.getAttribute("branch") == "true") {
@@ -245,6 +245,7 @@ var tableOfContents = {
 	tocLoaded: function () {
 		tableOfContents.tocEle = document.getElementById("TOC");
 		tableOfContents.tocEle.addEventListener("click", tableOfContents.tocClickHandler );
+        /*
 		var eleHeader = document.getElementById('header');
 		if (eleHeader) {
 			eleHeader.innerHTML = [
@@ -265,13 +266,13 @@ var tableOfContents = {
 				"<div id=\"pageTitle\" ></div>",
 				"<div id=\"breadcrumbs\" ></div>"
 			].join('\n');
-		}
+		}*/
 		if (window.location.hash) {
 			this.setSelectedPage(window.location.hash.substr(1));
 		}
 	},
 	search: function () {
-		var ele = document.getElementById("searchInputText");
+		var ele = document.getElementById("searchInput");
 		if (window.parent.helpServer)
 			window.parent.helpServer.searchTerm = ele.value;
 		this.searchText = ele.value;
@@ -347,14 +348,14 @@ var tableOfContents = {
 						html += "<a href=\"" + prefix + resultList[i].path + "\" target=\"_top\" id=\"search_"+resultList[i].path+"\" class=\"searchUnselected\" "
 						if( resultList[i].indent )
 						    html += " style=\"padding-left:"+(resultList[i].indent*4)+"pt;\" ";
-						html += ">" + resultList[i].title + "</a>";
+						html += ">" + resultList[i].title + "</a><br/>";
 					}
-					tableOfContents.searchMode = true;
+					//tableOfContents.searchMode = true;
 					var headerEle = document.getElementById('header');
 					document.getElementById("searchResults").innerHTML = html;
-					if (headerEle)
-						headerEle.className = 'searchActive';
-					document.body.className = 'searchActive';
+					//if (headerEle)
+					//	headerEle.className = 'searchActive';
+					//document.body.className = 'searchActive';
 				}
 			};
 			xmlhttp.open("GET", command, true);
@@ -369,6 +370,7 @@ var tableOfContents = {
 		this.searchMode = false;
 	},
 	setSearchBounds: function () {
+        /*
 		var leading = this.searchIndex < 1;
 		var trailing = (this.searchIndex + 1) >= this.searchCount;
 		var navFirst = document.getElementById('searchNavFirst');
@@ -380,6 +382,7 @@ var tableOfContents = {
 		navNext.disabled = trailing;
 		navEnd.disabled = trailing;
 		document.getElementById("searchNavCount").innerHTML = (this.searchIndex + 1) + " of " + this.searchCount + " on page";
+        */
 	},
 	setSearchCount: function (count) {
 		this.searchCount = count;
@@ -431,9 +434,9 @@ var tableOfContents = {
 		}
 	},
 	selectTreeElement: function (path) {
-		if (!this.searchMode) {
-			this.setSelectedPage(path);
-		}
+		//if (!this.searchMode) {
+		this.setSelectedPage(path);
+		//}
 	},
 	DeselectChecked: function () {
 		if (this.checkedItems.length) {
@@ -633,7 +636,6 @@ var tableOfContents = {
 			var cleanPageName = "";
 			var levels = [];
 			if( tableOfContents.useLocalToc && !tableOfContents.localFolderLevel ) {
-			   breadCrumbMarkup += " / ";
 			    var buildLocalBreadcrumb = function( topics ) {
 					var i;
 					for( i = 0 ; i < topics.length ; ++i ) {
@@ -643,7 +645,7 @@ var tableOfContents = {
 						} else if( topics[i].children && topics[i].children.length > 0 ) {
 							var branch = buildLocalBreadcrumb(topics[i].children);
 							if( branch ) {
-								return  "<a onclick=\"tableOfContents.clickBreadCrumbs('"+(topics[i].path + "#" + topics[i].hash)+"')\">"+ topics[i].title + "</a> / " + branch;
+								return  "<li><a onclick=\"tableOfContents.clickBreadCrumbs('"+(topics[i].path + "#" + topics[i].hash)+"')\">"+ topics[i].title + "</a> </li> " + branch;
 							}
 						} 
 					}
@@ -679,13 +681,11 @@ var tableOfContents = {
                             lastPathName = pathParts[pathParts.length-2];
                         }                        
                     }                    
-                    breadCrumbMarkup = "<a onclick=\"tableOfContents.clickBreadCrumbs('/')\">"+lastPathName+"<a> / ";                     
+                    breadCrumbMarkup = "<li><a onclick=\"tableOfContents.clickBreadCrumbs('/')\">"+lastPathName+"</a></li> ";                     
                 }
 				
 				for( i = startAt ; i < (levels.length-1) ; ++i ) {
-					if( i > startAt )
-						breadCrumbMarkup += " / "; 				
-					breadCrumbMarkup += "<a onclick=\"tableOfContents.clickBreadCrumbs('";
+					breadCrumbMarkup += "<li><a onclick=\"tableOfContents.clickBreadCrumbs('";
 					for( j = startAt ; j <= i ; ++j ) {
 						breadCrumbMarkup += "/" + levels[j];
 					}
@@ -693,7 +693,7 @@ var tableOfContents = {
 					if( leveltext.length > 5 && leveltext.substring(leveltext.length-5).toLowerCase() == ".html") {
 						leveltext = leveltext.substring(0,leveltext.length-5);					
 					}
-					breadCrumbMarkup += "')\">"+leveltext+"</a>";
+					breadCrumbMarkup += "')\">"+leveltext+"</a></li>";
 				}
 				cleanPageName = helpServer.cleanupHelpFilename( levels[levels.length-1] );
 				if( levels.length > 1 ) {
