@@ -40,8 +40,10 @@ overflow: auto;
 }
 #header {
 min-height: 44px;
-background: #eaeaea;
-padding: 18px;
+color: #b6b6b6;
+background: #2c3e50;
+padding-top: 4px;
+padding-left: 18px;
 padding-right: 62px;
 padding-bottom: 0px;
 }
@@ -69,6 +71,9 @@ content: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOCIgaGVpZ2h0PSI0NCIgeG1s
 position: absolute;
 left: -4px;
 top: 1px;
+}
+.crumbs li a {
+color: #eee;
 }
 
 #content {
@@ -156,7 +161,7 @@ left: 0px;
 right: 0px;
 }
 #toolbar button, #toTopButton {
-top: 18px;
+top: 4px;
 padding: 0px;
 margin: 0px;
 border: none;
@@ -188,7 +193,7 @@ display: none;
 		-moz-box-shadow: -2px 0px 8px 0px rgba(0,0,0,0.25);
 		box-shadow: -2px 0px 8px 0px rgba(0,0,0,0.25);
 	}
-	#header { padding-left: 80px;}
+	#header {  padding-left: 80px; }
 	.crumbs li { display: block; }
 	.crumbs li+li { padding-left: 44px; }
 	.crumbs li+li:before {
@@ -216,7 +221,6 @@ display: none;
 
 <div id="main" onclick="document.body.classList.remove('showTOC');">
 	<div id="header">
-		<div id="pageTitle" class="title">Title</div>
 		<ul id="breadcrumbs" class="crumbs"></ul>
 	</div>
 	<div id="help" name="help">
@@ -284,7 +288,7 @@ display: none;
 
 <div id="search">
 	<div id="searchToolbar">
-		<div id="searchField"><input id="searchInput" onkeyup="var keyCode = event.charCode || event.keyCode; if(keyCode == 13){ tableOfContents.search();} else if(keyCode == 27){ tableOfContents.searchClear();}" /></div>
+		<div id="searchField"><input id="searchInput" placeholder="Search..." onkeyup="var keyCode = event.charCode || event.keyCode; if(keyCode == 13){ tableOfContents.search();} else if(keyCode == 27){ tableOfContents.searchClear();}" /></div>
 		<button id="searchButton" onclick="tableOfContents.search();" >Search</button>
 		
 		<button id="searchClose" onclick="document.body.classList.remove('search');">

@@ -215,6 +215,7 @@ var helpServer = {
   },
   navigateToFragment: function () {
     var path = "";
+    
     if (window.location.hash)
       path = window.location.hash.substring(1);
 

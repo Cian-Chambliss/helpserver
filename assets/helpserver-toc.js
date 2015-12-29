@@ -209,6 +209,9 @@ var tableOfContents = {
 					} else {
 						if (e.target.id) {
 							var navToId = e.target.id;
+                            if( helpServer.currentPath ) {        
+                                history.pushState( helpServer.currentPath , helpServer.currentPath , helpServer.mainWindow.location.pathname + "#" + helpServer.currentPath);
+                            }                            
 							tableOfContents.disableScrollTo = e.target;
 							if (helpServer && helpServer.checkNavigation)
 								helpServer.checkNavigation(navToId, 'toc');
@@ -345,10 +348,11 @@ var tableOfContents = {
 					for (i = 0; i < resultList.length; ++i) {	
 						if( resultList[i].parentTitle )
 						   html += resultList[i].parentTitle;						   
-						html += "<a href=\"" + prefix + resultList[i].path + "\" target=\"_top\" id=\"search_"+resultList[i].path+"\" class=\"searchUnselected\" "
+						html += "<div onclick=\"tableOfContents.SearchGoto('" + resultList[i].path + "')\" target=\"_top\" id=\"search_"+resultList[i].path+"\" class=\"searchUnselected\" "
+                        
 						if( resultList[i].indent )
 						    html += " style=\"padding-left:"+(resultList[i].indent*4)+"pt;\" ";
-						html += ">" + resultList[i].title + "</a><br/>";
+						html += ">" + resultList[i].title + "</div>";
 					}
 					//tableOfContents.searchMode = true;
 					var headerEle = document.getElementById('header');
@@ -708,9 +712,11 @@ var tableOfContents = {
 						}
 					}
 				}
-			}			
-			breadCrumbs.innerHTML = breadCrumbMarkup;
-			titleElem.innerHTML = cleanPageName; 
+			}
+            if( breadCrumbs )			
+			    breadCrumbs.innerHTML = breadCrumbMarkup;
+            if( titleElem )
+			    titleElem.innerHTML = cleanPageName; 
 		}		
 	},
 	clickBreadCrumbs: function(path) {
@@ -742,9 +748,22 @@ var tableOfContents = {
                 }
             }
         }
+        if( helpServer.currentPath ) {        
+            history.pushState( helpServer.currentPath , helpServer.currentPath , helpServer.mainWindow.location.pathname + "#" + helpServer.currentPath);
+        }                            
 		if (helpServer && helpServer.checkNavigation)
 			helpServer.checkNavigation(path, 'breadcrumbs');
 		else
 			window.parent.helpServer.checkNavigation(path, 'breadcrumbs');
-	}
+	},
+    SearchGoto: function(path) {
+        if( helpServer.currentPath ) {        
+            history.pushState( helpServer.currentPath , helpServer.currentPath , helpServer.mainWindow.location.pathname + "#" + helpServer.currentPath);
+        }                            
+		if (helpServer && helpServer.checkNavigation)
+			helpServer.checkNavigation(path, 'search');
+		else
+			window.parent.helpServer.checkNavigation(path, 'search');        
+    }
+    
 };
