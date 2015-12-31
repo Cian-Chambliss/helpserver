@@ -404,6 +404,7 @@ help.status(function (stats) {
 
 ## Release History
 
+* 1.0.81 Added revision.txt to generated to keep a persistent revision count (count the # of git pulls). 
 * 1.0.80 Added tracking of changes to hash to browser history (so that the back button works!).
 * 1.0.78 First cut at a reactive design for the main.html (and associated) help pages.
 * 1.0.77 Added support for pages that contain <!--redirect:<path>--> to allow for 'aliased' pages. 

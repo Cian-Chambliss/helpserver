@@ -16,8 +16,15 @@ module.exports = function (config) {
     var filters = {};
     var assets = {};
     var defaultFilter = config.defaultFilter || '_all';
-    var serverHealth = { refreshCount: 0, busyInRefresh: false, gitResult: "None", gitPullCount: 0, whoCalled: "" };
+    var serverHealth = { refreshCount: 0, busyInRefresh: false, gitResult: "None", gitPullCount: 0, whoCalled: "" , revisionCount : 1 };
 
+    // Try and read revision...    
+    fs.readFile(config.generated+"revision.txt","utf8",function(err,data) {
+        if( !err ) {
+           serverHealth.revisionCount = Number(data);
+        }
+    });
+    
     var loadAssetUTF8 = function (name, callback) {
         if (assets[name]) {
             callback(null, assets[name]);
@@ -698,6 +705,12 @@ module.exports = function (config) {
                     serverHealth.gitResult = 'Update succeeded!';
                     serverHealth.gitPullCount++;
                     rebuildContent(help);
+                    ++serverHealth.revisionCount;
+                    fs.writeFile(config.generated+"revision.txt",""+serverHealth.revisionCount,function(err) { 
+                        if( err ) {
+                            console.log("Error saving revision");
+                        }
+                    });
                 }
             });
         } else {
