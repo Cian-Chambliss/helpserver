@@ -272,7 +272,93 @@ module.exports = function (config) {
             });
         });
     };
- 
+    var standardPagePrefix = [
+        "<html>",
+        "<head>",
+        "<link href=\"/assets/helpserver-toc.css\" rel=\"stylesheet\"/>",
+        "<script src=\"/assets/helpserver-polyfills.js\" type=\"text/javascript\" charset=\"utf-8\"></script>",        
+        "<link href=\"/assets/theme.css\" rel=\"stylesheet\"/>",
+        "<link href=\"/assets/helpserver-page.css\" rel=\"stylesheet\"/>",
+        "<script src=\"/assets/helpserver-page.js\" type=\"text/javascript\" charset=\"utf-8\"/></script>",
+        "</head>",
+        "<body onload=\"initialize()\" >",
+        "<div id=\"main\" onclick=\"document.body.classList.remove('showTOC');\">",
+	    "<div id=\"header\">",
+		"<ul id=\"breadcrumbs\" class=\"crumbs\"></ul>",
+	    "</div>",
+        "<div id=\"help\" name=\"help\">"        
+        ].join("\n");
+    var standardPageSuffix =  ["</div></div>",
+    "<div id=\"toolbar\"></div>",
+    "<button id=\"toTopButton\" onclick=\"document.getElementById('main').scrollTop = 0;\"  style=\"position: absolute; right: 18px; bottom: 0px;\"></button>",
+    "<div id=\"search\"></div>",
+    "</body></html>"
+    ].join("\n");
+    HelpServerUtil.prototype.getPage = function (page, callback) {
+        page = decodeURI(page);
+        var relativePath = page.substring(1);
+        //var generatedPage = config.generated + "topics/"+replaceAll(relativePath,"/","_");
+        var tocName = "toc.js";
+        var extension = null;
+        var extensionPos = page.lastIndexOf('.');
+        if (extensionPos > 0)
+            extension = page.substring(extensionPos + 1).toLowerCase();
+            
+        if( config.altTocs && config.altTocs.length > 0 ) {
+            var deepestAltToc = null;
+            var i;
+            var searchPath = "/"+relativePath.toLowerCase();
+            for( i = 0 ; i < config.altTocs.length ; ++i ) {
+                    var prefix = config.altTocs[i];
+                    if( searchPath.substring(0,prefix.length)== prefix.toLowerCase() ) {
+                        if( !deepestAltToc )
+                            deepestAltToc = prefix;
+                        else if( deepestAltToc.length < prefix.length )
+                            deepestAltToc = prefix;	 
+                    }
+            }
+            if( deepestAltToc ) {
+                deepestAltToc = replaceAll(deepestAltToc,"/","_");
+                tocName = deepestAltToc+"_toc.js";
+            }
+        }
+        
+        var processWebPage = function(htmlText) { 
+            var lowText = htmlText.toLowerCase();            
+            var bodyAt = lowText.indexOf('<body');
+            if (bodyAt >= 0) {
+                var endBodyAt = lowText.indexOf('</body');
+                if (endBodyAt >= 0) {
+                    htmlText = "<div "+htmlText.substring(bodyAt + 5, endBodyAt)+"</div>";                   
+                }
+            }
+            htmlText = standardPagePrefix+htmlText+standardPageSuffix;
+            return htmlText;
+        };
+
+        if( extension == "xml") {
+            // First Pre-process XML using XSLT...
+            var ListUtilities = require('./listutilities');
+            var lu = new ListUtilities(config);
+            page = page.replace(".xml",".xml_html");
+            lu.loadOrCreateTranslatedPage(this.config, page, (this.config.filter_name ? this.config.filter_name : defaultFilter), function(err,data,type) {
+                if (err) {
+                    callback(err, null);
+                } else {
+                    callback(null, processWebPage(data), "html");
+                }            
+            });
+        } else {
+            fs.readFile(config.source + relativePath, "utf8", function (err, data) {
+                if (err) {
+                    callback(err, null);
+                } else {
+                    callback(null, processWebPage(data), "html");
+                }
+            });            
+        }
+        //callback(null,'TBD - SEO content for '+relativePath+'  Toc will be '+tocName,"html");
+    }; 
     // Get a help page or resource (image css). or help resource
     HelpServerUtil.prototype.get = function (page, callback) {
         var extension = null;
@@ -950,6 +1036,20 @@ module.exports = function (config) {
                     res.status(404).send('Not found');
                 } else {
                     res.type('html');
+                    hlp.onSendExpress(res);
+                    res.send(data);
+                }
+            });
+        },
+        "pages": function (hlp, path, req, res) {
+            hlp.getPage(path, function (err, data, type) {
+                if (err) {
+                    hlp.onSendExpress(res);
+                    res.send(err);
+                } else {
+                    if (type) {
+                        res.type(type);
+                    }
                     hlp.onSendExpress(res);
                     res.send(data);
                 }
