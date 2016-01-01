@@ -275,6 +275,7 @@ module.exports = function (config) {
     var standardPagePrefix = [
         "<html>",
         "<head>",
+        "<base id=\"baseTag\" href=\"__baseImagePath__\" target=\"_blank\" />",
         "<link href=\"/assets/helpserver-toc.css\" rel=\"stylesheet\"/>",
         "<script src=\"/assets/helpserver-polyfills.js\" type=\"text/javascript\" charset=\"utf-8\"></script>",        
         "<link href=\"/assets/theme.css\" rel=\"stylesheet\"/>",
@@ -294,7 +295,7 @@ module.exports = function (config) {
     "<div id=\"search\"></div>",
     "</body></html>"
     ].join("\n");
-    HelpServerUtil.prototype.getPage = function (page, callback) {
+    HelpServerUtil.prototype.getPage = function (page, fromPath , callback) {
         page = decodeURI(page);
         var relativePath = page.substring(1);
         //var generatedPage = config.generated + "topics/"+replaceAll(relativePath,"/","_");
@@ -332,7 +333,21 @@ module.exports = function (config) {
                     htmlText = "<div "+htmlText.substring(bodyAt + 5, endBodyAt)+"</div>";                   
                 }
             }
-            htmlText = standardPagePrefix+htmlText+standardPageSuffix;
+            var pageProcessor = require('./updatePageReferences');
+            var  paths = { basepath : "/pages" , imagepath : "" };
+            var pagesAt = fromPath.indexOf("/pages");
+            if( pagesAt > 0 ) {
+                paths.basepath = fromPath.substring(0,pagesAt+6);
+            }            
+            if( pagesAt >= 0 ) {
+                if( pagesAt > 0 )
+                    paths.imagepath = fromPath.substring(0,pagesAt);
+                paths.imagepath += "/help";
+                paths.imagepath += fromPath.substring(pagesAt+6);
+            }
+            htmlText = pageProcessor(config, htmlText, paths );
+            baseImagePath = 
+            htmlText = standardPagePrefix.replace("__baseImagePath__",paths.imagepath)+htmlText+standardPageSuffix;
             return htmlText;
         };
 
@@ -1042,7 +1057,7 @@ module.exports = function (config) {
             });
         },
         "pages": function (hlp, path, req, res) {
-            hlp.getPage(path, function (err, data, type) {
+            hlp.getPage(path , req.path , function (err, data, type) {
                 if (err) {
                     hlp.onSendExpress(res);
                     res.send(err);

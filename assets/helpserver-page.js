@@ -90,37 +90,46 @@ function initialize() {
     searchEle.innerHTML = searchContent;
 
 };
-
+var helpServer = {
+    navigateClosestTopic: function (topic) {
+        var fromPath = window.location.pathname;
+        var pagesAt = fromPath.indexOf("/pages");
+        if (pagesAt >= 0) {
+            fromPath = fromPath.substring(pagesAt + 6);
+        }
+        alert('Find closest text='+topic+"&from="+fromPath);
+    }
+}
 var tableOfContents = {
-    anchorPrefix: "" ,
-	search: function () {
-		var ele = document.getElementById("searchInput");
-		this.searchText = ele.value;
-		if (ele.value != '') {
-			var command = "/search?limit=50&pattern=" + ele.value;
-			var xmlhttp = new XMLHttpRequest();
-			xmlhttp.onreadystatechange = function () {
-				if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-					var resultList = JSON.parse(xmlhttp.responseText);
-					var html = '';
-					var i;
-					var prefix = tableOfContents.anchorPrefix;
-					if( !prefix ) {
+    anchorPrefix: "",
+    search: function () {
+        var ele = document.getElementById("searchInput");
+        this.searchText = ele.value;
+        if (ele.value != '') {
+            var command = "/search?limit=50&pattern=" + ele.value;
+            var xmlhttp = new XMLHttpRequest();
+            xmlhttp.onreadystatechange = function () {
+                if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                    var resultList = JSON.parse(xmlhttp.responseText);
+                    var html = '';
+                    var i;
+                    var prefix = tableOfContents.anchorPrefix;
+                    if (!prefix) {
                         var pagesAt = window.location.pathname.indexOf("/pages");
-                        if( pagesAt >= 0 ) {
-                            prefix = window.location.pathname.substring(0,pagesAt + 6);
+                        if (pagesAt >= 0) {
+                            prefix = window.location.pathname.substring(0, pagesAt + 6);
                         }
-					}
-					for (i = 0; i < resultList.length; ++i) {	
-						html += "<div><a href=\""+ prefix + resultList[i].path + "\" id=\"search_"+resultList[i].path+"\" class=\"searchUnselected\" "                        
-						html += ">" + resultList[i].title + "</a></div>";
-					}
-					var headerEle = document.getElementById('header');
-					document.getElementById("searchResults").innerHTML = html;
-				}
-			};
-			xmlhttp.open("GET", command, true);
-			xmlhttp.send();
-		}
-	}
+                    }
+                    for (i = 0; i < resultList.length; ++i) {
+                        html += "<div><a href=\"" + prefix + resultList[i].path + "\" id=\"search_" + resultList[i].path + "\" class=\"searchUnselected\" "
+                        html += ">" + resultList[i].title + "</a></div>";
+                    }
+                    var headerEle = document.getElementById('header');
+                    document.getElementById("searchResults").innerHTML = html;
+                }
+            };
+            xmlhttp.open("GET", command, true);
+            xmlhttp.send();
+        }
+    }
 };
