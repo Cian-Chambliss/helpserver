@@ -1362,6 +1362,7 @@ module.exports = function (config) {
     // Express generic entry point
     HelpServerUtil.prototype.expressuse = function (req, res) {
         var pathValue = req.path;
+        var altConfig = help;
         if (config.replacePath) {
             var i;
             for (i = 0; i < config.replacePath.length; ++i) {
@@ -1374,14 +1375,22 @@ module.exports = function (config) {
         var items = pathValue.split('/');
         if (!pathValue || pathValue == '' || pathValue == '/') {
             if (config.defaultPage && config.defaultPage != '' && config.defaultPage != '/') {
-                return res.redirect(config.defaultPage);
-            }
+                req.path = config.defaultPage;
+                pathValue = config.defaultPage;
+                items = pathValue.split('/');
+            }           
         }
         var handler = expressHandler[items[1]];
         if (handler) {
-            handler(help, '/' + items.slice(2).join('/'), req, res);
+            if (config.defaultPage && config.defaultPage != '' && config.defaultPage != '/') {
+                 var defaultItems = config.defaultPage.split('/');
+                 if( config.defaultPage.length > 1 ) {
+                    altConfig = configurationObjects[defaultItems[1]]
+                 }
+            }
+            handler(altConfig, '/' + items.slice(2).join('/'), req, res);
         } else {
-            var altConfig = configurationObjects[items[1]];
+            altConfig = configurationObjects[items[1]];
             if (altConfig) {
                 handler = expressHandler[items[2]];
                 if (handler) {
