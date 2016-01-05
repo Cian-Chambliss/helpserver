@@ -17,6 +17,19 @@ module.exports = function (config) {
     var assets = {};
     var defaultFilter = config.defaultFilter || '_all';
     var serverHealth = { refreshCount: 0, busyInRefresh: false, gitResult: "None", gitPullCount: 0, whoCalled: "" , revisionCount : 1 };
+    var absolutePath = "/";
+    if( config.proxy ) {
+        var proxyBasePath = null;
+        var proxyHostStart = config.proxy.indexOf("://");
+        if( proxyHostStart >= 0 ) {
+            proxyBasePath = config.proxy.substring(proxyHostStart+3).split('/');
+        } else {
+            proxyBasePath = config.proxy.split('/');
+        }
+        if( proxyBasePath.length > 1 ) {                    
+            absolutePath = '/'+proxyBasePath.slice(1).join('/');
+        }   
+    }   
 
     // Try and read revision...    
     fs.readFile(config.generated+"revision.txt","utf8",function(err,data) {
@@ -55,6 +68,9 @@ module.exports = function (config) {
         this.config = config;
         if (!config || !config.hasOwnProperty('source') || !config.hasOwnProperty('generated')) {
             throw new Error('configuration must be passed that includes at least the source & generated folders { source : <sourcefolder > , generated : <generatedfilefolder> ... }');
+        }
+        if (!config.hasOwnProperty('proxy')) {
+            config.proxy = null;
         }
         if (config.hasOwnProperty('search')) {
             if (!config.search.hasOwnProperty('provider')) {
@@ -158,6 +174,7 @@ module.exports = function (config) {
             filters["_all"] = {
                 filter_name: '_all',
                 source: config.source,
+                proxy: config.proxy,
                 generated: config.generated,
                 search: config.search,
                 escapes: config.escapes,
@@ -189,6 +206,7 @@ module.exports = function (config) {
                 var configDef = config.configurations[configName];
                 configurations[configName] = {
                     source: configDef.source ? configDef.source : config.source,
+                    proxy: configDef.proxy ? configDef.proxy : config.proxy,
                     generated: configDef.generated ? configDef.generated : config.generated,
                     search: configDef.search ? configDef.search : config.search,
                     filter_name: configDef.filter_name ? configDef.filter_name : config.filter_name,
@@ -289,6 +307,9 @@ module.exports = function (config) {
 	    "</div>",
         "<div id=\"help\" name=\"help\">"        
         ].join("\n");
+    if( absolutePath.length > 1 ) {
+        standardPagePrefix = replaceAll( standardPagePrefix , '"/assets' , '"' + absolutePath + "assets" );
+    }        
     var standardPageSuffix =  ["</div></div>",
     "<div id=\"toolbar\"></div>",
     "<button id=\"toTopButton\" onclick=\"document.getElementById('main').scrollTop = 0;\"  style=\"position: absolute; right: 18px; bottom: 0px;\"></button>",
@@ -495,10 +516,20 @@ module.exports = function (config) {
                                 console.log(modulePath + 'assets/' + relativePath.substr(helpServerFile));
                                 callback(err, null);
                             } else {
+                                if( absolutePath.length > 1 ) {
+                                    if( relativePath.indexOf("helpserver-main.js") >= 0 ) {
+                                        data = data.replace('absolutePath: "/"','absolutePath: "'+absolutePath+'"');
+                                    }
+                                }
                                 callback(null, data, extension);
                             }
                         });
                     } else {
+                        if( absolutePath.length > 1 ) {
+                            if( relativePath.indexOf("helpserver-main.js") >= 0 ) {
+                                data = data.replace('absolutePath: "/"','absolutePath: "'+absolutePath+'"');
+                            }
+                        }
                         callback(null, data, "js");
                     }
                 });
@@ -1047,8 +1078,11 @@ module.exports = function (config) {
 
         "main": function (hlp, path, req, res) {
             loadAssetUTF8("main.html", function (err, data) {
+                if( absolutePath.length > 1 ) {
+                    data = replaceAll( data , '"/assets' , '"' + absolutePath + "assets" );
+                }
                 if (err) {
-                    res.status(404).send('Not found');
+                    res.status(404).send(path+' Not found');
                 } else {
                     res.type('html');
                     hlp.onSendExpress(res);
@@ -1073,7 +1107,7 @@ module.exports = function (config) {
         "edit": function (hlp, path, req, res) {
             loadAssetUTF8("edit.html", function (err, data) {
                 if (err) {
-                    res.status(404).send('Not found');
+                    res.status(404).send(path+' Not found');
                 } else {
                     res.type('html');
                     hlp.onSendExpress(res);
@@ -1084,7 +1118,7 @@ module.exports = function (config) {
         "search_panel": function (hlp, path, req, res) {
             loadAssetUTF8("search.html", function (err, data) {
                 if (err) {
-                    res.status(404).send('Not found');
+                    res.status(404).send(path+' Not found');
                 } else {
                     res.type('html');
                     hlp.onSendExpress(res);
@@ -1234,7 +1268,7 @@ module.exports = function (config) {
                 } else {
                     loadAssetUTF8("refresh.html", function (err, data) {
                         if (err) {
-                            res.status(404).send('Not found');
+                            res.status(404).send(path+' Not found');
                         } else {
                             res.type('html');
                             hlp.onSendExpress(res);
@@ -1271,7 +1305,7 @@ module.exports = function (config) {
         "config": function (hlp, path, req, res) {
             res.type('json');
             hlp.onSendExpress(res);
-            res.send(JSON.stringify({ escapes: config.escapes, keywords: config.keywords, altTocs: config.altTocs }));
+            res.send(JSON.stringify({ escapes: config.escapes, keywords: config.keywords, altTocs: config.altTocs , proxy : config.proxy , absolutePath : absolutePath }));
         },
         "diag": function (hlp, path, req, res) {
             res.type('json');
@@ -1283,7 +1317,7 @@ module.exports = function (config) {
             if (config.xslt) {
                 loadAssetUTF8(config.xslt, function (err, data) {
                     if (err) {
-                        res.status(404).send('Not found');
+                        res.status(404).send(path+' Not found');
                     } else {
                         res.type('html');
                         hlp.onSendExpress(res);
@@ -1291,7 +1325,7 @@ module.exports = function (config) {
                     }
                 });
             } else {
-                res.status(404).send('Not found');
+                res.status(404).send(path+' Not found');
             }
         },
         "topic": function (hlp, path, req, res) {
@@ -1363,6 +1397,15 @@ module.exports = function (config) {
     HelpServerUtil.prototype.expressuse = function (req, res) {
         var pathValue = req.path;
         var altConfig = help;
+        
+        // Debug code
+        if( pathValue.indexOf("/docs/") == 0 ) {
+            pathValue = pathValue.substring(5);
+            console.log('Protected PATH '+pathValue);
+        } else {
+            console.log('!!!!Unprotected '+pathValue);
+        }
+        
         if (config.replacePath) {
             var i;
             for (i = 0; i < config.replacePath.length; ++i) {
@@ -1375,7 +1418,6 @@ module.exports = function (config) {
         var items = pathValue.split('/');
         if (!pathValue || pathValue == '' || pathValue == '/') {
             if (config.defaultPage && config.defaultPage != '' && config.defaultPage != '/') {
-                req.path = config.defaultPage;
                 pathValue = config.defaultPage;
                 items = pathValue.split('/');
             }           
@@ -1396,10 +1438,10 @@ module.exports = function (config) {
                 if (handler) {
                     handler(altConfig, '/' + items.slice(3).join('/'), req, res);
                 } else {
-                    res.status(404).send('Not found');
+                    res.status(404).send(pathValue+' Not found');
                 }
             } else {
-                res.status(404).send('Not found');
+                res.status(404).send(pathValue+' Not found');
             }
         }
     };

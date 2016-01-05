@@ -1,5 +1,6 @@
 var helpServer = {
-	config: {},
+  config: {},
+  absolutePath: "/",
   baseTagHost: "",
   mainWindow: null,
   onItemToggle: null,
@@ -139,7 +140,7 @@ var helpServer = {
                             }
                         }
                     };
-                    xmlhttp2.open("GET", "/xslt" , true);
+                    xmlhttp2.open("GET", helpServer.absolutePath+"xslt" , true);
                     xmlhttp2.send('');
                 }
             } else {
@@ -200,7 +201,7 @@ var helpServer = {
              }             
           }
         };
-        xmlhttp.open("GET", "/help" + pageToGet, true);
+        xmlhttp.open("GET", helpServer.absolutePath + "help" + pageToGet, true);
         xmlhttp.send('');
       }
     }
@@ -229,8 +230,8 @@ var helpServer = {
       
       if (elemHelpPage) {
         if (elemHelpPage.tagName.toLowerCase() == "iframe") {
-          if (this.getSrcPath(elemHelpPage.src) !== ("/help" + path)) {
-            elemHelpPage.src = "/help" + path;
+          if (this.getSrcPath(elemHelpPage.src) !== (helpServer.absolutePath+"help" + path)) {
+            elemHelpPage.src = helpServer.absolutePath+"help" + path;
           }
         } else {
           this.loadHelpDiv(path);
@@ -248,7 +249,7 @@ var helpServer = {
       var saveBaseTag = null;
       if( baseTagElement ) {
           saveBaseTag = baseTagElement.href;
-          baseTagElement.href = "/";
+          baseTagElement.href = helpServer.absolutePath;
       }
         var currentItem = document.getElementById(path);
         if( currentItem ) {
@@ -270,9 +271,9 @@ var helpServer = {
     }
     if (from != 'help' && elemHelpPage) {
       if (elemHelpPage.tagName.toLowerCase() == "iframe") {
-        if (this.getSrcPath(elemHelpPage.src) !== ("/help" + path)) {
+        if (this.getSrcPath(elemHelpPage.src) !== (helpServer.absolutePath+"help" + path)) {
           this.originalHelpPage = null;
-          elemHelpPage.src = "/help" + path;
+          elemHelpPage.src = helpServer.absolutePath + "/help" + path;
         }
       } else {
         this.loadHelpDiv(path);
@@ -563,7 +564,7 @@ var helpServer = {
            }
         }
      };
-     xmlhttp.open("GET", "/topic?topic="+topic+"&from="+document.location.hash.substring(1)+"&hint="+hint, true);
+     xmlhttp.open("GET", helpServer.absolutePath+"topic?topic="+topic+"&from="+document.location.hash.substring(1)+"&hint="+hint, true);
      xmlhttp.send();
   }
 };
@@ -576,5 +577,5 @@ xmlhttp.onload = function () {
 		helpServer.config = JSON.parse(xmlhttp.responseText);
 	}
 };
-xmlhttp.open("GET", "/config", true);
+xmlhttp.open("GET", helpServer.absolutePath+"config", true);
 xmlhttp.send();

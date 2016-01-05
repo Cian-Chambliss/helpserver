@@ -111,7 +111,7 @@ var tableOfContents = {
 							}
 						}
 					};
-					xmlhttp.open("GET", "/altToc" + deepestAltToc, true);
+					xmlhttp.open("GET", helpServer.absolutePath+"altToc" + deepestAltToc, true);
 					xmlhttp.send('');
 				}	
 			} else if( helpServer.pageHasLocalTOC ) {								
@@ -280,7 +280,7 @@ var tableOfContents = {
 			window.parent.helpServer.searchTerm = ele.value;
 		this.searchText = ele.value;
 		if (ele.value != '') {
-			var command = "/search?limit=50&pattern=" + ele.value;
+			var command = helpServer.absolutePath+"search?limit=50&pattern=" + ele.value;
 			var xmlhttp = new XMLHttpRequest();
 			xmlhttp.onreadystatechange = function () {
 				if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
@@ -289,12 +289,12 @@ var tableOfContents = {
 					var i;
 					var prefix = tableOfContents.anchorPrefix;
 					if( !prefix ) {
-						prefix = "/main#";
+						prefix = helpServer.absolutePath+"main#";
 						var parts = window.location.pathname.split('/');
 						// Remember the path
 						if (parts.length > 2) {
 							if (parts[1] != 'toc') {
-								prefix = "/" + parts[1] + "/main#";
+								prefix = helpServer.absolutePath + parts[1] + "/main#";
 							}
 						}
 					}
@@ -505,11 +505,11 @@ var tableOfContents = {
 	tocPopulate: function () {
 		this.tocLoaded();	
 		var parts = window.location.pathname.split('/');
-		var command = "/toc.json";
+		var command = helpServer.absolutePath+"toc.json";
 		// Remember the path
 		if (parts.length > 2) {
 			if (parts[1] != 'main') {
-				command = "/" + parts[1] + "/toc.json";
+				command = helpServer.absolutePath+ parts[1] + "/toc.json";
 			}
 		}
 		var xmlhttp = new XMLHttpRequest();
