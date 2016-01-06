@@ -24,6 +24,7 @@ var tableOfContents = {
     tocEle: null,
     pendingTocData: null,
     anchorPrefix: "",
+    breadcrumbs: "",
     getAnchorPrefix: function() {
         var prefix = tableOfContents.anchorPrefix;
         if (!prefix) {
@@ -36,10 +37,6 @@ var tableOfContents = {
         return prefix;
     },    
     populateTree: function (_tocData, pageName) {
-        if (!tableOfContents.tocEle) {
-            tableOfContents.tocEle = document.getElementById("TOC");
-       		tableOfContents.tocEle.addEventListener("click", tableOfContents.tocClickHandler );
-        }
         if (tableOfContents.tocEle) {
             var pathOfPage = window.location.pathname;
             var indexOfPages = pathOfPage.indexOf("/pages");
@@ -47,6 +44,7 @@ var tableOfContents = {
                pathOfPage = pathOfPage.substring(indexOfPages+6);
             }
             pathOfPage = decodeURI(pathOfPage);
+            var parentsNodes = [];
             
             var setInitialSelection = function(res) {
                 if (res && res.length) {
@@ -64,6 +62,7 @@ var tableOfContents = {
                             if( setInitialSelection(res[i].children, false) ) {
                                 res[i].initialSelection = true;
                                 branchSelected = true;
+                                parentsNodes.push(res[i]);
                                 break;
                             }
                         }
@@ -73,6 +72,27 @@ var tableOfContents = {
             };
             setInitialSelection(_tocData.children);
             var prefix = tableOfContents.getAnchorPrefix();
+            var breadCrumbs = "";
+            
+            if( parentsNodes.length > 0 ) {
+                // Construct breadcrumbs
+                var i = parentsNodes.length-1;
+                while( i >= 0 ) {
+                    if( parentsNodes[i].path ) {
+                        if( parentsNodes[i].hash ) {
+                            breadCrumbs += "<li><a href=\""+prefix + parentsNodes[i].path + "#" + parentsNodes[i].hash+"\">"+parentsNodes[i].title+"</a></li>";
+                        } else {
+                            breadCrumbs += "<li><a href=\""+prefix + parentsNodes[i].path +"\">"+parentsNodes[i].title+"</a></li>";                            
+                        }
+                    } else {
+                       breadCrumbs += "<li>"+parentsNodes[i].title+"</li>";
+                    }
+                    --i;
+                }                
+            }
+            if( breadCrumbs != "" ) {
+                tableOfContents.breadcrumbs = breadCrumbs;
+            }
             
             var buildTree = function (res, isOpen) {
                 if (res && res.length) {
@@ -115,12 +135,20 @@ var tableOfContents = {
             if( path ) {
                 tableOfContents.setSelectedPage(path);
             }
+            if( tableOfContents.breadcrumbs != "" ) {
+               var breadCrumbsEle = document.getElementById("breadcrumbs");
+               breadCrumbsEle.innerHTML = tableOfContents.breadcrumbs;
+            }
         } else {
             tableOfContents.pendingTocData = _tocData
         }
     },
     loaded: function () {
-        if (tableOfContents.pendingTocData) {
+        tableOfContents.tocEle = document.getElementById("TOC");
+        if( tableOfContents.tocEle ) {
+            tableOfContents.tocEle.addEventListener("click", tableOfContents.tocClickHandler );
+        }
+        if (tableOfContents.pendingTocData) {            
             tableOfContents.populateTree(tableOfContents.pendingTocData);
             tableOfContents.pendingTocData = null;
         }
@@ -174,7 +202,6 @@ var tableOfContents = {
                 navTo.scrollIntoViewIfNeeded();
             else
                 navTo.scrollIntoView();
-            tableOfContents.populateBreadcrumbs();
         }
     },
     tocClickHandler: function (e) {
