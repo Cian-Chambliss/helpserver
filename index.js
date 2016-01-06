@@ -299,12 +299,14 @@ module.exports = function (config) {
         "<link href=\"/assets/theme.css\" rel=\"stylesheet\"/>",
         "<link href=\"/assets/helpserver-page.css\" rel=\"stylesheet\"/>",
         "<script src=\"/assets/helpserver-page.js\" type=\"text/javascript\" charset=\"utf-8\"/></script>",
+        "<!--tocloader-->",
         "</head>",
         "<body onload=\"initialize()\" >",
+        "<div id=\"TOC\"></div>",
         "<div id=\"main\" onclick=\"document.body.classList.remove('showTOC');\">",
 	    "<div id=\"header\">",
 		"<ul id=\"breadcrumbs\" class=\"crumbs\"></ul>",
-	    "</div>",
+	    "</div>",       
         "<div id=\"help\" name=\"help\">"        
         ].join("\n");
     if( absolutePath.length > 1 ) {
@@ -320,7 +322,7 @@ module.exports = function (config) {
         page = decodeURI(page);
         var relativePath = page.substring(1);
         //var generatedPage = config.generated + "topics/"+replaceAll(relativePath,"/","_");
-        var tocName = "toc.js";
+        var tocName = (this.config.filter_name ? this.config.filter_name : defaultFilter) + this.config.structurefile.replace(".json",".js");
         var extension = null;
         var extensionPos = page.lastIndexOf('.');
         if (extensionPos > 0)
@@ -341,10 +343,10 @@ module.exports = function (config) {
             }
             if( deepestAltToc ) {
                 deepestAltToc = replaceAll(deepestAltToc,"/","_");
-                tocName = deepestAltToc+"_toc.js";
+                tocName = deepestAltToc+tocName;
             }
-        }
-        
+        }        
+       
         var processWebPage = function(htmlText) { 
             var lowText = htmlText.toLowerCase();            
             var bodyAt = lowText.indexOf('<body');
@@ -366,9 +368,9 @@ module.exports = function (config) {
                 paths.imagepath += "/help";
                 paths.imagepath += fromPath.substring(pagesAt+6);
             }
-            htmlText = pageProcessor(config, htmlText, paths );
-            baseImagePath = 
-            htmlText = standardPagePrefix.replace("__baseImagePath__",paths.imagepath)+htmlText+standardPageSuffix;
+            htmlText = pageProcessor(config, htmlText, paths );             
+            var tocLoader = "<script src=\""+absolutePath+"toc_loader/"+tocName+"\" defer></script>";
+            htmlText = standardPagePrefix.replace("__baseImagePath__",paths.imagepath).replace("<!--tocloader-->",tocLoader)+htmlText+standardPageSuffix;
             return htmlText;
         };
 
@@ -395,6 +397,27 @@ module.exports = function (config) {
         }
         //callback(null,'TBD - SEO content for '+relativePath+'  Toc will be '+tocName,"html");
     }; 
+    HelpServerUtil.prototype.getTocLoader = function (page, fromPath , callback) {
+        page = decodeURI(page);
+        var relativePath = page.substring(1);   
+        var jsonToJsPage = function(json) {
+            var completedPage = page;
+            var endPath = completedPage.lastIndexOf('/');
+            if( endPath >= 0 ) {
+                completedPage = completedPage.substring(endPath+1);
+            }
+            // Simple populate
+            return  "tableOfContents.populateTree("+json+',"'+completedPage+'");';  
+        };  
+        // USE JSON file as basis for TOC - if query parameters limit view, return a sparse TOC
+        fs.readFile(config.generated + relativePath+"on", "utf8", function (err, data) {
+            if (err) {
+                callback(err, null);
+            } else {
+                callback(null, jsonToJsPage(data), "html");
+            }            
+        });
+    };
     // Get a help page or resource (image css). or help resource
     HelpServerUtil.prototype.get = function (page, callback) {
         var extension = null;
@@ -1092,6 +1115,20 @@ module.exports = function (config) {
         },
         "pages": function (hlp, path, req, res) {
             hlp.getPage(path , req.path , function (err, data, type) {
+                if (err) {
+                    hlp.onSendExpress(res);
+                    res.send(err);
+                } else {
+                    if (type) {
+                        res.type(type);
+                    }
+                    hlp.onSendExpress(res);
+                    res.send(data);
+                }
+            });
+        },
+        "toc_loader": function (hlp, path, req, res) {
+            hlp.getTocLoader(path , req.path , function (err, data, type) {
                 if (err) {
                     hlp.onSendExpress(res);
                     res.send(err);
