@@ -290,10 +290,10 @@ module.exports = function (config) {
             });
         });
     };
+//   "<base id=\"baseTag\" href=\"__baseImagePath__\" target=\"_blank\" />",
     var standardPagePrefix = [
         "<html>",
         "<head>",
-        "<base id=\"baseTag\" href=\"__baseImagePath__\" target=\"_blank\" />",
         "<link href=\"/assets/helpserver-toc.css\" rel=\"stylesheet\"/>",
         "<script src=\"/assets/helpserver-polyfills.js\" type=\"text/javascript\" charset=\"utf-8\"></script>",        
         "<link href=\"/assets/theme.css\" rel=\"stylesheet\"/>",
@@ -328,74 +328,78 @@ module.exports = function (config) {
         if (extensionPos > 0)
             extension = page.substring(extensionPos + 1).toLowerCase();
             
-        if( config.altTocs && config.altTocs.length > 0 ) {
-            var deepestAltToc = null;
-            var i;
-            var searchPath = "/"+relativePath.toLowerCase();
-            for( i = 0 ; i < config.altTocs.length ; ++i ) {
-                    var prefix = config.altTocs[i];
-                    if( searchPath.substring(0,prefix.length)== prefix.toLowerCase() ) {
-                        if( !deepestAltToc )
-                            deepestAltToc = prefix;
-                        else if( deepestAltToc.length < prefix.length )
-                            deepestAltToc = prefix;	 
+        if( extension == "html" || extension == "xml" || extension == "md" ) {    
+            if( config.altTocs && config.altTocs.length > 0 ) {
+                var deepestAltToc = null;
+                var i;
+                var searchPath = "/"+relativePath.toLowerCase();
+                for( i = 0 ; i < config.altTocs.length ; ++i ) {
+                        var prefix = config.altTocs[i];
+                        if( searchPath.substring(0,prefix.length)== prefix.toLowerCase() ) {
+                            if( !deepestAltToc )
+                                deepestAltToc = prefix;
+                            else if( deepestAltToc.length < prefix.length )
+                                deepestAltToc = prefix;	 
+                        }
+                }
+                if( deepestAltToc ) {
+                    deepestAltToc = replaceAll(deepestAltToc,"/","_");
+                    tocName = deepestAltToc+tocName;
+                }
+            }        
+        
+            var processWebPage = function(htmlText) { 
+                var lowText = htmlText.toLowerCase();            
+                var bodyAt = lowText.indexOf('<body');
+                if (bodyAt >= 0) {
+                    var endBodyAt = lowText.indexOf('</body');
+                    if (endBodyAt >= 0) {
+                        htmlText = "<div "+htmlText.substring(bodyAt + 5, endBodyAt)+"</div>";                   
                     }
-            }
-            if( deepestAltToc ) {
-                deepestAltToc = replaceAll(deepestAltToc,"/","_");
-                tocName = deepestAltToc+tocName;
-            }
-        }        
-       
-        var processWebPage = function(htmlText) { 
-            var lowText = htmlText.toLowerCase();            
-            var bodyAt = lowText.indexOf('<body');
-            if (bodyAt >= 0) {
-                var endBodyAt = lowText.indexOf('</body');
-                if (endBodyAt >= 0) {
-                    htmlText = "<div "+htmlText.substring(bodyAt + 5, endBodyAt)+"</div>";                   
                 }
-            }
-            var pageProcessor = require('./updatePageReferences');
-            var  paths = { basepath : "/pages" , imagepath : "" };
-            var pagesAt = fromPath.indexOf("/pages");
-            if( pagesAt > 0 ) {
-                paths.basepath = fromPath.substring(0,pagesAt+6);
-            }            
-            if( pagesAt >= 0 ) {
-                if( pagesAt > 0 )
-                    paths.imagepath = fromPath.substring(0,pagesAt);
-                paths.imagepath += "/help";
-                paths.imagepath += fromPath.substring(pagesAt+6);
-            }
-            htmlText = pageProcessor(config, htmlText, paths );             
-            var tocLoader = "<script src=\""+absolutePath+"toc_loader/"+tocName+"\" defer></script>";
-            htmlText = standardPagePrefix.replace("__baseImagePath__",paths.imagepath).replace("<!--tocloader-->",tocLoader)+htmlText+standardPageSuffix;
-            return htmlText;
-        };
-
-        if( extension == "xml") {
-            // First Pre-process XML using XSLT...
-            var ListUtilities = require('./listutilities');
-            var lu = new ListUtilities(config);
-            page = page.replace(".xml",".xml_html");
-            lu.loadOrCreateTranslatedPage(this.config, page, (this.config.filter_name ? this.config.filter_name : defaultFilter), function(err,data,type) {
-                if (err) {
-                    callback(err, null);
-                } else {
-                    callback(null, processWebPage(data), "html");
+                var pageProcessor = require('./updatePageReferences');
+                var  paths = { basepath : "/pages" , imagepath : "" };
+                var pagesAt = fromPath.indexOf("/pages");
+                if( pagesAt > 0 ) {
+                    paths.basepath = fromPath.substring(0,pagesAt+6);
                 }            
-            });
-        } else {
-            fs.readFile(config.source + relativePath, "utf8", function (err, data) {
-                if (err) {
-                    callback(err, null);
-                } else {
-                    callback(null, processWebPage(data), "html");
+                if( pagesAt >= 0 ) {
+                    if( pagesAt > 0 )
+                        paths.imagepath = fromPath.substring(0,pagesAt);
+                    paths.imagepath += "/help";
+                    paths.imagepath += fromPath.substring(pagesAt+6);
                 }
-            });            
+                htmlText = pageProcessor(config, htmlText, paths );             
+                var tocLoader = "<script src=\""+absolutePath+"toc_loader/"+tocName+"\" defer></script>";
+                htmlText = standardPagePrefix.replace("__baseImagePath__",paths.imagepath).replace("<!--tocloader-->",tocLoader)+htmlText+standardPageSuffix;
+                return htmlText;
+            };
+
+            if( extension == "xml") {
+                // First Pre-process XML using XSLT...
+                var ListUtilities = require('./listutilities');
+                var lu = new ListUtilities(config);
+                page = page.replace(".xml",".xml_html");
+                lu.loadOrCreateTranslatedPage(this.config, page, (this.config.filter_name ? this.config.filter_name : defaultFilter), function(err,data,type) {
+                    if (err) {
+                        callback(err, null);
+                    } else {
+                        callback(null, processWebPage(data), "html");
+                    }            
+                });
+            } else {
+                fs.readFile(config.source + relativePath, "utf8", function (err, data) {
+                    if (err) {
+                        callback(err, null);
+                    } else {
+                        callback(null, processWebPage(data), "html");
+                    }
+                });            
+            }
+        } else {
+            // ...Else assume its a resource (i.e. JPEG/PNG etc...)
+            this.get(page,callback);
         }
-        //callback(null,'TBD - SEO content for '+relativePath+'  Toc will be '+tocName,"html");
     }; 
     HelpServerUtil.prototype.getTocLoader = function (page, fromPath , callback) {
         page = decodeURI(page);
@@ -1436,12 +1440,13 @@ module.exports = function (config) {
         var altConfig = help;
         
         // Debug code
+        /*
         if( pathValue.indexOf("/docs/") == 0 ) {
             pathValue = pathValue.substring(5);
             console.log('Protected PATH '+pathValue);
         } else {
             console.log('!!!!Unprotected '+pathValue);
-        }
+        }*/
         
         if (config.replacePath) {
             var i;
