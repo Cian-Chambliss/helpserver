@@ -290,7 +290,6 @@ module.exports = function (config) {
             });
         });
     };
-//   "<base id=\"baseTag\" href=\"__baseImagePath__\" target=\"_blank\" />",
     var standardPagePrefix = [
         "<html>",
         "<head>",
@@ -371,7 +370,7 @@ module.exports = function (config) {
                 }
                 htmlText = pageProcessor(config, htmlText, paths );             
                 var tocLoader = "<script src=\""+absolutePath+"toc_loader/"+tocName+"\" defer></script>";
-                htmlText = standardPagePrefix.replace("__baseImagePath__",paths.imagepath).replace("<!--tocloader-->",tocLoader)+htmlText+standardPageSuffix;
+                htmlText = standardPagePrefix.replace("<!--tocloader-->",tocLoader)+htmlText+standardPageSuffix;
                 return htmlText;
             };
 

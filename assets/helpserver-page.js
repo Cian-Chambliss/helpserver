@@ -9,12 +9,14 @@ var helpServer = {
         alert('Find closest text=' + topic + "&from=" + fromPath);
     },
     checkNavigation: function (navToId,from) {
-        var fromPath = window.location.pathname;
-        var pagesAt = fromPath.indexOf("/pages");
-        if (pagesAt >= 0) {
-            fromPath = fromPath.substring(pagesAt + 6);
-            navToId = fromPath + navToId
-        }        
+        if( navToId.indexOf("://") <= 0 ) {
+            var fromPath = window.location.pathname;
+            var pagesAt = fromPath.indexOf("/pages");
+            if (pagesAt >= 0) {
+                fromPath = fromPath.substring(0,pagesAt + 6);
+                navToId = fromPath + navToId
+            }        
+        }
         window.location = navToId;
     }
 }
@@ -70,10 +72,10 @@ var tableOfContents = {
                 }
             };
             setInitialSelection(_tocData.children);
+            var prefix = tableOfContents.getAnchorPrefix();
             
             var buildTree = function (res, isOpen) {
                 if (res && res.length) {
-                    var prefix = tableOfContents.getAnchorPrefix();
                     var ulList = isOpen ? "<ul>\n" : "<ul style=\"display:none\">\n";
                     var i;
                     for (i = 0; i < res.length; ++i) {
@@ -91,11 +93,11 @@ var tableOfContents = {
                                 if (res[i].hash)
                                     ulList += "<div id=\""+res[i].path + "#" + res[i].hash+"\" ignoreBreadcumbs=\"true\" ><a href=\"" + prefix + res[i].path + "#" + res[i].hash + "\" >" + res[i].title + "</a></div>";
                                 else
-                                    ulList += "<div id=\""+res[i].path + "#" + res[i].hash+"\" ignoreBreadcumbs=\"true\" ><a href=\"" + prefix + res[i].path + "\" >" + res[i].title + "</a></div>";
+                                    ulList += "<div id=\""+res[i].path + "\" ignoreBreadcumbs=\"true\" ><a href=\"" + prefix + res[i].path + "\" >" + res[i].title + "</a></div>";
                             } else if (res[i].hash)
                                 ulList += "<div id=\""+res[i].path + "#" + res[i].hash+"\" ><a href=\"" + prefix + res[i].path + "#" + res[i].hash + "\" >" + res[i].title + "</a></div>";
                             else
-                                ulList += "<div id=\""+res[i].path + "#" + res[i].hash+"\" ><a href=\"" + prefix + res[i].path + "\" >" + res[i].title + "</a></div>";
+                                ulList += "<div id=\""+res[i].path + "\" ><a href=\"" + prefix + res[i].path + "\" >" + res[i].title + "</a></div>";
                         } else {
                             ulList += "<div>" + res[i].title + "</div>";
                         }
@@ -109,8 +111,8 @@ var tableOfContents = {
                 return "";
             };
             tableOfContents.tocEle.innerHTML = buildTree(_tocData.children, true);
-            if (window.location.hash != '') {
-                var path = window.location.hash.substring(1);
+            var path = window.location.pathname.replace(prefix,"");
+            if( path ) {
                 tableOfContents.setSelectedPage(path);
             }
         } else {
@@ -153,31 +155,10 @@ var tableOfContents = {
         if (!navTo) {
             navToId = decodeURI(navToId);
             navTo = document.getElementById(navToId);
-            if (!navTo) {
-                // If link is to folder - lets look for types of index pages...
-                if (navToId.lastIndexOf('.') > navToId.lastIndexOf('/')) {
-                    navTo = document.getElementById(navToId + "/index.xml");
-                    if (navTo)
-                        navTo = navToId + "/index.xml";
-                    else {
-                        navTo = document.getElementById(navToId + "/index.html");
-                        if (navTo)
-                            navTo = navToId + "/index.html";
-                        else {
-                            navTo = document.getElementById(navToId + "/index.md");
-                            if (navTo)
-                                navTo = navToId + "/index.md";
-                        }
-                    }
-                }
-            }
         }
         if (!navTo && !tableOfContents.tocData)
             ; // race with TOC load
-        else if (navTo && this.lastSelection != navTo) {
-            if (this.lastSelection != null) {
-                this.lastSelection.className = "";
-            }
+        else if (navTo ) {
             navTo.className = "selected";
             var dad = navTo.parentNode;
             while (dad) {
