@@ -295,7 +295,7 @@ module.exports = function (config) {
     ,""
     ,"#Version __helpversionnumber__"
     ,"NETWORK:"
-    ,"/search"
+    ,"*"
     ,"CACHE:"
     ,"/assets/helpserver-toc.css"
     ,"/assets/helpserver-polyfills.js"
