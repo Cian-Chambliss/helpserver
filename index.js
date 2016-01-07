@@ -16,7 +16,7 @@ module.exports = function (config) {
     var filters = {};
     var assets = {};
     var defaultFilter = config.defaultFilter || '_all';
-    var serverHealth = { refreshCount: 0, busyInRefresh: false, gitResult: "None", gitPullCount: 0, whoCalled: "" , revisionCount : 1 };
+    var serverHealth = { refreshCount: 0, busyInRefresh: false, gitResult: "None", gitPullCount: 0, whoCalled: "" , revisionCount : 1 };    
     var absolutePath = "/";
     if( config.proxy ) {
         var proxyBasePath = null;
@@ -290,8 +290,38 @@ module.exports = function (config) {
             });
         });
     };
+    
+    var pagesManifestArray = ["CACHE MANIFEST"
+    ,""
+    ,"#Version __helpversionnumber__"
+    ,"NETWORK:"
+    ,"/search"
+    ,"CACHE:"
+    ,"/assets/helpserver-toc.css"
+    ,"/assets/helpserver-polyfills.js"
+    ,"/assets/theme.css"
+    ,"/assets/helpserver-page.css"
+    ,"/assets/helpserver-page.js"
+    ,"/toc_loader/__filter__"+ (config.structurefile || "tree.json").replace(".json",".js")
+    ];
+    //var manifestTOCName = (this.config.filter_name ? this.config.filter_name : defaultFilter) + this.config.structurefile.replace(".json",".js");
+    if( absolutePath.length > 1 ) {
+        var i;
+        for( i = 0 ; i < pagesManifestArray.length ; ++i ) {
+            if( pagesManifestArray.substring(0,1) == "/" ) {
+                pagesManifestArray[i] = standardPagePrefix + pagesManifestArray[i].substring(1);
+            }
+        }
+    }
+    if(  config.altTocs &&  config.altTocs.length ) {
+        for( i = 0 ; i < config.altTocs.length ; ++i ) {
+           pagesManifestArray.push( "/toc_loader/"+replaceAll(config.altTocs[i],"/","_")+"__filter__"+ (config.structurefile || "tree.json").replace(".json",".js") );
+        }
+    }
+    var pagesManifest = pagesManifestArray.join("\n");
+            
     var standardPagePrefix = [
-        "<html>",
+        "<html manifest=\"/appcache/__filter__.appcache\" >",
         "<head>",
         "<link href=\"/assets/helpserver-toc.css\" rel=\"stylesheet\"/>",
         "<script src=\"/assets/helpserver-polyfills.js\" type=\"text/javascript\" charset=\"utf-8\"></script>",        
@@ -310,7 +340,8 @@ module.exports = function (config) {
         ].join("\n");
     if( absolutePath.length > 1 ) {
         standardPagePrefix = replaceAll( standardPagePrefix , '"/assets' , '"' + absolutePath + "assets" );
-    }        
+        standardPagePrefix = replaceAll( standardPagePrefix , '"/appcache' , '"' + absolutePath + "appcache" );        
+    }      
     var standardPageSuffix =  ["</div></div>",
     "<div id=\"toolbar\"></div>",
     "<button id=\"toTopButton\" onclick=\"document.getElementById('main').scrollTop = 0;\"  style=\"position: absolute; right: 18px; bottom: 0px;\"></button>",
@@ -321,7 +352,8 @@ module.exports = function (config) {
         page = decodeURI(page);
         var relativePath = page.substring(1);
         //var generatedPage = config.generated + "topics/"+replaceAll(relativePath,"/","_");
-        var tocName = (this.config.filter_name ? this.config.filter_name : defaultFilter) + this.config.structurefile.replace(".json",".js");
+        var thisFiltername = (this.config.filter_name ? this.config.filter_name : defaultFilter);
+        var tocName = thisFiltername + this.config.structurefile.replace(".json",".js");
         var extension = null;
         var extensionPos = page.lastIndexOf('.');
         if (extensionPos > 0)
@@ -370,7 +402,7 @@ module.exports = function (config) {
                 }
                 htmlText = pageProcessor(config, htmlText, paths );             
                 var tocLoader = "<script src=\""+absolutePath+"toc_loader/"+tocName+"\" defer></script>";
-                htmlText = standardPagePrefix.replace("<!--tocloader-->",tocLoader)+htmlText+standardPageSuffix;
+                htmlText = standardPagePrefix.replace("__filter__",thisFiltername).replace("<!--tocloader-->",tocLoader)+htmlText+standardPageSuffix;
                 return htmlText;
             };
 
@@ -1130,6 +1162,13 @@ module.exports = function (config) {
                 }
             });
         },
+        "appcache": function (hlp, path, req, res) {
+            var manifest = replaceAll( pagesManifest , "__filter__" , path.substring(1).replace(".appcache","") );
+            manifest = manifest.replace("__helpversionnumber__",""+serverHealth.revisionCount);
+            res.type("text/cache-manifest");
+            hlp.onSendExpress(res);
+            res.send(manifest);
+        },
         "toc_loader": function (hlp, path, req, res) {
             hlp.getTocLoader(path , req.path , function (err, data, type) {
                 if (err) {
@@ -1439,13 +1478,13 @@ module.exports = function (config) {
         var altConfig = help;
         
         // Debug code
-        /*
+        
         if( pathValue.indexOf("/docs/") == 0 ) {
             pathValue = pathValue.substring(5);
             console.log('Protected PATH '+pathValue);
         } else {
             console.log('!!!!Unprotected '+pathValue);
-        }*/
+        }
         
         if (config.replacePath) {
             var i;
