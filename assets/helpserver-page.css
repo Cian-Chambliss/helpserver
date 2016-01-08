@@ -54,9 +54,18 @@ color: #eee;
 padding: 4px;
 }
 
-#TOC {
+#branding {
+color: #b6b6b6;
+background: #2c3e50;
 position: absolute;
 top: 0px;
+left: 0px;
+width: 250px;
+height: 48px;    
+}
+#TOC {
+position: absolute;
+top: 48px;
 bottom: 0px;
 left: 0px;
 width: 250px;

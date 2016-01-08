@@ -1,21 +1,47 @@
 // Set up standard page elements...
 var helpServer = {
     navigateClosestTopic: function (topic) {
+        var hint = "";
+        //------------------ Special case
+        if( topic )
+            topic = topic.replace(/^\s+|\s+$/gm,'');
+        var lastWordStart = topic.lastIndexOf(' ');
+        if( lastWordStart > 0 ) {
+            if( topic.substring(lastWordStart+1).toLowerCase() == "class" ) {
+                var classMethods = document.location.hash.toLowerCase().lastIndexOf("/methods/");
+                if( classMethods > 0 ) {
+                    hint = document.location.hash.substring(1,classMethods)+"/definition";
+                }
+            }
+        }
+        //--------------------------------
+        
         var fromPath = window.location.pathname;
         var pagesAt = fromPath.indexOf("/pages");
         if (pagesAt >= 0) {
+            var basePath = fromPath.substring(0,pagesAt+1);
             fromPath = fromPath.substring(pagesAt + 6);
+            var xmlhttp = new XMLHttpRequest();
+            xmlhttp.onload = function () {
+                if (this.status == 200) {
+                    if (xmlhttp.responseText != "") {
+                        // link to
+                        window.location = basePath + "pages" + xmlhttp.responseText;
+                    }
+                }
+            };
+            xmlhttp.open("GET", basePath + "topic?topic=" + topic + "&from=" + document.location.hash.substring(1) + "&hint=" + hint, true);
+            xmlhttp.send();
         }
-        alert('Find closest text=' + topic + "&from=" + fromPath);
     },
-    checkNavigation: function (navToId,from) {
-        if( navToId.indexOf("://") <= 0 ) {
+    checkNavigation: function (navToId, from) {
+        if (navToId.indexOf("://") <= 0) {
             var fromPath = window.location.pathname;
             var pagesAt = fromPath.indexOf("/pages");
             if (pagesAt >= 0) {
-                fromPath = fromPath.substring(0,pagesAt + 6);
+                fromPath = fromPath.substring(0, pagesAt + 6);
                 navToId = fromPath + navToId
-            }        
+            }
         }
         window.location = navToId;
     }
@@ -25,41 +51,41 @@ var tableOfContents = {
     pendingTocData: null,
     anchorPrefix: "",
     breadcrumbs: "",
-    getAnchorPrefix: function() {
+    getAnchorPrefix: function () {
         var prefix = tableOfContents.anchorPrefix;
         if (!prefix) {
             var pagesAt = window.location.pathname.indexOf("/pages");
             if (pagesAt >= 0) {
                 prefix = window.location.pathname.substring(0, pagesAt + 6);
-                tableOfContents.anchorPrefix = prefix; 
+                tableOfContents.anchorPrefix = prefix;
             }
         }
         return prefix;
-    },    
+    },
     populateTree: function (_tocData, pageName) {
         if (tableOfContents.tocEle) {
             var pathOfPage = window.location.pathname;
             var indexOfPages = pathOfPage.indexOf("/pages");
-            if( indexOfPages >= 0 ) {
-               pathOfPage = pathOfPage.substring(indexOfPages+6);
+            if (indexOfPages >= 0) {
+                pathOfPage = pathOfPage.substring(indexOfPages + 6);
             }
             pathOfPage = decodeURI(pathOfPage);
             var parentsNodes = [];
-            
-            var setInitialSelection = function(res) {
+
+            var setInitialSelection = function (res) {
                 if (res && res.length) {
                     var branchSelected = false;
                     var i;
                     for (i = 0; i < res.length; ++i) {
-                        if( res[i].path && res[i].path.length ) {
-                            if( pathOfPage == res[i].path ) {
+                        if (res[i].path && res[i].path.length) {
+                            if (pathOfPage == res[i].path) {
                                 res[i].initialSelection = true;
                                 branchSelected = true;
                                 break;
-                            }   
+                            }
                         }
                         if (res[i].children) {
-                            if( setInitialSelection(res[i].children, false) ) {
+                            if (setInitialSelection(res[i].children, false)) {
                                 res[i].initialSelection = true;
                                 branchSelected = true;
                                 parentsNodes.push(res[i]);
@@ -73,34 +99,34 @@ var tableOfContents = {
             setInitialSelection(_tocData.children);
             var prefix = tableOfContents.getAnchorPrefix();
             var breadCrumbs = "";
-            
-            if( parentsNodes.length > 0 ) {
+
+            if (parentsNodes.length > 0) {
                 // Construct breadcrumbs
-                var i = parentsNodes.length-1;
-                while( i >= 0 ) {
-                    if( parentsNodes[i].path ) {
-                        if( parentsNodes[i].hash ) {
-                            breadCrumbs += "<li><a href=\""+prefix + parentsNodes[i].path + "#" + parentsNodes[i].hash+"\">"+parentsNodes[i].title+"</a></li>";
+                var i = parentsNodes.length - 1;
+                while (i >= 0) {
+                    if (parentsNodes[i].path) {
+                        if (parentsNodes[i].hash) {
+                            breadCrumbs += "<li><a href=\"" + prefix + parentsNodes[i].path + "#" + parentsNodes[i].hash + "\">" + parentsNodes[i].title + "</a></li>";
                         } else {
-                            breadCrumbs += "<li><a href=\""+prefix + parentsNodes[i].path +"\">"+parentsNodes[i].title+"</a></li>";                            
+                            breadCrumbs += "<li><a href=\"" + prefix + parentsNodes[i].path + "\">" + parentsNodes[i].title + "</a></li>";
                         }
                     } else {
-                       breadCrumbs += "<li>"+parentsNodes[i].title+"</li>";
+                        breadCrumbs += "<li>" + parentsNodes[i].title + "</li>";
                     }
                     --i;
-                }                
+                }
             }
-            if( breadCrumbs != "" ) {
+            if (breadCrumbs != "") {
                 tableOfContents.breadcrumbs = breadCrumbs;
             }
-            
+
             var buildTree = function (res, isOpen) {
                 if (res && res.length) {
                     var ulList = isOpen ? "<ul>\n" : "<ul style=\"display:none\">\n";
                     var i;
                     for (i = 0; i < res.length; ++i) {
                         if (res[i].children) {
-                            if( res[i].initialSelection ) {
+                            if (res[i].initialSelection) {
                                 ulList += "<li branch=\"true\" class=\"opened\" >";
                             } else {
                                 ulList += "<li branch=\"true\" class=\"closed\" >";
@@ -111,13 +137,13 @@ var tableOfContents = {
                         if (res[i].path) {
                             if (res[i].ignoreBreadcrumbs) {
                                 if (res[i].hash)
-                                    ulList += "<div id=\""+res[i].path + "#" + res[i].hash+"\" ignoreBreadcumbs=\"true\" ><a href=\"" + prefix + res[i].path + "#" + res[i].hash + "\" >" + res[i].title + "</a></div>";
+                                    ulList += "<div id=\"" + res[i].path + "#" + res[i].hash + "\" ignoreBreadcumbs=\"true\" ><a href=\"" + prefix + res[i].path + "#" + res[i].hash + "\" >" + res[i].title + "</a></div>";
                                 else
-                                    ulList += "<div id=\""+res[i].path + "\" ignoreBreadcumbs=\"true\" ><a href=\"" + prefix + res[i].path + "\" >" + res[i].title + "</a></div>";
+                                    ulList += "<div id=\"" + res[i].path + "\" ignoreBreadcumbs=\"true\" ><a href=\"" + prefix + res[i].path + "\" >" + res[i].title + "</a></div>";
                             } else if (res[i].hash)
-                                ulList += "<div id=\""+res[i].path + "#" + res[i].hash+"\" ><a href=\"" + prefix + res[i].path + "#" + res[i].hash + "\" >" + res[i].title + "</a></div>";
+                                ulList += "<div id=\"" + res[i].path + "#" + res[i].hash + "\" ><a href=\"" + prefix + res[i].path + "#" + res[i].hash + "\" >" + res[i].title + "</a></div>";
                             else
-                                ulList += "<div id=\""+res[i].path + "\" ><a href=\"" + prefix + res[i].path + "\" >" + res[i].title + "</a></div>";
+                                ulList += "<div id=\"" + res[i].path + "\" ><a href=\"" + prefix + res[i].path + "\" >" + res[i].title + "</a></div>";
                         } else {
                             ulList += "<div>" + res[i].title + "</div>";
                         }
@@ -131,13 +157,13 @@ var tableOfContents = {
                 return "";
             };
             tableOfContents.tocEle.innerHTML = buildTree(_tocData.children, true);
-            var path = window.location.pathname.replace(prefix,"");
-            if( path ) {
+            var path = window.location.pathname.replace(prefix, "");
+            if (path) {
                 tableOfContents.setSelectedPage(path);
             }
-            if( tableOfContents.breadcrumbs != "" ) {
-               var breadCrumbsEle = document.getElementById("breadcrumbs");
-               breadCrumbsEle.innerHTML = tableOfContents.breadcrumbs;
+            if (tableOfContents.breadcrumbs != "") {
+                var breadCrumbsEle = document.getElementById("breadcrumbs");
+                breadCrumbsEle.innerHTML = tableOfContents.breadcrumbs;
             }
         } else {
             tableOfContents.pendingTocData = _tocData
@@ -145,10 +171,10 @@ var tableOfContents = {
     },
     loaded: function () {
         tableOfContents.tocEle = document.getElementById("TOC");
-        if( tableOfContents.tocEle ) {
-            tableOfContents.tocEle.addEventListener("click", tableOfContents.tocClickHandler );
+        if (tableOfContents.tocEle) {
+            tableOfContents.tocEle.addEventListener("click", tableOfContents.tocClickHandler);
         }
-        if (tableOfContents.pendingTocData) {            
+        if (tableOfContents.pendingTocData) {
             tableOfContents.populateTree(tableOfContents.pendingTocData);
             tableOfContents.pendingTocData = null;
         }
@@ -186,7 +212,7 @@ var tableOfContents = {
         }
         if (!navTo && !tableOfContents.tocData)
             ; // race with TOC load
-        else if (navTo ) {
+        else if (navTo) {
             navTo.className = "selected";
             var dad = navTo.parentNode;
             while (dad) {

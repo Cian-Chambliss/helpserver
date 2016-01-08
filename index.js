@@ -18,6 +18,7 @@ module.exports = function (config) {
     var defaultFilter = config.defaultFilter || '_all';
     var serverHealth = { refreshCount: 0, busyInRefresh: false, gitResult: "None", gitPullCount: 0, whoCalled: "" , revisionCount : 1 };    
     var absolutePath = "/";
+    var logoHREF = (config.logoHref || "http://www.google.com" );
     if( config.proxy ) {
         var proxyBasePath = null;
         var proxyHostStart = config.proxy.indexOf("://");
@@ -302,6 +303,7 @@ module.exports = function (config) {
     ,"/assets/theme.css"
     ,"/assets/helpserver-page.css"
     ,"/assets/helpserver-page.js"
+    ,"/assets/helpserver-main.css"
     ,"/toc_loader/__filter__"+ (config.structurefile || "tree.json").replace(".json",".js")
     ];
     //var manifestTOCName = (this.config.filter_name ? this.config.filter_name : defaultFilter) + this.config.structurefile.replace(".json",".js");
@@ -327,10 +329,12 @@ module.exports = function (config) {
         "<script src=\"/assets/helpserver-polyfills.js\" type=\"text/javascript\" charset=\"utf-8\"></script>",        
         "<link href=\"/assets/theme.css\" rel=\"stylesheet\"/>",
         "<link href=\"/assets/helpserver-page.css\" rel=\"stylesheet\"/>",
+        "<link href=\"/assets/helpserver-main.css\" rel=\"stylesheet\"/>",
         "<script src=\"/assets/helpserver-page.js\" type=\"text/javascript\" charset=\"utf-8\"/></script>",
         "<!--tocloader-->",
         "</head>",
         "<body onload=\"initialize()\" >",
+        "<div id=\"branding\"><div id=\"logo\" onclick=\"window.location='__logolhref__';\" ></div></div>",
         "<div id=\"TOC\"></div>",
         "<div id=\"main\" onclick=\"document.body.classList.remove('showTOC');\">",
 	    "<div id=\"header\">",
@@ -342,6 +346,7 @@ module.exports = function (config) {
         standardPagePrefix = replaceAll( standardPagePrefix , '"/assets' , '"' + absolutePath + "assets" );
         standardPagePrefix = replaceAll( standardPagePrefix , '"/appcache' , '"' + absolutePath + "appcache" );        
     }      
+    standardPagePrefix =standardPagePrefix.replace("__logolhref__",logoHREF);
     var standardPageSuffix =  ["</div></div>",
     "<div id=\"toolbar\"></div>",
     "<button id=\"toTopButton\" onclick=\"document.getElementById('main').scrollTop = 0;\"  style=\"position: absolute; right: 18px; bottom: 0px;\"></button>",
@@ -1478,13 +1483,14 @@ module.exports = function (config) {
         var altConfig = help;
         
         // Debug code
-        
+        /*
         if( pathValue.indexOf("/docs/") == 0 ) {
             pathValue = pathValue.substring(5);
             console.log('Protected PATH '+pathValue);
         } else {
             console.log('!!!!Unprotected '+pathValue);
         }
+        */
         
         if (config.replacePath) {
             var i;
