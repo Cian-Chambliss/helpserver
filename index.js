@@ -31,6 +31,7 @@ module.exports = function (config) {
             absolutePath = '/'+proxyBasePath.slice(1).join('/');
         }   
     }   
+    var pathPages = absolutePath+"pages/";
 
     // Try and read revision...    
     fs.readFile(config.generated+"revision.txt","utf8",function(err,data) {
@@ -321,9 +322,10 @@ module.exports = function (config) {
         }
     }
     var pagesManifest = pagesManifestArray.join("\n");
-            
-    var standardPagePrefix = [
-        "<html manifest=\"/appcache/__filter__.appcache\" >",
+        //"<html manifest=\"/appcache/__filter__.appcache\" >",    
+    var standardPageTemplate = 
+    [
+        "<html>",
         "<head>",
         "<link href=\"/assets/helpserver-toc.css\" rel=\"stylesheet\"/>",
         "<script src=\"/assets/helpserver-polyfills.js\" type=\"text/javascript\" charset=\"utf-8\"></script>",        
@@ -333,34 +335,63 @@ module.exports = function (config) {
         "<script src=\"/assets/helpserver-page.js\" type=\"text/javascript\" charset=\"utf-8\"/></script>",
         "<!--tocloader-->",
         "</head>",
-        "<body onload=\"initialize()\" >",
-        "<div id=\"branding\"><div id=\"logo\" onclick=\"window.location='__logolhref__';\" ></div></div>",
-        "<div id=\"TOC\"></div>",
+        "<body onload=\"initialize()\" >",        
         "<div id=\"main\" onclick=\"document.body.classList.remove('showTOC');\">",
-	    "<div id=\"header\">",
-		"<ul id=\"breadcrumbs\" class=\"crumbs\"></ul>",
-	    "</div>",       
-        "<div id=\"help\" name=\"help\">"        
-        ].join("\n");
-    if( absolutePath.length > 1 ) {
-        standardPagePrefix = replaceAll( standardPagePrefix , '"/assets' , '"' + absolutePath + "assets" );
-        standardPagePrefix = replaceAll( standardPagePrefix , '"/appcache' , '"' + absolutePath + "appcache" );        
-    }      
-    standardPagePrefix =standardPagePrefix.replace("__logolhref__",logoHREF);
-    var standardPageSuffix =  ["</div></div>",
-    "<div id=\"toolbar\"></div>",
-    "<button id=\"toTopButton\" onclick=\"document.getElementById('main').scrollTop = 0;\"  style=\"position: absolute; right: 18px; bottom: 0px;\"></button>",
-    "<div id=\"search\"></div>",
-    "</body></html>"
+        "<div id=\"help\" name=\"help\">",
+        "<ul id=\"breadcrumbs\" class=\"crumbs\"><!--breadcrumbs--></ul>",     
+        "<div id=\"relatedTopics\"><!--related--></div>",
+        "<!--body-->",
+        "</div></div>",
+        "<div id=\"header\" onclick=\"document.body.classList.remove('showTOC');\">",
+        "<div id=\"logo\" onclick=\"window.location='<!--logohref-->';\" ></div>",
+        "</div>",       
+        "<div id=\"toolbar\"></div>",
+        "<button id=\"toTopButton\" onclick=\"document.getElementById('main').scrollTop = 0;\"  style=\"position: absolute; right: 18px; bottom: 0px;\"></button>",
+        "<div id=\"search\"></div>",
+        "</body></html>"
     ].join("\n");
-    HelpServerUtil.prototype.getPage = function (page, fromPath , callback) {
+    
+    var standardSearchTemplate = "<!--body-->";
+    
+    var fixupTemplate = function(html) {
+        if( absolutePath.length > 1 ) {
+            html = replaceAll( html , '"/assets' , '"' + absolutePath + "assets" );
+            html = replaceAll( html , '"/appcache' , '"' + absolutePath + "appcache" );        
+        }
+        return html.replace("<!--logohref-->",logoHREF);        
+    };
+    
+    if( config.pageTemplate ) {
+        loadAssetUTF8(config.pageTemplate, function (err, data) {
+            if( !err ) {
+              standardPageTemplate = data
+            }
+            standardPageTemplate = fixupTemplate(standardPageTemplate);            
+        });
+    }  else {
+        standardPageTemplate = fixupTemplate(standardPageTemplate);
+    }
+    if( config.searchTemplate ) {
+        loadAssetUTF8(config.searchTemplate, function (err, data) {
+            if( !err ) {
+              standardSearchTemplate = data;
+              standardSearchTemplate = fixupTemplate(standardSearchTemplate);
+            }
+        });
+    }
+    
+    var treeData = {};
+    HelpServerUtil.prototype.getPage = function (page, fromPath ,req , callback) {
+        var hlp = this;
         page = decodeURI(page);
         var relativePath = page.substring(1);
         //var generatedPage = config.generated + "topics/"+replaceAll(relativePath,"/","_");
         var thisFiltername = (this.config.filter_name ? this.config.filter_name : defaultFilter);
-        var tocName = thisFiltername + this.config.structurefile.replace(".json",".js");
+        var treeName = thisFiltername + this.config.structurefile;
+        var tocName = treeName.replace(".json",".js");
         var extension = null;
-        var extensionPos = page.lastIndexOf('.');
+        var extensionPos = page.lastIndexOf('.');        
+        
         if (extensionPos > 0)
             extension = page.substring(extensionPos + 1).toLowerCase();
             
@@ -381,10 +412,117 @@ module.exports = function (config) {
                 if( deepestAltToc ) {
                     deepestAltToc = replaceAll(deepestAltToc,"/","_");
                     tocName = deepestAltToc+tocName;
+                    treeName = deepestAltToc+treeName;
                 }
             }        
+            var generateNavigation = function(tree) {
+                var breadcrumbs = "";
+                var related = "";
+                var parentUrl = "#";
+                var childUrl = "#";
+                var previousUrl = "#";
+                var nextUrl = "#";
+                
+                var childUrl = "#";
+                var previousUrl = "#";
+                var nextUrl = "#";             
+                
+                if( tree && tree.children ) {
+                    var searchTopic = "/"+relativePath.toLowerCase();
+                    var kidsLevel = tree.children;
+                    var firstChild = null;
+                    var firstChildParent = null;
+                    var indexOfKid = -1;
+                    var parentOfNode = null;
+                    
+                    var recurseNavTree = function(kids) {
+                        if( kids.length ) {
+                            for( var i = 0 ; i < kids.length ; ++i ) {
+                                if( kids[i].path && kids[i].path.toLowerCase() == searchTopic ) {
+                                    kidsLevel = kids;
+                                    indexOfKid = i;
+                                    if( kids[i].children && kids[i].children.length ) {
+                                        firstChild = kids[i].children[0];
+                                        firstChildParent = kids[i];  
+                                    }
+                                    return [kids[i]];
+                                } else if( kids[i].children ) {
+                                    var childResult = recurseNavTree(kids[i].children);
+                                    if( childResult ) {
+                                        if( !parentOfNode ) {
+                                            parentOfNode = kids[i];
+                                        }
+                                        return [kids[i]].concat(childResult);
+                                    }
+                                }
+                            }
+                        }
+                        return null;
+                    }; 
+                    var branches = recurseNavTree(tree.children);
+                    if( branches ) {
+                        //breadcrumbs = "<ul>";
+                        if( tree.path ) {
+                            breadcrumbs += "<li>";
+                            breadcrumbs += "<a href=\""+pathPages+tree.path.substring(1)+"\">";
+                            if( !tree.title || tree.title == '/') {
+                                breadcrumbs += "Main";
+                            } else {
+                                breadcrumbs += tree.title;
+                            }
+                            breadcrumbs += "</a>";
+                            breadcrumbs += "</li>";
+                        }
+                        for( var i = 0 ; i < branches.length-1 ; ++i ) {
+                            breadcrumbs += "<li>";
+                            if( branches[i].path ) {
+                                breadcrumbs += "<a href=\""+pathPages+branches[i].path.substring(1)+"\">";
+                                breadcrumbs += branches[i].title;
+                                breadcrumbs += "</a>";
+                            } else {
+                                breadcrumbs += branches[i].title;
+                            }
+                            breadcrumbs += "</li>";
+                        }
+                        //breadcrumbs += "</ul>";                        
+                    }
+                    if( kidsLevel ) {
+                        related = "<ul>";
+                        for( var i = 0 ; i < kidsLevel.length ; ++i ) {
+                            if( kidsLevel[i].path ) {
+                                related += "<li>";
+                                related += "<a href=\""+pathPages+kidsLevel[i].path.substring(1);
+                                if( i == indexOfKid )
+                                    related += "\" class=\"selected\" >";
+                                else
+                                    related += "\">";
+                                related +=  kidsLevel[i].title;
+                                related += "</a>";
+                                related += "</li>";
+                            }
+                        }                
+                        related += "</ul>";        
+                    }
+                }                 
+                
+                if( firstChild && firstChild.path) { 
+                   childUrl = pathPages+firstChild.path.substring(1);
+                }
+                if( parentOfNode && parentOfNode.path ) {
+                    parentUrl = pathPages+parentOfNode.path.substring(1);
+                }
+                if( kidsLevel ) {
+                    if( indexOfKid > 0 && kidsLevel[indexOfKid-1].path ) {
+                        previousUrl = pathPages+kidsLevel[indexOfKid-1].path.substring(1);
+                    }
+                    if( indexOfKid < (kidsLevel.length-1) &&  kidsLevel[indexOfKid+1].path ) {
+                        nextUrl = pathPages+kidsLevel[indexOfKid+1].path.substring(1);
+                    }
+                }                              
+                return { breadcrumbs : breadcrumbs , related: related , parentUrl : parentUrl , childUrl : childUrl , previousUrl : previousUrl , nextUrl : nextUrl };
+            };
         
-            var processWebPage = function(htmlText) { 
+            var processWebPage = function(htmlText,tree) { 
                 var lowText = htmlText.toLowerCase();            
                 var bodyAt = lowText.indexOf('<body');
                 if (bodyAt >= 0) {
@@ -406,9 +544,17 @@ module.exports = function (config) {
                     paths.imagepath += fromPath.substring(pagesAt+6);
                 }
                 htmlText = pageProcessor(config, htmlText, paths );             
-                var tocLoader = "<script src=\""+absolutePath+"toc_loader/"+tocName+"\" defer></script>";
-                htmlText = standardPagePrefix.replace("__filter__",thisFiltername).replace("<!--tocloader-->",tocLoader)+htmlText+standardPageSuffix;
-                return htmlText;
+                var tocLoader = "<script src=\""+absolutePath+"toc_loader/"+tocName+"\" defer></script>";                
+                tocLoader = "";
+                var navigationText = generateNavigation(tree);
+                var fullPage = standardPageTemplate;
+                fullPage = fullPage.replace("<!--navparent-->",navigationText.parentUrl)
+                .replace("<!--navchild-->",navigationText.childUrl)
+                .replace("<!--navprevious-->",navigationText.previousUrl)
+                .replace("<!--navnext-->",navigationText.nextUrl)
+                .replace("<!--search--->",absolutePath+"pages/search");                
+                fullPage = fullPage.replace("__filter__",thisFiltername).replace("<!--tocloader-->",tocLoader).replace("<!--related-->",navigationText.related).replace("<!--breadcrumbs-->",navigationText.breadcrumbs).replace("<!--body-->", htmlText);              
+                return fullPage;
             };
 
             if( extension == "xml") {
@@ -419,8 +565,17 @@ module.exports = function (config) {
                 lu.loadOrCreateTranslatedPage(this.config, page, (this.config.filter_name ? this.config.filter_name : defaultFilter), function(err,data,type) {
                     if (err) {
                         callback(err, null);
-                    } else {
-                        callback(null, processWebPage(data), "html");
+                    } else {                         
+                        if( !treeData[treeName] ) {
+                            fs.readFile(config.generated + treeName, "utf8", function (err, jsonTreeData) {
+                                if( !err ) {
+                                    treeData[treeName] = JSON.parse(jsonTreeData);
+                                }                        
+                                callback(null, processWebPage(data,treeData[treeName]), "html");
+                            });
+                        } else {
+                            callback(null, processWebPage(data,treeData[treeName]), "html");                            
+                        }
                     }            
                 });
             } else {
@@ -428,10 +583,51 @@ module.exports = function (config) {
                     if (err) {
                         callback(err, null);
                     } else {
-                        callback(null, processWebPage(data), "html");
+                        if( !treeData[treeName] ) {
+                            fs.readFile(config.generated + treeName, "utf8", function (err, jsonTreeData ) {
+                                if( !err ) {
+                                    treeData[treeName] = JSON.parse(jsonTreeData);
+                                }                        
+                                callback(null, processWebPage(data,treeData[treeName]), "html");
+                            });
+                        } else {
+                            callback(null, processWebPage(data,treeData[treeName]), "html");
+                        }
                     }
                 });            
             }
+        } else if( page == "/search" && req.query.pattern ) {
+            var offset = 0;
+            var limit = 50;
+            if (req.query.limit)
+                limit = parseInt(req.query.limit);
+            if (req.query.offset)
+                offset = parseInt(req.query.offset);
+            hlp.search(req.query.pattern, function (err, data) {
+                if (err) {
+                    callback(null, "Error: "+ err , "html");
+                } else {
+                    var i = 0;
+                    var searchResults  = "<ul>";
+                    if (data.length > 0) {
+                        var ListUtilities = require('./listutilities');
+                        var lu = new ListUtilities(config);
+                        for (i = 0; i < data.length; ++i) {
+                            searchResults += "<li>";
+                            searchResults += "<a href=\""+pathPages+data[i].path.substring(1)+"\">";
+                            searchResults += lu.removeDigitPrefix(data[i].title);
+                            searchResults += "</a>";
+                            searchResults += "</li>";
+                            
+                        }
+                    } else {
+                        searchResults += "<li>No Results Found</li>";
+                    }
+                    searchResults += "</ul>";
+                    // data
+                    callback(null, standardSearchTemplate.replace("<!--body-->",searchResults), "html");
+                }
+            }, offset, limit);            
         } else {
             // ...Else assume its a resource (i.e. JPEG/PNG etc...)
             this.get(page,callback);
@@ -1154,7 +1350,7 @@ module.exports = function (config) {
             });
         },
         "pages": function (hlp, path, req, res) {
-            hlp.getPage(path , req.path , function (err, data, type) {
+            hlp.getPage(path , req.path , req , function (err, data, type) {
                 if (err) {
                     hlp.onSendExpress(res);
                     res.send(err);

@@ -1,194 +1,201 @@
 body {
-font: 14px Arial, sans-serif;
-overflow: hidden;
+font: 18px weblysleek_uisemilight, sans-serif;
+padding: 0px;
+margin: 0px;
 }
-
-#main {
-position: absolute;
-top: 0px;
-bottom: 0px;
-left: 250px;
-right: 0px;
-background: #eee;
-overflow: auto;
+.container {
+max-width: 1140px;
+padding: 0px 30px;
+margin: 0px auto;
 }
 #header {
-min-height: 44px;
-color: #b6b6b6;
+height: 130px;
 background: #2c3e50;
-padding-top: 4px;
-padding-left: 18px;
-padding-right: 62px;
-padding-bottom: 0px;
+color: #fff;
 }
-.title {
-font-size: 18px;
+#header-top {
+padding: 10px 0px;
+height: 44px;
 }
-.crumbs {
-margin: 0px;
-margin-left: -18px;
-padding: 0px;
-list-style: none;
+#header-top-title {
+margin-top: 14px;
 }
-.crumbs li {
+#header-bottom {
 position: relative;
-margin: 0px;
-padding: 15px;
-color: #555;
-display: inline-block;
 }
-.crumbs li:hover, .crumbs li:active {
-color: #000;
-}
-.crumbs li+li:before {
-content: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOCIgaGVpZ2h0PSI0NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJtIDEuMDEwMTIyNCwxNi40MzcxNjkgNS41ODU3ODYsNS41NjI4MyAtNS41ODU3ODYsNS41NjI4MzIiIHN0cm9rZT0iIzg4OCIgc3Ryb2tlLXdpZHRoPSIyIiBmaWxsPSJub25lIiAvPjwvc3ZnPg==');
-position: absolute;
-left: -4px;
-top: 1px;
-}
-.crumbs li a {
-color: #eee;
-}
-
-#content {
-padding: 4px;
-}
-
 #branding {
-color: #b6b6b6;
-background: #2c3e50;
-position: absolute;
-top: 0px;
-left: 0px;
-width: 250px;
-height: 48px;    
+width: 120px;
 }
-#TOC {
-position: absolute;
-top: 48px;
-bottom: 0px;
-left: 0px;
-width: 250px;
-background: #ddd;
-overflow: auto;
+#header .logo a {
+background-image: url(http://www.alphasoftware.com/newsite/images/alpha-software-logo.png);
+background-repeat: no-repeat;
+display: inline-block;
+width: 120px;
+height: 30px;
+}
+#header .logo a span {
+display: inline-block;
+text-indent: -9999px;
 }
 
 #search {
 position: absolute;
-top: 0px;
-bottom: 0px;
-left: 0px;
 right: 0px;
+top: 0px;
+}
+#search input {
+border: 1px solid #798490;
+border-radius: 3px;
+background: #405061;
+padding: 6px;
+font-size: 14px;
 color: #fff;
-background: rgba(0,0,0,.85);
+outline: none;
+width: 200px;
+}
+#search input:focus {
+width: 200px !important;
+}
+#search button {
+padding: 0px;
+margin: 0px;
+width: 30px;
+height: 30px;
+border: none;
+background: transparent;
+outline: none;
+vertical-align: top;
+}
+
+#content {
+font-size: 14px;
+}
+
+#bread-crumbs {
+padding: 10px 0px;
+}
+#bread-crumbs ul {
+list-style: none;
+margin: 0px;
+padding: 0px;
+}
+#bread-crumbs ul li {
+display: inline-block;
+}
+#bread-crumbs ul li:before {
+content: "\0203A";
+display: inline-block;
+padding: 0px 3px;
+}
+#bread-crumbs ul li:first-child:before {
 display: none;
 }
-#searchResults {
-position: absolute;
-top: 62px;
-bottom: 0px;
-left: 0px;
-right: 0px;
-overflow: auto;
-padding: 18px;
+#bread-crumbs a {
+color: #000;
 }
-#searchResults a {
-color: white;
+#bread-crumbs a:hover {
+text-decoration: none;
 }
-#searchField {
-position: absolute;
-top: 18px;
-left: 18px;
-right: 170px;
+
+#page-nav {
+background: #f9f9f9;
+border: 1px solid #eee;
+border-radius: 3px;
+width: 250px;
+padding: 0px;
+float: left;
+overflow: hidden;
 }
-#searchField input {
-padding: 4px;
-height: 34px;
-width: 100%;
-background: rgba(0,0,0,.25);
-color: #fff;
-border: 1px solid #fff;
-border-radius: 4px;
-outline: none;
+#page-nav > div {
+padding: 6px;
+text-align: center;
+background: #eee;
+height: 16px;
+overflow: hidden;
 }
-#searchButton {
-position: absolute;
-top: 18px;
-right: 62px;
-height: 44px;
-width: 96px;
+#page-nav > div a {
+color: #000;
+}
+#page-nav > div a:hover {
+text-decoration: none;
+}
+#page-nav ul {
+font-size: 14px;
+list-style: none;
+margin: 0px;
+padding: 0px;
+}
+#page-nav ul li a {
+display: block;
+padding: 4px 6px;
+text-decoration: none;
+color: #000;
+}
+
+#page-nav ul li .selected {
+background: #888;
+}
+
+#page-nav ul li a:hover {
+background: #ddd;
+}
+.selected {
+background: #f2f2f2;
+}
+#page-nav-parent[href="#"], #page-nav-parent[href="#"] + span,
+#page-nav-child[href="#"], #page-nav-child[href="#"] + span,
+#page-nav-previous[href="#"], #page-nav-previous[href="#"] + span {
+display: none;
+}
+#page-nav-next[href="#"], #page-nav-next[href="#"] + span {
+display: none;
+}
+#page-nav-list-toggle {
+display: none;
 border: none;
-color: #fff;
+background: transparent;
+outline: none;
+font-size: 22px;
 font-weight: bold;
-background: rgba(0,0,0,.25);
-border: 1px solid #ddd;
-border-radius: 4px;
-outline: none;
-margin: 0px;
-}
-#searchClose {
-position: absolute;
-top: 18px;
-right: 18px;
+margin-top: -6px;
+width: 28px;
 padding: 0px;
-margin: 0px;
-border: none;
-background: transparent;
-outline: none;
+padding-bottom: 2px;
+transform: rotate(90deg);
 }
 
-#toolbar {
-position: absolute;
-top: 0px;
-left: 0px;
-right: 0px;
-}
-#toolbar button, #toTopButton {
-top: 4px;
-padding: 0px;
-margin: 0px;
-border: none;
-background: transparent;
-outline: none;
-}
-#toTopButton {
-top: auto;
-background: rgba(0,0,0,.25);
-border-radius: 4px 4px 0px 0px;
-}
-#toolbarTOCButton {
-display: none;
-}
-
-.search #search {display: block;}
-.search #toolbar, .search #toTopButton {display: none;}
 
 
-@media screen and (max-width: 700px) {
-	#toolbarTOCButton { display: block; }
-	#TOCClose { display: block; }
-	
-	#main {
-		left: 0px;
-		transition: transform 300ms;
-		transform: translate(0px,0px);
-		-webkit-box-shadow: -2px 0px 8px 0px rgba(0,0,0,0.25);
-		-moz-box-shadow: -2px 0px 8px 0px rgba(0,0,0,0.25);
-		box-shadow: -2px 0px 8px 0px rgba(0,0,0,0.25);
+#doc {
+margin-left: 260px;
+}
+
+@media screen and (max-width: 800px) {
+	#search input {
+		width: 75px;
 	}
-	#header {  padding-left: 80px; }
-	.crumbs li { display: block; }
-	.crumbs li+li { padding-left: 44px; }
-	.crumbs li+li:before {
-		left: 18px;
-		top: 1px;
+	#doc {
+		margin-left: 0px;
 	}
-	#toolbar, #toTopButton {
-		transition: transform 300ms;
-		transform: translate(0px,0px);
+	#page-nav {
+		width: 100%;
+		float: none;
+		margin-bottom: 10px;
 	}
-	.showTOC #main, .showTOC #toolbar, .showTOC #toTopButton {
-		transition: transform 300ms;
-		transform: translate(250px,0px);
+	#page-nav > div{
+		text-align: left;
+	}
+	#page-nav-list-toggle {
+		display: block;
+		float: right;
+	}
+	.page-nav-show-list #page-nav-list-toggle {
+		transform: rotate(-90deg);
+	}
+	#page-nav ul {
+		display: none;
+	}
+	.page-nav-show-list ul {
+		display: block !important;
 	}
 }
