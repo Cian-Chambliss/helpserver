@@ -311,8 +311,8 @@ module.exports = function (config) {
     if( absolutePath.length > 1 ) {
         var i;
         for( i = 0 ; i < pagesManifestArray.length ; ++i ) {
-            if( pagesManifestArray.substring(0,1) == "/" ) {
-                pagesManifestArray[i] = standardPagePrefix + pagesManifestArray[i].substring(1);
+            if( pagesManifestArray[i].substring(0,1) == "/" ) {
+                pagesManifestArray[i] = absolutePath + pagesManifestArray[i].substring(1);
             }
         }
     }
@@ -356,7 +356,8 @@ module.exports = function (config) {
     var fixupTemplate = function(html) {
         if( absolutePath.length > 1 ) {
             html = replaceAll( html , '"/assets' , '"' + absolutePath + "assets" );
-            html = replaceAll( html , '"/appcache' , '"' + absolutePath + "appcache" );        
+            html = replaceAll( html , '"/appcache' , '"' + absolutePath + "appcache" );
+            html = replaceAll( html , '"/pages' , '"' + absolutePath + "pages" );
         }
         return html.replace("<!--logohref-->",logoHREF);        
     };
@@ -480,6 +481,11 @@ module.exports = function (config) {
                             } else {
                                 breadcrumbs += branches[i].title;
                             }
+                            breadcrumbs += "</li>";
+                        }
+                        if( pageTitle ) {
+                            breadcrumbs += "<li>";
+                            breadcrumbs +=pageTitle
                             breadcrumbs += "</li>";
                         }
                         //breadcrumbs += "</ul>";                        
@@ -631,7 +637,7 @@ module.exports = function (config) {
                     }
                     searchResults += "</ul>";
                     // data
-                    callback(null, standardSearchTemplate.replace("<!--body-->",searchResults), "html");
+                    callback(null, standardSearchTemplate.replace("<!--body-->",searchResults).replace("<!--search--->",absolutePath+"pages/search").replace("<!--searchpattern--->",req.query.pattern), "html");
                 }
             }, offset, limit);            
         } else {
@@ -1687,15 +1693,14 @@ module.exports = function (config) {
         var pathValue = req.path;
         var altConfig = help;
         
-        // Debug code
-        /*
-        if( pathValue.indexOf("/docs/") == 0 ) {
-            pathValue = pathValue.substring(5);
-            console.log('Protected PATH '+pathValue);
-        } else {
-            console.log('!!!!Unprotected '+pathValue);
+        // Strip off the absolute path if present (allows direct testing of site)
+        if( absolutePath.length > 1 ) {
+            if( pathValue.indexOf(absolutePath) == 0 ) {
+                pathValue = pathValue.substring(absolutePath.length-1);
+            } else {
+                console.log('Warning Unprotected path'+pathValue);
+            }
         }
-        */
         
         if (config.replacePath) {
             var i;

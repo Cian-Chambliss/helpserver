@@ -22,9 +22,11 @@ margin-top: 14px;
 }
 #header-bottom {
 position: relative;
+white-space: nowrap;
 }
 #branding {
 width: 120px;
+display:inline-block;
 }
 #header .logo a {
 background-image: url(http://www.alphasoftware.com/newsite/images/alpha-software-logo.png);
@@ -37,6 +39,30 @@ height: 30px;
 display: inline-block;
 text-indent: -9999px;
 }
+
+#main-menu {
+display:inline-block;
+white-space:normal;
+}
+#main-menu ul {
+list-style: none;
+margin: 0px;
+padding: 0px;
+}
+#main-menu ul li {
+display: inline-block;
+padding: 5px 10px;
+}
+
+#main-menu a {
+color: #eee;
+}
+
+#main-menu a:hover {
+color: #eee;
+background: #798490;
+}
+
 
 #search {
 position: absolute;
@@ -145,9 +171,7 @@ background: #f2f2f2;
 }
 #page-nav-parent[href="#"], #page-nav-parent[href="#"] + span,
 #page-nav-child[href="#"], #page-nav-child[href="#"] + span,
-#page-nav-previous[href="#"], #page-nav-previous[href="#"] + span {
-display: none;
-}
+#page-nav-previous[href="#"], #page-nav-previous[href="#"] + span,
 #page-nav-next[href="#"], #page-nav-next[href="#"] + span {
 display: none;
 }
@@ -170,6 +194,7 @@ transform: rotate(90deg);
 #doc {
 margin-left: 260px;
 }
+
 
 @media screen and (max-width: 800px) {
 	#search input {
