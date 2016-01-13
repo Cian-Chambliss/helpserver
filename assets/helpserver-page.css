@@ -1,4 +1,4 @@
-body {
+#pageBody {
 font: 18px weblysleek_uisemilight, sans-serif;
 padding: 0px;
 margin: 0px;
@@ -92,6 +92,7 @@ display: none;
 }
 #bread-crumbs a {
 color: #000;
+text-decoration: underline;
 }
 #bread-crumbs a:hover {
 text-decoration: none;

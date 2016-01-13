@@ -422,10 +422,7 @@ module.exports = function (config) {
                 var childUrl = "#";
                 var previousUrl = "#";
                 var nextUrl = "#";
-                
-                var childUrl = "#";
-                var previousUrl = "#";
-                var nextUrl = "#";             
+                var pageTitle = null;
                 
                 if( tree && tree.children ) {
                     var searchTopic = "/"+relativePath.toLowerCase();
@@ -439,6 +436,7 @@ module.exports = function (config) {
                         if( kids.length ) {
                             for( var i = 0 ; i < kids.length ; ++i ) {
                                 if( kids[i].path && kids[i].path.toLowerCase() == searchTopic ) {
+                                    pageTitle = kids[i].title;
                                     kidsLevel = kids;
                                     indexOfKid = i;
                                     if( kids[i].children && kids[i].children.length ) {
@@ -518,8 +516,15 @@ module.exports = function (config) {
                     if( indexOfKid < (kidsLevel.length-1) &&  kidsLevel[indexOfKid+1].path ) {
                         nextUrl = pathPages+kidsLevel[indexOfKid+1].path.substring(1);
                     }
-                }                              
-                return { breadcrumbs : breadcrumbs , related: related , parentUrl : parentUrl , childUrl : childUrl , previousUrl : previousUrl , nextUrl : nextUrl };
+                }
+                if( !pageTitle ) {
+                    pageTitle = relativePath;
+                    var pathPartOffset = pageTitle.lastIndexOf('/'); 
+                    if( pathPartOffset >= 0 ) {
+                        pageTitle = pageTitle.substring(pathPartOffset+1);
+                    }
+                }   
+                return { breadcrumbs : breadcrumbs , related: related , parentUrl : parentUrl , childUrl : childUrl , previousUrl : previousUrl , nextUrl : nextUrl , pageTitle : pageTitle };
             };
         
             var processWebPage = function(htmlText,tree) { 
@@ -552,7 +557,8 @@ module.exports = function (config) {
                 .replace("<!--navchild-->",navigationText.childUrl)
                 .replace("<!--navprevious-->",navigationText.previousUrl)
                 .replace("<!--navnext-->",navigationText.nextUrl)
-                .replace("<!--search--->",absolutePath+"pages/search");                
+                .replace("<!--search--->",absolutePath+"pages/search")
+                .replace("<!--pagetopic--->",navigationText.pageTitle);                
                 fullPage = fullPage.replace("__filter__",thisFiltername).replace("<!--tocloader-->",tocLoader).replace("<!--related-->",navigationText.related).replace("<!--breadcrumbs-->",navigationText.breadcrumbs).replace("<!--body-->", htmlText);              
                 return fullPage;
             };
@@ -1097,6 +1103,9 @@ module.exports = function (config) {
                     serverHealth.gitPullCount++;
                     rebuildContent(help);
                     ++serverHealth.revisionCount;
+                    // Force a reload of the tree cache
+                    treeData = {};
+                    
                     fs.writeFile(config.generated+"revision.txt",""+serverHealth.revisionCount,function(err) { 
                         if( err ) {
                             console.log("Error saving revision");
