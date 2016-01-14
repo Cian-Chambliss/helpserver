@@ -16,30 +16,31 @@ module.exports = function (config) {
     var filters = {};
     var assets = {};
     var defaultFilter = config.defaultFilter || '_all';
-    var serverHealth = { refreshCount: 0, busyInRefresh: false, gitResult: "None", gitPullCount: 0, whoCalled: "" , revisionCount : 1 };    
+    var serverHealth = { refreshCount: 0, busyInRefresh: false, gitResult: "None", gitPullCount: 0, whoCalled: "", revisionCount: 1 };
     var absolutePath = "/";
-    var logoHREF = (config.logoHref || "http://www.google.com" );
-    if( config.proxy ) {
+    var actualLinks = null;
+    var logoHREF = (config.logoHref || "http://www.google.com");
+    if (config.proxy) {
         var proxyBasePath = null;
         var proxyHostStart = config.proxy.indexOf("://");
-        if( proxyHostStart >= 0 ) {
-            proxyBasePath = config.proxy.substring(proxyHostStart+3).split('/');
+        if (proxyHostStart >= 0) {
+            proxyBasePath = config.proxy.substring(proxyHostStart + 3).split('/');
         } else {
             proxyBasePath = config.proxy.split('/');
         }
-        if( proxyBasePath.length > 1 ) {                    
-            absolutePath = '/'+proxyBasePath.slice(1).join('/');
-        }   
-    }   
-    var pathPages = absolutePath+"pages/";
+        if (proxyBasePath.length > 1) {
+            absolutePath = '/' + proxyBasePath.slice(1).join('/');
+        }
+    }
+    var pathPages = absolutePath + "pages/";
 
     // Try and read revision...    
-    fs.readFile(config.generated+"revision.txt","utf8",function(err,data) {
-        if( !err ) {
-           serverHealth.revisionCount = Number(data);
+    fs.readFile(config.generated + "revision.txt", "utf8", function (err, data) {
+        if (!err) {
+            serverHealth.revisionCount = Number(data);
         }
     });
-    
+
     var loadAssetUTF8 = function (name, callback) {
         if (assets[name]) {
             callback(null, assets[name]);
@@ -292,131 +293,131 @@ module.exports = function (config) {
             });
         });
     };
-    
+
     var pagesManifestArray = ["CACHE MANIFEST"
-    ,""
-    ,"#Version __helpversionnumber__"
-    ,"NETWORK:"
-    ,"*"
-    ,"CACHE:"
-    ,"/assets/helpserver-toc.css"
-    ,"/assets/helpserver-polyfills.js"
-    ,"/assets/theme.css"
-    ,"/assets/helpserver-page.css"
-    ,"/assets/helpserver-page.js"
-    ,"/assets/helpserver-main.css"
-    ,"/toc_loader/__filter__"+ (config.structurefile || "tree.json").replace(".json",".js")
+        , ""
+        , "#Version __helpversionnumber__"
+        , "NETWORK:"
+        , "*"
+        , "CACHE:"
+        , "/assets/helpserver-toc.css"
+        , "/assets/helpserver-polyfills.js"
+        , "/assets/theme.css"
+        , "/assets/helpserver-page.css"
+        , "/assets/helpserver-page.js"
+        , "/assets/helpserver-main.css"
+        , "/toc_loader/__filter__" + (config.structurefile || "tree.json").replace(".json", ".js")
     ];
     //var manifestTOCName = (this.config.filter_name ? this.config.filter_name : defaultFilter) + this.config.structurefile.replace(".json",".js");
-    if( absolutePath.length > 1 ) {
+    if (absolutePath.length > 1) {
         var i;
-        for( i = 0 ; i < pagesManifestArray.length ; ++i ) {
-            if( pagesManifestArray[i].substring(0,1) == "/" ) {
+        for (i = 0; i < pagesManifestArray.length; ++i) {
+            if (pagesManifestArray[i].substring(0, 1) == "/") {
                 pagesManifestArray[i] = absolutePath + pagesManifestArray[i].substring(1);
             }
         }
     }
-    if(  config.altTocs &&  config.altTocs.length ) {
-        for( i = 0 ; i < config.altTocs.length ; ++i ) {
-           pagesManifestArray.push( "/toc_loader/"+replaceAll(config.altTocs[i],"/","_")+"__filter__"+ (config.structurefile || "tree.json").replace(".json",".js") );
+    if (config.altTocs && config.altTocs.length) {
+        for (i = 0; i < config.altTocs.length; ++i) {
+            pagesManifestArray.push("/toc_loader/" + replaceAll(config.altTocs[i], "/", "_") + "__filter__" + (config.structurefile || "tree.json").replace(".json", ".js"));
         }
     }
     var pagesManifest = pagesManifestArray.join("\n");
-        //"<html manifest=\"/appcache/__filter__.appcache\" >",    
-    var standardPageTemplate = 
-    [
-        "<html>",
-        "<head>",
-        "<link href=\"/assets/helpserver-toc.css\" rel=\"stylesheet\"/>",
-        "<script src=\"/assets/helpserver-polyfills.js\" type=\"text/javascript\" charset=\"utf-8\"></script>",        
-        "<link href=\"/assets/theme.css\" rel=\"stylesheet\"/>",
-        "<link href=\"/assets/helpserver-page.css\" rel=\"stylesheet\"/>",
-        "<link href=\"/assets/helpserver-main.css\" rel=\"stylesheet\"/>",
-        "<script src=\"/assets/helpserver-page.js\" type=\"text/javascript\" charset=\"utf-8\"/></script>",
-        "<!--tocloader-->",
-        "</head>",
-        "<body onload=\"initialize()\" >",        
-        "<div id=\"main\" onclick=\"document.body.classList.remove('showTOC');\">",
-        "<div id=\"help\" name=\"help\">",
-        "<ul id=\"breadcrumbs\" class=\"crumbs\"><!--breadcrumbs--></ul>",     
-        "<div id=\"relatedTopics\"><!--related--></div>",
-        "<!--body-->",
-        "</div></div>",
-        "<div id=\"header\" onclick=\"document.body.classList.remove('showTOC');\">",
-        "<div id=\"logo\" onclick=\"window.location='<!--logohref-->';\" ></div>",
-        "</div>",       
-        "<div id=\"toolbar\"></div>",
-        "<button id=\"toTopButton\" onclick=\"document.getElementById('main').scrollTop = 0;\"  style=\"position: absolute; right: 18px; bottom: 0px;\"></button>",
-        "<div id=\"search\"></div>",
-        "</body></html>"
-    ].join("\n");
-    
+    //"<html manifest=\"/appcache/__filter__.appcache\" >",    
+    var standardPageTemplate =
+        [
+            "<html>",
+            "<head>",
+            "<link href=\"/assets/helpserver-toc.css\" rel=\"stylesheet\"/>",
+            "<script src=\"/assets/helpserver-polyfills.js\" type=\"text/javascript\" charset=\"utf-8\"></script>",
+            "<link href=\"/assets/theme.css\" rel=\"stylesheet\"/>",
+            "<link href=\"/assets/helpserver-page.css\" rel=\"stylesheet\"/>",
+            "<link href=\"/assets/helpserver-main.css\" rel=\"stylesheet\"/>",
+            "<script src=\"/assets/helpserver-page.js\" type=\"text/javascript\" charset=\"utf-8\"/></script>",
+            "<!--tocloader-->",
+            "</head>",
+            "<body onload=\"initialize()\" >",
+            "<div id=\"main\" onclick=\"document.body.classList.remove('showTOC');\">",
+            "<div id=\"help\" name=\"help\">",
+            "<ul id=\"breadcrumbs\" class=\"crumbs\"><!--breadcrumbs--></ul>",
+            "<div id=\"relatedTopics\"><!--related--></div>",
+            "<!--body-->",
+            "</div></div>",
+            "<div id=\"header\" onclick=\"document.body.classList.remove('showTOC');\">",
+            "<div id=\"logo\" onclick=\"window.location='<!--logohref-->';\" ></div>",
+            "</div>",
+            "<div id=\"toolbar\"></div>",
+            "<button id=\"toTopButton\" onclick=\"document.getElementById('main').scrollTop = 0;\"  style=\"position: absolute; right: 18px; bottom: 0px;\"></button>",
+            "<div id=\"search\"></div>",
+            "</body></html>"
+        ].join("\n");
+
     var standardSearchTemplate = "<!--body-->";
-    
-    var fixupTemplate = function(html) {
-        if( absolutePath.length > 1 ) {
-            html = replaceAll( html , '"/assets' , '"' + absolutePath + "assets" );
-            html = replaceAll( html , '"/appcache' , '"' + absolutePath + "appcache" );
-            html = replaceAll( html , '"/pages' , '"' + absolutePath + "pages" );
+
+    var fixupTemplate = function (html) {
+        if (absolutePath.length > 1) {
+            html = replaceAll(html, '"/assets', '"' + absolutePath + "assets");
+            html = replaceAll(html, '"/appcache', '"' + absolutePath + "appcache");
+            html = replaceAll(html, '"/pages', '"' + absolutePath + "pages");
         }
-        return html.replace("<!--logohref-->",logoHREF);        
+        return html.replace("<!--logohref-->", logoHREF);
     };
-    
-    if( config.pageTemplate ) {
+
+    if (config.pageTemplate) {
         loadAssetUTF8(config.pageTemplate, function (err, data) {
-            if( !err ) {
-              standardPageTemplate = data
+            if (!err) {
+                standardPageTemplate = data
             }
-            standardPageTemplate = fixupTemplate(standardPageTemplate);            
+            standardPageTemplate = fixupTemplate(standardPageTemplate);
         });
-    }  else {
+    } else {
         standardPageTemplate = fixupTemplate(standardPageTemplate);
     }
-    if( config.searchTemplate ) {
+    if (config.searchTemplate) {
         loadAssetUTF8(config.searchTemplate, function (err, data) {
-            if( !err ) {
-              standardSearchTemplate = data;
-              standardSearchTemplate = fixupTemplate(standardSearchTemplate);
+            if (!err) {
+                standardSearchTemplate = data;
+                standardSearchTemplate = fixupTemplate(standardSearchTemplate);
             }
         });
     }
-    
+
     var treeData = {};
-    HelpServerUtil.prototype.getPage = function (page, fromPath ,req , callback) {
+    HelpServerUtil.prototype.getPage = function (page, fromPath, req, callback) {
         var hlp = this;
         page = decodeURI(page);
         var relativePath = page.substring(1);
         //var generatedPage = config.generated + "topics/"+replaceAll(relativePath,"/","_");
         var thisFiltername = (this.config.filter_name ? this.config.filter_name : defaultFilter);
         var treeName = thisFiltername + this.config.structurefile;
-        var tocName = treeName.replace(".json",".js");
+        var tocName = treeName.replace(".json", ".js");
         var extension = null;
-        var extensionPos = page.lastIndexOf('.');        
-        
+        var extensionPos = page.lastIndexOf('.');
+
         if (extensionPos > 0)
             extension = page.substring(extensionPos + 1).toLowerCase();
-            
-        if( extension == "html" || extension == "xml" || extension == "md" ) {    
-            if( config.altTocs && config.altTocs.length > 0 ) {
+
+        if (extension == "html" || extension == "xml" || extension == "md") {
+            if (config.altTocs && config.altTocs.length > 0) {
                 var deepestAltToc = null;
                 var i;
-                var searchPath = "/"+relativePath.toLowerCase();
-                for( i = 0 ; i < config.altTocs.length ; ++i ) {
-                        var prefix = config.altTocs[i];
-                        if( searchPath.substring(0,prefix.length)== prefix.toLowerCase() ) {
-                            if( !deepestAltToc )
-                                deepestAltToc = prefix;
-                            else if( deepestAltToc.length < prefix.length )
-                                deepestAltToc = prefix;	 
-                        }
+                var searchPath = "/" + relativePath.toLowerCase();
+                for (i = 0; i < config.altTocs.length; ++i) {
+                    var prefix = config.altTocs[i];
+                    if (searchPath.substring(0, prefix.length) == prefix.toLowerCase()) {
+                        if (!deepestAltToc)
+                            deepestAltToc = prefix;
+                        else if (deepestAltToc.length < prefix.length)
+                            deepestAltToc = prefix;
+                    }
                 }
-                if( deepestAltToc ) {
-                    deepestAltToc = replaceAll(deepestAltToc,"/","_");
-                    tocName = deepestAltToc+tocName;
-                    treeName = deepestAltToc+treeName;
+                if (deepestAltToc) {
+                    deepestAltToc = replaceAll(deepestAltToc, "/", "_");
+                    tocName = deepestAltToc + tocName;
+                    treeName = deepestAltToc + treeName;
                 }
-            }        
-            var generateNavigation = function(tree) {
+            }
+            var generateNavigation = function (tree) {
                 var breadcrumbs = "";
                 var related = "";
                 var parentUrl = "#";
@@ -424,31 +425,31 @@ module.exports = function (config) {
                 var previousUrl = "#";
                 var nextUrl = "#";
                 var pageTitle = null;
-                
-                if( tree && tree.children ) {
-                    var searchTopic = "/"+relativePath.toLowerCase();
+
+                if (tree && tree.children) {
+                    var searchTopic = "/" + relativePath.toLowerCase();
                     var kidsLevel = tree.children;
                     var firstChild = null;
                     var firstChildParent = null;
                     var indexOfKid = -1;
                     var parentOfNode = null;
-                    
-                    var recurseNavTree = function(kids) {
-                        if( kids.length ) {
-                            for( var i = 0 ; i < kids.length ; ++i ) {
-                                if( kids[i].path && kids[i].path.toLowerCase() == searchTopic ) {
+
+                    var recurseNavTree = function (kids) {
+                        if (kids.length) {
+                            for (var i = 0; i < kids.length; ++i) {
+                                if (kids[i].path && kids[i].path.toLowerCase() == searchTopic) {
                                     pageTitle = kids[i].title;
                                     kidsLevel = kids;
                                     indexOfKid = i;
-                                    if( kids[i].children && kids[i].children.length ) {
+                                    if (kids[i].children && kids[i].children.length) {
                                         firstChild = kids[i].children[0];
-                                        firstChildParent = kids[i];  
+                                        firstChildParent = kids[i];
                                     }
                                     return [kids[i]];
-                                } else if( kids[i].children ) {
+                                } else if (kids[i].children) {
                                     var childResult = recurseNavTree(kids[i].children);
-                                    if( childResult ) {
-                                        if( !parentOfNode ) {
+                                    if (childResult) {
+                                        if (!parentOfNode) {
                                             parentOfNode = kids[i];
                                         }
                                         return [kids[i]].concat(childResult);
@@ -457,14 +458,14 @@ module.exports = function (config) {
                             }
                         }
                         return null;
-                    }; 
+                    };
                     var branches = recurseNavTree(tree.children);
-                    if( branches ) {
+                    if (branches) {
                         //breadcrumbs = "<ul>";
-                        if( tree.path ) {
+                        if (tree.path) {
                             breadcrumbs += "<li>";
-                            breadcrumbs += "<a href=\""+pathPages+tree.path.substring(1)+"\">";
-                            if( !tree.title || tree.title == '/') {
+                            breadcrumbs += "<a href=\"" + pathPages + tree.path.substring(1) + "\">";
+                            if (!tree.title || tree.title == '/') {
                                 breadcrumbs += "Main";
                             } else {
                                 breadcrumbs += tree.title;
@@ -472,10 +473,10 @@ module.exports = function (config) {
                             breadcrumbs += "</a>";
                             breadcrumbs += "</li>";
                         }
-                        for( var i = 0 ; i < branches.length-1 ; ++i ) {
+                        for (var i = 0; i < branches.length - 1; ++i) {
                             breadcrumbs += "<li>";
-                            if( branches[i].path ) {
-                                breadcrumbs += "<a href=\""+pathPages+branches[i].path.substring(1)+"\">";
+                            if (branches[i].path) {
+                                breadcrumbs += "<a href=\"" + pathPages + branches[i].path.substring(1) + "\">";
                                 breadcrumbs += branches[i].title;
                                 breadcrumbs += "</a>";
                             } else {
@@ -483,132 +484,271 @@ module.exports = function (config) {
                             }
                             breadcrumbs += "</li>";
                         }
-                        if( pageTitle ) {
+                        if (pageTitle) {
                             breadcrumbs += "<li>";
-                            breadcrumbs +=pageTitle
+                            breadcrumbs += pageTitle
                             breadcrumbs += "</li>";
                         }
                         //breadcrumbs += "</ul>";                        
                     }
-                    if( kidsLevel ) {
+                    if (kidsLevel) {
                         related = "<ul>";
-                        for( var i = 0 ; i < kidsLevel.length ; ++i ) {
-                            if( kidsLevel[i].path ) {
+                        for (var i = 0; i < kidsLevel.length; ++i) {
+                            if (kidsLevel[i].path) {
                                 related += "<li>";
-                                related += "<a href=\""+pathPages+kidsLevel[i].path.substring(1);
-                                if( i == indexOfKid )
+                                related += "<a href=\"" + pathPages + kidsLevel[i].path.substring(1);
+                                if (i == indexOfKid)
                                     related += "\" class=\"selected\" >";
                                 else
                                     related += "\">";
-                                related +=  kidsLevel[i].title;
+                                related += kidsLevel[i].title;
                                 related += "</a>";
                                 related += "</li>";
                             }
-                        }                
-                        related += "</ul>";        
-                    }
-                }                 
-                
-                if( firstChild && firstChild.path) { 
-                   childUrl = pathPages+firstChild.path.substring(1);
-                }
-                if( parentOfNode && parentOfNode.path ) {
-                    parentUrl = pathPages+parentOfNode.path.substring(1);
-                }
-                if( kidsLevel ) {
-                    if( indexOfKid > 0 && kidsLevel[indexOfKid-1].path ) {
-                        previousUrl = pathPages+kidsLevel[indexOfKid-1].path.substring(1);
-                    }
-                    if( indexOfKid < (kidsLevel.length-1) &&  kidsLevel[indexOfKid+1].path ) {
-                        nextUrl = pathPages+kidsLevel[indexOfKid+1].path.substring(1);
+                        }
+                        related += "</ul>";
                     }
                 }
-                if( !pageTitle ) {
+
+                if (firstChild && firstChild.path) {
+                    childUrl = pathPages + firstChild.path.substring(1);
+                }
+                if (parentOfNode && parentOfNode.path) {
+                    parentUrl = pathPages + parentOfNode.path.substring(1);
+                }
+                if (kidsLevel) {
+                    if (indexOfKid > 0 && kidsLevel[indexOfKid - 1].path) {
+                        previousUrl = pathPages + kidsLevel[indexOfKid - 1].path.substring(1);
+                    }
+                    if (indexOfKid < (kidsLevel.length - 1) && kidsLevel[indexOfKid + 1].path) {
+                        nextUrl = pathPages + kidsLevel[indexOfKid + 1].path.substring(1);
+                    }
+                }
+                if (!pageTitle) {
                     pageTitle = relativePath;
-                    var pathPartOffset = pageTitle.lastIndexOf('/'); 
-                    if( pathPartOffset >= 0 ) {
-                        pageTitle = pageTitle.substring(pathPartOffset+1);
+                    var pathPartOffset = pageTitle.lastIndexOf('/');
+                    if (pathPartOffset >= 0) {
+                        pageTitle = pageTitle.substring(pathPartOffset + 1);
                     }
-                }   
-                return { breadcrumbs : breadcrumbs , related: related , parentUrl : parentUrl , childUrl : childUrl , previousUrl : previousUrl , nextUrl : nextUrl , pageTitle : pageTitle };
+                }
+                return { breadcrumbs: breadcrumbs, related: related, parentUrl: parentUrl, childUrl: childUrl, previousUrl: previousUrl, nextUrl: nextUrl, pageTitle: pageTitle };
             };
-        
-            var processWebPage = function(htmlText,tree) { 
-                var lowText = htmlText.toLowerCase();            
+
+            var processWebPage = function (htmlText, tree) {
+                var lowText = htmlText.toLowerCase();
                 var bodyAt = lowText.indexOf('<body');
                 if (bodyAt >= 0) {
                     var endBodyAt = lowText.indexOf('</body');
                     if (endBodyAt >= 0) {
-                        htmlText = "<div "+htmlText.substring(bodyAt + 5, endBodyAt)+"</div>";                   
+                        htmlText = "<div " + htmlText.substring(bodyAt + 5, endBodyAt) + "</div>";
                     }
                 }
                 var pageProcessor = require('./updatePageReferences');
-                var  paths = { basepath : "/pages" , imagepath : "" };
+                var paths = { basepath: "/pages", imagepath: "" };
                 var pagesAt = fromPath.indexOf("/pages");
-                if( pagesAt > 0 ) {
-                    paths.basepath = fromPath.substring(0,pagesAt+6);
-                }            
-                if( pagesAt >= 0 ) {
-                    if( pagesAt > 0 )
-                        paths.imagepath = fromPath.substring(0,pagesAt);
-                    paths.imagepath += "/help";
-                    paths.imagepath += fromPath.substring(pagesAt+6);
+                if (pagesAt > 0) {
+                    paths.basepath = fromPath.substring(0, pagesAt + 6);
                 }
-                htmlText = pageProcessor(config, htmlText, paths );             
-                var tocLoader = "<script src=\""+absolutePath+"toc_loader/"+tocName+"\" defer></script>";                
+                if (absolutePath.length > 0) {
+                    paths.basepath = absolutePath + paths.basepath.substring(1);
+                }
+                if (pagesAt >= 0) {
+                    if (pagesAt > 0)
+                        paths.imagepath = fromPath.substring(0, pagesAt);
+                    paths.imagepath += "/help";
+                    paths.imagepath += fromPath.substring(pagesAt + 6);
+                }
+                htmlText = pageProcessor(config, htmlText, paths);
+                var tocLoader = "<script src=\"" + absolutePath + "toc_loader/" + tocName + "\" defer></script>";
                 tocLoader = "";
                 var navigationText = generateNavigation(tree);
                 var fullPage = standardPageTemplate;
-                fullPage = fullPage.replace("<!--navparent-->",navigationText.parentUrl)
-                .replace("<!--navchild-->",navigationText.childUrl)
-                .replace("<!--navprevious-->",navigationText.previousUrl)
-                .replace("<!--navnext-->",navigationText.nextUrl)
-                .replace("<!--search--->",absolutePath+"pages/search")
-                .replace("<!--pagetopic--->",navigationText.pageTitle);                
-                fullPage = fullPage.replace("__filter__",thisFiltername).replace("<!--tocloader-->",tocLoader).replace("<!--related-->",navigationText.related).replace("<!--breadcrumbs-->",navigationText.breadcrumbs).replace("<!--body-->", htmlText);              
+                fullPage = fullPage.replace("<!--navparent-->", navigationText.parentUrl)
+                    .replace("<!--navchild-->", navigationText.childUrl)
+                    .replace("<!--navprevious-->", navigationText.previousUrl)
+                    .replace("<!--navnext-->", navigationText.nextUrl)
+                    .replace("<!--search--->", absolutePath + "pages/search")
+                    .replace("<!--pagetopic--->", navigationText.pageTitle);
+                fullPage = fullPage.replace("__filter__", thisFiltername).replace("<!--tocloader-->", tocLoader).replace("<!--related-->", navigationText.related).replace("<!--breadcrumbs-->", navigationText.breadcrumbs).replace("<!--body-->", htmlText);
                 return fullPage;
             };
-
-            if( extension == "xml") {
+            var findClosestFilename = function (path, getFilenameCallback) {
+                var findClosest = function(path) {
+                    path = path.toLowerCase();
+                    var i;
+                    var pathPartOffset = path.lastIndexOf('/');
+                    var pathPart = "";
+                    var namePart = path;
+                    var sameToExtn = null;
+                    var sameName = null; 
+                    if( pathPartOffset >= 0 ) {
+                        pathPart = path.substring(0,pathPartOffset+1);
+                        namePart = path.substring(pathPartOffset+1);
+                        var namePartOffset = namePart.lastIndexOf('.');
+                        if( namePartOffset > 0 ) {    
+                            namePart = namePart.substring(0,namePartOffset);                        
+                        }
+                    }                    
+                    for( i = 0 ; i < actualLinks.length ; ++i ) {
+                        var filename = actualLinks[i].toLowerCase();        
+                        if( filename == path )
+                            return filename;
+                        var fileNameOffset = filename.lastIndexOf('/');
+                        if( fileNameOffset >= 0 ) {
+                            var filenameName = filename.substring(fileNameOffset+1);
+                            var filenamePartOffset = filenameName.lastIndexOf('.');
+                            if( filenamePartOffset > 0 ) {    
+                                filenameName = filenameName.substring(0,filenamePartOffset);                        
+                            }
+                            if( filenameName == namePart ) {
+                                if( pathPart == filename.substring(0,fileNameOffset+1) ) {
+                                    sameToExtn = actualLinks[i];
+                                } else {
+                                    sameName = actualLinks[i];
+                                }
+                            }
+                        }
+                    }
+                    if( sameToExtn )
+                        return sameToExtn;
+                    return sameName;
+                };
+                if( actualLinks ) {
+                    getFilenameCallback( findClosest(path) );                     
+                } else {
+                    fs.readFile(config.generated + config.flatfile, function (errFiles, dataFiles) {
+                        if( errFiles ) {
+                            getFilenameCallback(null);
+                        } else {
+                            var files = JSON.parse(dataFiles);
+                            var i;
+                            actualLinks = [];
+                            for( i = 0 ; i < files.length ; ++i ) {
+                                actualLinks.push(files[i].path);
+                            }
+                            getFilenameCallback( findClosest(path) );
+                        }
+                    });
+                }                
+            };
+            var findClosestLink = function (err, path, resolvedLink) {
+                // First lowercase the path (for case insensite compares)
+                var lcpath = path.toLowerCase();
+                var brokenLinkFile = config.generated + "broken/" + replaceAll(lcpath, "/", "_");
+                fs.readFile( brokenLinkFile, "utf8", function (errbroke, databroke) {
+                    if (errbroke) {
+                        // Need to perform a lookup
+                        findClosestFilename("/"+relativePath, function (actualFilename) {
+                            if (actualFilename) {
+                                var actualExtensionPos = actualFilename.lastIndexOf('.');
+                                var actualExtension = ""; 
+                                if (actualExtensionPos > 0)
+                                    actualExtension = actualFilename.substring(actualExtensionPos + 1).toLowerCase();
+                                if( actualExtension == "xml" ) {
+                                    var ListUtilities = require('./listutilities');
+                                    var lu = new ListUtilities(config);
+                                    actualFilename = actualFilename.replace(".xml", ".xml_html");
+                                    lu.loadOrCreateTranslatedPage(hlp.config, actualFilename, (hlp.config.filter_name ? hlp.config.filter_name : defaultFilter), function (errActual, dataActual, type) {
+                                        if (errActual) {
+                                            resolvedLink(err, null);
+                                        } else {
+                                            dataActual = dataActual + "<!--Broken Link To:"+page+"-->";
+                                            fs.writeFile( brokenLinkFile, dataActual, function (err) {
+                                                resolvedLink(null, dataActual);
+                                            });
+                                        }                                        
+                                    });                                    
+                                } else {
+                                    fs.readFile(config.source + actualFilename, "utf8", function (errActual, dataActual) {
+                                        if (errActual) {
+                                            resolvedLink(err, null);
+                                        } else {
+                                            dataActual = dataActual + "<!--Broken Link To:"+page+"-->";
+                                            fs.writeFile( brokenLinkFile, dataActual, function (err) {
+                                                resolvedLink(null, dataActual);
+                                            });
+                                        }
+                                    });
+                                }
+                            } else {
+                                resolvedLink(err, null);
+                            }
+                        });
+                    } else {
+                        resolvedLink(null, databroke);
+                    }
+                });
+            };
+            if (extension == "xml") {
                 // First Pre-process XML using XSLT...
                 var ListUtilities = require('./listutilities');
                 var lu = new ListUtilities(config);
-                page = page.replace(".xml",".xml_html");
-                lu.loadOrCreateTranslatedPage(this.config, page, (this.config.filter_name ? this.config.filter_name : defaultFilter), function(err,data,type) {
+                page = page.replace(".xml", ".xml_html");
+                lu.loadOrCreateTranslatedPage(this.config, page, (this.config.filter_name ? this.config.filter_name : defaultFilter), function (err, data, type) {
                     if (err) {
-                        callback(err, null);
-                    } else {                         
-                        if( !treeData[treeName] ) {
+                        findClosestLink(err, relativePath, function (err2, badLinkData ) {
+                            if (err2) {
+                                callback(err2, null);
+                            } else {
+                                if (!treeData[treeName]) {
+                                    fs.readFile(config.generated + treeName, "utf8", function (err, jsonTreeData) {
+                                        if (!err) {
+                                            treeData[treeName] = JSON.parse(jsonTreeData);
+                                        }
+                                        callback(null, processWebPage(badLinkData, treeData[treeName]), "html");
+                                    });
+                                } else {
+                                    callback(null, processWebPage(badLinkData, treeData[treeName]), "html");
+                                }
+                            }
+                        });
+                    } else {
+                        if (!treeData[treeName]) {
                             fs.readFile(config.generated + treeName, "utf8", function (err, jsonTreeData) {
-                                if( !err ) {
+                                if (!err) {
                                     treeData[treeName] = JSON.parse(jsonTreeData);
-                                }                        
-                                callback(null, processWebPage(data,treeData[treeName]), "html");
+                                }
+                                callback(null, processWebPage(data, treeData[treeName]), "html");
                             });
                         } else {
-                            callback(null, processWebPage(data,treeData[treeName]), "html");                            
+                            callback(null, processWebPage(data, treeData[treeName]), "html");
                         }
-                    }            
+                    }
                 });
             } else {
                 fs.readFile(config.source + relativePath, "utf8", function (err, data) {
                     if (err) {
-                        callback(err, null);
+                        findClosestLink(err, relativePath, function (err2, badLinkData) {
+                            if (err2) {
+                                callback(err2, null);
+                            } else {
+                                if (!treeData[treeName]) {
+                                    fs.readFile(config.generated + treeName, "utf8", function (err, jsonTreeData) {
+                                        if (!err) {
+                                            treeData[treeName] = JSON.parse(jsonTreeData);
+                                        }
+                                        callback(null, processWebPage(badLinkData, treeData[treeName]), "html");
+                                    });
+                                } else {
+                                    callback(null, processWebPage(badLinkData, treeData[treeName]), "html");
+                                }
+                            }
+                        });
                     } else {
-                        if( !treeData[treeName] ) {
-                            fs.readFile(config.generated + treeName, "utf8", function (err, jsonTreeData ) {
-                                if( !err ) {
+                        if (!treeData[treeName]) {
+                            fs.readFile(config.generated + treeName, "utf8", function (err, jsonTreeData) {
+                                if (!err) {
                                     treeData[treeName] = JSON.parse(jsonTreeData);
-                                }                        
-                                callback(null, processWebPage(data,treeData[treeName]), "html");
+                                }
+                                callback(null, processWebPage(data, treeData[treeName]), "html");
                             });
                         } else {
-                            callback(null, processWebPage(data,treeData[treeName]), "html");
+                            callback(null, processWebPage(data, treeData[treeName]), "html");
                         }
                     }
-                });            
+                });
             }
-        } else if( page == "/search" && req.query.pattern ) {
+        } else if (page == "/search" && req.query.pattern) {
             var offset = 0;
             var limit = 50;
             if (req.query.limit)
@@ -617,53 +757,53 @@ module.exports = function (config) {
                 offset = parseInt(req.query.offset);
             hlp.search(req.query.pattern, function (err, data) {
                 if (err) {
-                    callback(null, "Error: "+ err , "html");
+                    callback(null, "Error: " + err, "html");
                 } else {
                     var i = 0;
-                    var searchResults  = "<ul>";
+                    var searchResults = "<ul>";
                     if (data.length > 0) {
                         var ListUtilities = require('./listutilities');
                         var lu = new ListUtilities(config);
                         for (i = 0; i < data.length; ++i) {
                             searchResults += "<li>";
-                            searchResults += "<a href=\""+pathPages+data[i].path.substring(1)+"\">";
+                            searchResults += "<a href=\"" + pathPages + data[i].path.substring(1) + "\">";
                             searchResults += lu.removeDigitPrefix(data[i].title);
                             searchResults += "</a>";
                             searchResults += "</li>";
-                            
+
                         }
                     } else {
                         searchResults += "<li>No Results Found</li>";
                     }
                     searchResults += "</ul>";
                     // data
-                    callback(null, standardSearchTemplate.replace("<!--body-->",searchResults).replace("<!--search--->",absolutePath+"pages/search").replace("<!--searchpattern--->",req.query.pattern), "html");
+                    callback(null, standardSearchTemplate.replace("<!--body-->", searchResults).replace("<!--search--->", absolutePath + "pages/search").replace("<!--searchpattern--->", req.query.pattern), "html");
                 }
-            }, offset, limit);            
+            }, offset, limit);
         } else {
             // ...Else assume its a resource (i.e. JPEG/PNG etc...)
-            this.get(page,callback);
+            this.get(page, callback);
         }
-    }; 
-    HelpServerUtil.prototype.getTocLoader = function (page, fromPath , callback) {
+    };
+    HelpServerUtil.prototype.getTocLoader = function (page, fromPath, callback) {
         page = decodeURI(page);
-        var relativePath = page.substring(1);   
-        var jsonToJsPage = function(json) {
+        var relativePath = page.substring(1);
+        var jsonToJsPage = function (json) {
             var completedPage = page;
             var endPath = completedPage.lastIndexOf('/');
-            if( endPath >= 0 ) {
-                completedPage = completedPage.substring(endPath+1);
+            if (endPath >= 0) {
+                completedPage = completedPage.substring(endPath + 1);
             }
             // Simple populate
-            return  "tableOfContents.populateTree("+json+',"'+completedPage+'");';  
+            return "tableOfContents.populateTree(" + json + ',"' + completedPage + '");';
         };  
         // USE JSON file as basis for TOC - if query parameters limit view, return a sparse TOC
-        fs.readFile(config.generated + relativePath+"on", "utf8", function (err, data) {
+        fs.readFile(config.generated + relativePath + "on", "utf8", function (err, data) {
             if (err) {
                 callback(err, null);
             } else {
                 callback(null, jsonToJsPage(data), "html");
-            }            
+            }
         });
     };
     // Get a help page or resource (image css). or help resource
@@ -787,18 +927,18 @@ module.exports = function (config) {
                                 console.log(modulePath + 'assets/' + relativePath.substr(helpServerFile));
                                 callback(err, null);
                             } else {
-                                if( absolutePath.length > 1 ) {
-                                    if( relativePath.indexOf("helpserver-main.js") >= 0 ) {
-                                        data = data.replace('absolutePath: "/"','absolutePath: "'+absolutePath+'"');
+                                if (absolutePath.length > 1) {
+                                    if (relativePath.indexOf("helpserver-main.js") >= 0) {
+                                        data = data.replace('absolutePath: "/"', 'absolutePath: "' + absolutePath + '"');
                                     }
                                 }
                                 callback(null, data, extension);
                             }
                         });
                     } else {
-                        if( absolutePath.length > 1 ) {
-                            if( relativePath.indexOf("helpserver-main.js") >= 0 ) {
-                                data = data.replace('absolutePath: "/"','absolutePath: "'+absolutePath+'"');
+                        if (absolutePath.length > 1) {
+                            if (relativePath.indexOf("helpserver-main.js") >= 0) {
+                                data = data.replace('absolutePath: "/"', 'absolutePath: "' + absolutePath + '"');
                             }
                         }
                         callback(null, data, "js");
@@ -1111,9 +1251,9 @@ module.exports = function (config) {
                     ++serverHealth.revisionCount;
                     // Force a reload of the tree cache
                     treeData = {};
-                    
-                    fs.writeFile(config.generated+"revision.txt",""+serverHealth.revisionCount,function(err) { 
-                        if( err ) {
+                    actualLinks = null;
+                    fs.writeFile(config.generated + "revision.txt", "" + serverHealth.revisionCount, function (err) {
+                        if (err) {
                             console.log("Error saving revision");
                         }
                     });
@@ -1352,11 +1492,11 @@ module.exports = function (config) {
 
         "main": function (hlp, path, req, res) {
             loadAssetUTF8("main.html", function (err, data) {
-                if( absolutePath.length > 1 ) {
-                    data = replaceAll( data , '"/assets' , '"' + absolutePath + "assets" );
+                if (absolutePath.length > 1) {
+                    data = replaceAll(data, '"/assets', '"' + absolutePath + "assets");
                 }
                 if (err) {
-                    res.status(404).send(path+' Not found');
+                    res.status(404).send(path + ' Not found');
                 } else {
                     res.type('html');
                     hlp.onSendExpress(res);
@@ -1365,7 +1505,7 @@ module.exports = function (config) {
             });
         },
         "pages": function (hlp, path, req, res) {
-            hlp.getPage(path , req.path , req , function (err, data, type) {
+            hlp.getPage(path, req.path, req, function (err, data, type) {
                 if (err) {
                     hlp.onSendExpress(res);
                     res.send(err);
@@ -1379,14 +1519,14 @@ module.exports = function (config) {
             });
         },
         "appcache": function (hlp, path, req, res) {
-            var manifest = replaceAll( pagesManifest , "__filter__" , path.substring(1).replace(".appcache","") );
-            manifest = manifest.replace("__helpversionnumber__",""+serverHealth.revisionCount);
+            var manifest = replaceAll(pagesManifest, "__filter__", path.substring(1).replace(".appcache", ""));
+            manifest = manifest.replace("__helpversionnumber__", "" + serverHealth.revisionCount);
             res.type("text/cache-manifest");
             hlp.onSendExpress(res);
             res.send(manifest);
         },
         "toc_loader": function (hlp, path, req, res) {
-            hlp.getTocLoader(path , req.path , function (err, data, type) {
+            hlp.getTocLoader(path, req.path, function (err, data, type) {
                 if (err) {
                     hlp.onSendExpress(res);
                     res.send(err);
@@ -1402,7 +1542,7 @@ module.exports = function (config) {
         "edit": function (hlp, path, req, res) {
             loadAssetUTF8("edit.html", function (err, data) {
                 if (err) {
-                    res.status(404).send(path+' Not found');
+                    res.status(404).send(path + ' Not found');
                 } else {
                     res.type('html');
                     hlp.onSendExpress(res);
@@ -1413,7 +1553,7 @@ module.exports = function (config) {
         "search_panel": function (hlp, path, req, res) {
             loadAssetUTF8("search.html", function (err, data) {
                 if (err) {
-                    res.status(404).send(path+' Not found');
+                    res.status(404).send(path + ' Not found');
                 } else {
                     res.type('html');
                     hlp.onSendExpress(res);
@@ -1563,7 +1703,7 @@ module.exports = function (config) {
                 } else {
                     loadAssetUTF8("refresh.html", function (err, data) {
                         if (err) {
-                            res.status(404).send(path+' Not found');
+                            res.status(404).send(path + ' Not found');
                         } else {
                             res.type('html');
                             hlp.onSendExpress(res);
@@ -1600,7 +1740,7 @@ module.exports = function (config) {
         "config": function (hlp, path, req, res) {
             res.type('json');
             hlp.onSendExpress(res);
-            res.send(JSON.stringify({ escapes: config.escapes, keywords: config.keywords, altTocs: config.altTocs , proxy : config.proxy , absolutePath : absolutePath }));
+            res.send(JSON.stringify({ escapes: config.escapes, keywords: config.keywords, altTocs: config.altTocs, proxy: config.proxy, absolutePath: absolutePath }));
         },
         "diag": function (hlp, path, req, res) {
             res.type('json');
@@ -1612,7 +1752,7 @@ module.exports = function (config) {
             if (config.xslt) {
                 loadAssetUTF8(config.xslt, function (err, data) {
                     if (err) {
-                        res.status(404).send(path+' Not found');
+                        res.status(404).send(path + ' Not found');
                     } else {
                         res.type('html');
                         hlp.onSendExpress(res);
@@ -1620,7 +1760,7 @@ module.exports = function (config) {
                     }
                 });
             } else {
-                res.status(404).send(path+' Not found');
+                res.status(404).send(path + ' Not found');
             }
         },
         "topic": function (hlp, path, req, res) {
@@ -1694,14 +1834,14 @@ module.exports = function (config) {
         var altConfig = help;
         
         // Strip off the absolute path if present (allows direct testing of site)
-        if( absolutePath.length > 1 ) {
-            if( pathValue.indexOf(absolutePath) == 0 ) {
-                pathValue = pathValue.substring(absolutePath.length-1);
+        if (absolutePath.length > 1) {
+            if (pathValue.indexOf(absolutePath) == 0) {
+                pathValue = pathValue.substring(absolutePath.length - 1);
             } else {
-                console.log('Warning Unprotected path'+pathValue);
+                console.log('Warning Unprotected path' + pathValue);
             }
         }
-        
+
         if (config.replacePath) {
             var i;
             for (i = 0; i < config.replacePath.length; ++i) {
@@ -1716,15 +1856,15 @@ module.exports = function (config) {
             if (config.defaultPage && config.defaultPage != '' && config.defaultPage != '/') {
                 pathValue = config.defaultPage;
                 items = pathValue.split('/');
-            }           
+            }
         }
         var handler = expressHandler[items[1]];
         if (handler) {
             if (config.defaultPage && config.defaultPage != '' && config.defaultPage != '/') {
-                 var defaultItems = config.defaultPage.split('/');
-                 if( config.defaultPage.length > 1 ) {
+                var defaultItems = config.defaultPage.split('/');
+                if (config.defaultPage.length > 1) {
                     altConfig = configurationObjects[defaultItems[1]]
-                 }
+                }
             }
             handler(altConfig, '/' + items.slice(2).join('/'), req, res);
         } else {
@@ -1734,10 +1874,10 @@ module.exports = function (config) {
                 if (handler) {
                     handler(altConfig, '/' + items.slice(3).join('/'), req, res);
                 } else {
-                    res.status(404).send(pathValue+' Not found');
+                    res.status(404).send(pathValue + ' Not found');
                 }
             } else {
-                res.status(404).send(pathValue+' Not found');
+                res.status(404).send(pathValue + ' Not found');
             }
         }
     };
