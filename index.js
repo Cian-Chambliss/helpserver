@@ -530,45 +530,58 @@ module.exports = function (config) {
                     if (pathPartOffset >= 0) {
                         pageTitle = pageTitle.substring(pathPartOffset + 1);
                     }
+                    var extensionPartOffset = pageTitle.lastIndexOf('.');
+                    if( extensionPartOffset > 0 ) {
+                        pageTitle = pageTitle.substring(0,extensionPartOffset);                        
+                    }
                 }
                 return { breadcrumbs: breadcrumbs, related: related, parentUrl: parentUrl, childUrl: childUrl, previousUrl: previousUrl, nextUrl: nextUrl, pageTitle: pageTitle };
             };
 
             var processWebPage = function (htmlText, tree) {
                 var lowText = htmlText.toLowerCase();
+                var descriptionTagPos = lowText.indexOf("<meta name=\"description\"");
+                var titleTagPos = lowText.indexOf("<title");
                 var bodyAt = lowText.indexOf('<body');
                 if (bodyAt >= 0) {
                     var endBodyAt = lowText.indexOf('</body');
                     if (endBodyAt >= 0) {
                         htmlText = "<div " + htmlText.substring(bodyAt + 5, endBodyAt) + "</div>";
                     }
-                }
+                }                
                 var pageProcessor = require('./updatePageReferences');
-                var paths = { basepath: "/pages", imagepath: "" };
+                var pageProc = { 
+                    basepath: "/pages"
+                    , imagepath: ""
+                    , pageTitle : null 
+                    , pageDescription : null 
+                };
                 var pagesAt = fromPath.indexOf("/pages");
                 if (pagesAt > 0) {
-                    paths.basepath = fromPath.substring(0, pagesAt + 6);
+                    pageProc.basepath = fromPath.substring(0, pagesAt + 6);
                 }
                 if (absolutePath.length > 0) {
-                    paths.basepath = absolutePath + paths.basepath.substring(1);
+                    pageProc.basepath = absolutePath + pageProc.basepath.substring(1);
                 }
                 if (pagesAt >= 0) {
                     if (pagesAt > 0)
-                        paths.imagepath = fromPath.substring(0, pagesAt);
-                    paths.imagepath += "/help";
-                    paths.imagepath += fromPath.substring(pagesAt + 6);
+                        pageProc.imagepath = fromPath.substring(0, pagesAt);
+                    pageProc.imagepath += "/help";
+                    pageProc.imagepath += fromPath.substring(pagesAt + 6);
                 }
-                htmlText = pageProcessor(config, htmlText, paths);
+                htmlText = pageProcessor(config, htmlText, pageProc);
                 var tocLoader = "<script src=\"" + absolutePath + "toc_loader/" + tocName + "\" defer></script>";
                 tocLoader = "";
                 var navigationText = generateNavigation(tree);
                 var fullPage = standardPageTemplate;
+                var  title = navigationText.pageTitle;
                 fullPage = fullPage.replace("<!--navparent-->", navigationText.parentUrl)
                     .replace("<!--navchild-->", navigationText.childUrl)
                     .replace("<!--navprevious-->", navigationText.previousUrl)
                     .replace("<!--navnext-->", navigationText.nextUrl)
                     .replace("<!--search--->", absolutePath + "pages/search")
-                    .replace("<!--pagetopic--->", navigationText.pageTitle);
+                    .replace("<!--pagetopic--->", title)
+                    .replace("<!--pagedescription--->", pageProc.pageDescription);
                 fullPage = fullPage.replace("__filter__", thisFiltername).replace("<!--tocloader-->", tocLoader).replace("<!--related-->", navigationText.related).replace("<!--breadcrumbs-->", navigationText.breadcrumbs).replace("<!--body-->", htmlText);
                 return fullPage;
             };
