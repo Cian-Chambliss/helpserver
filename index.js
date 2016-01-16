@@ -561,7 +561,9 @@ module.exports = function (config) {
                     pageProc.basepath = fromPath.substring(0, pagesAt + 6);
                 }
                 if (absolutePath.length > 0) {
-                    pageProc.basepath = absolutePath + pageProc.basepath.substring(1);
+                    if( pageProc.basepath.substring(0,absolutePath.length) != absolutePath ) { 
+                        pageProc.basepath = absolutePath + pageProc.basepath.substring(1);
+                    }
                 }
                 if (pagesAt >= 0) {
                     if (pagesAt > 0)

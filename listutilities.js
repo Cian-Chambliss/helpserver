@@ -731,7 +731,7 @@ module.exports = function (config) {
                 if (config.altTocs) {
                     var i;
                     for (i = 0; i < config.altTocs.length; ++i) {
-                        if (path.substring(0, config.altTocs[i].length).toLowerCase() == config.altTocs[i].toLowerCase()) {
+                        if ((path+"/").substring(0, config.altTocs[i].length).toLowerCase() == config.altTocs[i].toLowerCase()) {
                             var altTocClean = lu.replaceAll(config.altTocs[i], '/', '_');
                             filterStuctureName = config.generated + altTocClean + flt + config.structurefile;
                             break;
