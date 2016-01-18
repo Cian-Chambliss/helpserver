@@ -8,8 +8,9 @@ module.exports = function (config) {
     };
 
     ListUtilities.prototype.replaceAll = function (str, find, replace) {
-        while (str.indexOf(find) >= 0)
-            str = str.replace(find, replace);
+        if( str.indexOf(find) >= 0 ) {
+            str = str.split(find).join(replace);
+        }
         return str;
     };
 
@@ -709,7 +710,7 @@ module.exports = function (config) {
         var indexTemplatePos = path.indexOf("/index.xml");
         var xmlTemplate = null;
         var lists = [];
-
+        
         if (indexTemplatePos > 0) {
             path = path.substring(0, indexTemplatePos);
             generatedTopic += ".xml";
@@ -801,11 +802,6 @@ module.exports = function (config) {
                             if (pageChildren) {
                                 // good - We have a list of page, lets build an HTML
                                 var async = require('async');
-                                var htmlText = "";
-                                if( xmlTemplate )
-                                     htmlText = xmlTemplate;
-                                else    
-                                    htmlText = "";
                                 async.eachSeries(pageChildren, function (pageEntry, callbackLoop) {
                                     var pathName = pageEntry.path;
                                     if (!pathName) {
@@ -826,6 +822,10 @@ module.exports = function (config) {
                                           , name : pageEntry.title 
                                           , format : genereratedExtension 
                                           }, function (snippet) {
+                                            if( pageEntry.listParent.content.indexOf("</page>") >= 0 )
+                                               console.log("!!-----Added reference to "+pathName );
+                                            else
+                                               console.log("------Added reference to "+pathName );
                                             pageEntry.listParent.content += snippet+"\n";
                                             callbackLoop();
                                         });
@@ -834,16 +834,29 @@ module.exports = function (config) {
                                     }
                                  }, function () {
                                     // Finished the page...
+                                    console.log("++++Create the page" );
+                                    var htmlText = "";
+                                    if( xmlTemplate )
+                                        htmlText = xmlTemplate;
+                                    else    
+                                        htmlText = "";
                                     if( lists.length > 0 ) {
                                         var i;
                                         for( i = 0 ; i < lists.length ; ++i ) {
+                                            if( lists[i].content.indexOf('</page>') >= 0 ) {
+                                                console.log("!!!++++Nested content detected" );
+                                            } 
                                             if( config.wrapIndex ) {                                            
                                                 htmlText = lu.replaceAll(htmlText, '<!--list:'+lists[i].listDef+'-->', config.wrapIndex({ format  : genereratedExtension , content : lists[i].content }) );
                                             } else {
-                                                htmlText = lu.replaceAll(htmlText, '<!--list:'+lists[i].listDef+'-->', content );
+                                                htmlText = lu.replaceAll(htmlText, '<!--list:'+lists[i].listDef+'-->', lists[i].content );
                                             }                                            
                                         }
                                     }
+                                    if( htmlText.indexOf('</page>') != htmlText.lastIndexOf('</page>') ) {
+                                        console.log("!!!++++Nested content detected!!!" );
+                                    } 
+                                    
                                     fs.writeFile(generatedTopic, htmlText, function (err) {
                                         if( genereratedExtension == ".xml" ) {
                                             callback(null, htmlText, "xml");
@@ -938,6 +951,7 @@ module.exports = function (config) {
                     generatePage();
                 }
             } else {
+                console.log("++++Loaded from CACHE: "+path);
                 if( genereratedExtension == ".xml" ) {
                     callback(null, data, "xml");
                 } else if( genereratedExtension == ".md" ) {

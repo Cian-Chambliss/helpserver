@@ -1778,6 +1778,23 @@ module.exports = function (config) {
                 res.status(404).send(path + ' Not found');
             }
         },
+        "files.json": function (hlp, path, req, res) {
+            fs.readFile(config.generated + config.flatfile, function (errFiles, dataFiles) {
+                if( errFiles ) {
+                    res.status(404).send(config.flatfile + ' Not found');
+                } else {
+                    var files = JSON.parse(dataFiles);
+                    var i;
+                    var links = [];
+                    for( i = 0 ; i < files.length ; ++i ) {
+                        links.push(files[i].path);
+                    }                    
+                    res.type('json');
+                    hlp.onSendExpress(res);
+                    res.send(JSON.stringify(links));
+                }
+            });
+        },
         "topic": function (hlp, path, req, res) {
             var searchResultProcess = function (err, data) {
                 if (err) {
