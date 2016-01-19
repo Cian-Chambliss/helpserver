@@ -795,6 +795,30 @@ module.exports = function (config) {
                     callback(null, standardSearchTemplate.replace("<!--body-->", searchResults).replace("<!--search--->", absolutePath + "pages/search").replace("<!--searchpattern--->", req.query.pattern), "html");
                 }
             }, offset, limit);
+        } else if (page == "/unknown_reference" && req.query.page) {
+            var content = standardSearchTemplate;
+            var searchForPattern = unescape(req.query.page);
+            if( searchForPattern.lastIndexOf("/") >= 0) {
+                searchForPattern = searchForPattern.substring(searchForPattern.lastIndexOf("/")+1);
+            }
+            if( searchForPattern.lastIndexOf(".") > 0) {
+                searchForPattern = searchForPattern.substring(0,searchForPattern.lastIndexOf("."));
+            }
+            content = content.replace("<!--searchpattern--->", searchForPattern).replace("<!--search--->", absolutePath + "pages/search");
+            content = content.replace("<!--body-->","Unknown Reference '"+req.query.page+"'");
+            callback(null, content, "html");            
+        } else if (page == "/ambiguous_reference" && req.query.page) {
+            var content = standardSearchTemplate;
+            var searchForPattern = unescape(req.query.page);
+            if( searchForPattern.lastIndexOf("/") >= 0) {
+                searchForPattern = searchForPattern.substring(searchForPattern.lastIndexOf("/")+1);
+            }
+            if( searchForPattern.lastIndexOf(".") > 0) {
+                searchForPattern = searchForPattern.substring(0,searchForPattern.lastIndexOf("."));
+            }
+            content = content.replace("<!--searchpattern--->", searchForPattern).replace("<!--search--->", absolutePath + "pages/search");
+            content = content.replace("<!--body-->","Ambiguous Reference '"+req.query.page+"'");            
+            callback(null, content, "html");            
         } else {
             // ...Else assume its a resource (i.e. JPEG/PNG etc...)
             this.get(page, callback);
