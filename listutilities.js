@@ -729,11 +729,12 @@ module.exports = function (config) {
             if (err) {
                 // TBD - create (and load) the page just-in-time - using the table of contents....
                 var filterStuctureName = config.generated + flt + config.structurefile;
-                if (config.altTocs) {
+                if (config.tocData.altTocs) {
+                    var altTocs = config.tocData.altTocs;
                     var i;
-                    for (i = 0; i < config.altTocs.length; ++i) {
-                        if ((path+"/").substring(0, config.altTocs[i].length).toLowerCase() == config.altTocs[i].toLowerCase()) {
-                            var altTocClean = lu.replaceAll(config.altTocs[i], '/', '_');
+                    for (i = 0; i < altTocs.length; ++i) {
+                        if ((path+"/").substring(0, altTocs[i].length).toLowerCase() == altTocs[i].toLowerCase()) {
+                            var altTocClean = lu.replaceAll(altTocs[i], '/', '_');
                             filterStuctureName = config.generated + altTocClean + flt + config.structurefile;
                             break;
                         }
@@ -815,12 +816,13 @@ module.exports = function (config) {
                                     var isFolder = true;
                                     if (extensionIndex > 0 && pathName.substr(extensionIndex + 1).indexOf('/') < 0) 
                                         isFolder = false;                                        
-                                    if (config.pageIndexer) {
-                                        config.pageIndexer({ 
+                                    if (config.events.pageIndexer) {
+                                        config.events.pageIndexer({ 
                                             filename : (config.source + pathName)
                                           , path : pathName , isFolder : isFolder
                                           , name : pageEntry.title 
                                           , format : genereratedExtension 
+                                          , all : pageChildren
                                           }, function (snippet) {
                                             if( pageEntry.listParent.content.indexOf("</page>") >= 0 )
                                                console.log("!!-----Added reference to "+pathName );
@@ -846,8 +848,8 @@ module.exports = function (config) {
                                             if( lists[i].content.indexOf('</page>') >= 0 ) {
                                                 console.log("!!!++++Nested content detected" );
                                             } 
-                                            if( config.wrapIndex ) {                                            
-                                                htmlText = lu.replaceAll(htmlText, '<!--list:'+lists[i].listDef+'-->', config.wrapIndex({ format  : genereratedExtension , content : lists[i].content }) );
+                                            if( config.events.wrapIndex ) {                                            
+                                                htmlText = lu.replaceAll(htmlText, '<!--list:'+lists[i].listDef+'-->', config.events.wrapIndex({ format  : genereratedExtension , content : lists[i].content }) );
                                             } else {
                                                 htmlText = lu.replaceAll(htmlText, '<!--list:'+lists[i].listDef+'-->', lists[i].content );
                                             }                                            
@@ -895,8 +897,8 @@ module.exports = function (config) {
                     fs.readFile(config.source + originalPath, "utf8", function (err, xmlData) {
                         if (err) {                            
                             console.log("Could not read template file " + originalPath);
-                            if( config.getDefaultIndexTemplate ) {
-                                xmlTemplate = config.getDefaultIndexTemplate({ format: genereratedExtension , path : originalPath , filename : config.source + originalPath });
+                            if( config.events.getDefaultIndexTemplate ) {
+                                xmlTemplate = config.events.getDefaultIndexTemplate({ format: genereratedExtension , path : originalPath , filename : config.source + originalPath });
                             } else {
                                 xmlTemplate = "<!--list:.-->";
                             }
@@ -942,8 +944,8 @@ module.exports = function (config) {
                     });
                 } else {
                     // If this is just a folder - lets get the default template for html page and go...
-                    if( config.getDefaultIndexTemplate ) {
-                        xmlTemplate = config.getDefaultIndexTemplate({ format: genereratedExtension , path : originalPath , filename : config.source + originalPath });
+                    if( config.events.getDefaultIndexTemplate ) {
+                        xmlTemplate = config.events.getDefaultIndexTemplate({ format: genereratedExtension , path : originalPath , filename : config.source + originalPath });
                     } else {
                         xmlTemplate = "<!--list:.-->";
                     }
@@ -977,13 +979,13 @@ module.exports = function (config) {
                            callback(err,null,null);
                        } else {
                           var generatedIndexFile = lu.replaceAll(generatedTopic,".xml_html",".xml")+".xml";
-                          config.translateXML( generatedIndexFile, generatedTopic ,function(err,data) {
+                          config.events.translateXML( generatedIndexFile, generatedTopic ,function(err,data) {
                               callback(err,data,"html");
                           });
                        }
                     });
                 } else {
-                    config.translateXML(config.source + path,generatedTopic,function(err,data) {
+                    config.events.translateXML(config.source + path,generatedTopic,function(err,data) {
                         callback(err,data,"html");
                     });
                 }

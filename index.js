@@ -20,6 +20,7 @@ module.exports = function (config) {
     var absolutePath = "/";
     var actualLinks = null;
     var logoHREF = (config.logoHref || "http://www.google.com");
+    
     if (config.proxy) {
         var proxyBasePath = null;
         var proxyHostStart = config.proxy.indexOf("://");
@@ -129,24 +130,21 @@ module.exports = function (config) {
         if (!config.hasOwnProperty('xslt')) {
             config.xslt = '';
         }
+        if (!config.hasOwnProperty('library')) {
+            config.library = [];
+        }
+        if (!config.hasOwnProperty('events')) {
+            config.events = {};
+        };
 
-        if (!config.hasOwnProperty('pageIndexer')) {
-            config.pageIndexer = null;
+        if (!config.hasOwnProperty('tocData')) {
+            config.tocData = { };
         }
-        if (!config.hasOwnProperty('wrapIndex')) {
-            config.wrapIndex = null;
+        if (!config.tocData.hasOwnProperty('altTocs')) {
+            config.tocData.altTocs = [];
         }
-        if (!config.hasOwnProperty('getDefaultIndexTemplate')) {
-            config.getDefaultIndexTemplate = null;
-        }
-        if (!config.hasOwnProperty('translateXML')) {
-            config.translateXML = null;
-        }
-        if (!config.hasOwnProperty('altTocs')) {
-            config.altTocs = [];
-        }
-        if (!config.hasOwnProperty('defaultPathMetadata')) {
-            config.defaultPathMetadata = [];
+        if (!config.tocData.hasOwnProperty('defaultPathMetadata')) {
+            config.tocData.defaultPathMetadata = [];
         }
         if (!config.hasOwnProperty('templatefile')) {
             config.templatefile = modulePath + "toctemplate.html";
@@ -182,12 +180,8 @@ module.exports = function (config) {
                 search: config.search,
                 escapes: config.escapes,
                 xslt: config.xslt,
-                pageIndexer: config.pageIndexer,
-                wrapIndex: config.wrapIndex,
-                getDefaultIndexTemplate: config.getDefaultIndexTemplate,
-                translateXML: config.translateXML,
-                altTocs: config.altTocs,
-                defaultPathMetadata: config.defaultPathMetadata,
+                events: config.events,
+                tocData: config.tocData,
                 templatefile: config.templatefile,
                 structurefile: config.structurefile,
                 htmlfile: config.htmlfile,
@@ -216,12 +210,8 @@ module.exports = function (config) {
                     filter: configDef.filter ? configDef.filter : config.filter,
                     escapes: configDef.escapes ? configDef.escapes : config.escapes,
                     xslt: configDef.xslt ? configDef.xslt : config.xslt,
-                    pageIndexer: configDef.pageIndexer ? configDef.pageIndexer : config.pageIndexer,
-                    wrapIndex: configDef.wrapIndex ? configDef.wrapIndex : config.wrapIndex,
-                    getDefaultIndexTemplate: configDef.getDefaultIndexTemplate ? configDef.getDefaultIndexTemplate : config.getDefaultIndexTemplate,
-                    translateXML: configDef.translateXML ? configDef.translateXML : config.translateXML,
-                    altTocs: configDef.altTocs ? configDef.altTocs : config.altTocs,
-                    defaultPathMetadata: configDef.defaultPathMetadata ? configDef.defaultPathMetadata : config.defaultPathMetadata,
+                    events: configDef.events ? configDef.events : config.events,
+                    tocData: configDef.tocData ? configDef.tocData : config.tocData,
                     templatefile: configDef.templatefile ? configDef.templatefile : config.templatefile,
                     structurefile: configDef.structurefile ? configDef.structurefile : config.structurefile,
                     htmlfile: configDef.htmlfile ? configDef.htmlfile : config.htmlfile,
@@ -317,9 +307,10 @@ module.exports = function (config) {
             }
         }
     }
-    if (config.altTocs && config.altTocs.length) {
-        for (i = 0; i < config.altTocs.length; ++i) {
-            pagesManifestArray.push("/toc_loader/" + replaceAll(config.altTocs[i], "/", "_") + "__filter__" + (config.structurefile || "tree.json").replace(".json", ".js"));
+    var altTocs = config.tocData.altTocs;
+    if ( altTocs && altTocs.length) {
+        for (i = 0; i < altTocs.length; ++i) {
+            pagesManifestArray.push("/toc_loader/" + replaceAll(altTocs[i], "/", "_") + "__filter__" + (config.structurefile || "tree.json").replace(".json", ".js"));
         }
     }
     var pagesManifest = pagesManifestArray.join("\n");
@@ -393,17 +384,72 @@ module.exports = function (config) {
         var tocName = treeName.replace(".json", ".js");
         var extension = null;
         var extensionPos = page.lastIndexOf('.');
+        var GenerateLibrary = function (book,nested) {
+            var i;
+            var html = "";
+            if (book && book.length > 0) {
+                if( nested )
+                    html = "<ul>";
+                else    
+                    html = "<ul id=\"library\" >";
+                for (i = 0; i < book.length; ++i) {
+                    html += "<li>";
+                    if (book[i].href) {
+                        html += "<a href=\"" + book[i].href + "\" >" + book[i].title + "</a>";
+                    } else {
+                        html +=  "<a href=\"#\">"+ book[i].title+ "</a>";
+                    }
+                    if (book[i].books) {
+                        html += GenerateLibrary(book[i].books,true);
+                    }
+                    html += "</li>";
+                }
+                html += "</ul>"
+            }
+            return html;
+        };        
+        var harvestBreadcrumbs = function (book,breadcrumbs,basePath) {
+            var i;
+            var match = null;
+            if (book && book.length > 0) {
+                for (i = 0; i < book.length; ++i) {
+                    if (book[i].breadcrumb) {
+                        breadcrumbs.push(book[i]);
+                        if( book[i].href ) {
+                            if( !basePath ) {
+                                var pathLen = book[i].href.lastIndexOf('/');
+                                if( pathLen >= 0 ) {
+                                     var pathCompare = book[i].href.substring(0,pathLen+1);
+                                     if(pathCompare == '/' || pathCompare == '/pages/') {
+                                         match = book[i].breadcrumb; 
+                                     }
+                                }                                                     
+                            } else if( book[i].href.indexOf(basePath) >= 0 ) {
+                                match = book[i].breadcrumb;
+                            }
+                        }
+                    }
+                    if (book[i].books) {
+                       var test = harvestBreadcrumbs(book[i].books,breadcrumbs,basePath);
+                       if( test )
+                          match = test;
+                    }
+                }
+            }
+            return match;
+        };
 
         if (extensionPos > 0)
             extension = page.substring(extensionPos + 1).toLowerCase();
 
-        if (extension == "html" || extension == "xml" || extension == "md") {
-            if (config.altTocs && config.altTocs.length > 0) {
+        if( extension == "html" || extension == "xml" || extension == "md" ) {
+            var altTocs = config.tocData.altTocs
+            if ( altTocs && altTocs.length > 0) {
                 var deepestAltToc = null;
                 var i;
                 var searchPath = "/" + relativePath.toLowerCase();
-                for (i = 0; i < config.altTocs.length; ++i) {
-                    var prefix = config.altTocs[i];
+                for (i = 0; i < altTocs.length; ++i) {
+                    var prefix = altTocs[i];
                     if (searchPath.substring(0, prefix.length) == prefix.toLowerCase()) {
                         if (!deepestAltToc)
                             deepestAltToc = prefix;
@@ -412,9 +458,9 @@ module.exports = function (config) {
                     }
                 }
                 if (deepestAltToc) {
-                    deepestAltToc = replaceAll(deepestAltToc, "/", "_");
-                    tocName = deepestAltToc + tocName;
-                    treeName = deepestAltToc + treeName;
+                    var deepestAltTocFN = replaceAll(deepestAltToc, "/", "_");
+                    tocName = deepestAltTocFN + tocName;
+                    treeName = deepestAltTocFN + treeName;
                 }
             }
             var generateNavigation = function (tree) {
@@ -428,7 +474,7 @@ module.exports = function (config) {
 
                 if (tree && tree.children) {
                     var searchTopic = "/" + relativePath.toLowerCase();
-                    var kidsLevel = tree.children;
+                    var kidsLevel = null;
                     var firstChild = null;
                     var firstChildParent = null;
                     var indexOfKid = -1;
@@ -460,12 +506,29 @@ module.exports = function (config) {
                         return null;
                     };
                     var branches = recurseNavTree(tree.children);
-                    if (branches) {
+                    var booksBranches = [];                    
+                    var currentBook = harvestBreadcrumbs(config.library,booksBranches, deepestAltToc );
+                    if( booksBranches.length < 2 ) {
+                        currentBook = null;
+                    }    
+                    if( !kidsLevel && !currentBook ) {
+                         kidsLevel = tree.children;
+                    }                    
+                        
+                    if ( branches || currentBook ) {
                         //breadcrumbs = "<ul>";
+                        //breadcrumb
+                        if( currentBook ) {
+                            breadcrumbs += "<li>";
+                            breadcrumbs += "Main";
+                            breadcrumbs += "</li>";                            
+                        }
                         if (tree.path) {
                             breadcrumbs += "<li>";
                             breadcrumbs += "<a href=\"" + pathPages + tree.path.substring(1) + "\">";
-                            if (!tree.title || tree.title == '/') {
+                            if( currentBook ) {
+                                breadcrumbs += currentBook;
+                            } else if (!tree.title || tree.title == '/') {
                                 breadcrumbs += "Main";
                             } else {
                                 breadcrumbs += tree.title;
@@ -473,16 +536,18 @@ module.exports = function (config) {
                             breadcrumbs += "</a>";
                             breadcrumbs += "</li>";
                         }
-                        for (var i = 0; i < branches.length - 1; ++i) {
-                            breadcrumbs += "<li>";
-                            if (branches[i].path) {
-                                breadcrumbs += "<a href=\"" + pathPages + branches[i].path.substring(1) + "\">";
-                                breadcrumbs += branches[i].title;
-                                breadcrumbs += "</a>";
-                            } else {
-                                breadcrumbs += branches[i].title;
+                        if( branches && branches.length > 0 ) {
+                            for (var i = 0; i < branches.length - 1; ++i) {
+                                breadcrumbs += "<li>";
+                                if (branches[i].path) {
+                                    breadcrumbs += "<a href=\"" + pathPages + branches[i].path.substring(1) + "\">";
+                                    breadcrumbs += branches[i].title;
+                                    breadcrumbs += "</a>";
+                                } else {
+                                    breadcrumbs += branches[i].title;
+                                }
+                                breadcrumbs += "</li>";
                             }
-                            breadcrumbs += "</li>";
                         }
                         if (pageTitle) {
                             breadcrumbs += "<li>";
@@ -507,9 +572,22 @@ module.exports = function (config) {
                             }
                         }
                         related += "</ul>";
+                    } else if( currentBook ) {
+                        related = "<ul>";
+                        for (var i = 0; i < booksBranches.length; ++i) {
+                            related += "<li>";
+                            related += "<a href=\"" + booksBranches[i].href;
+                            if (booksBranches[i].breadcrumb == currentBook)
+                                related += "\" class=\"selected\" >";
+                            else
+                                related += "\">";
+                            related += booksBranches[i].breadcrumb;
+                            related += "</a>";
+                            related += "</li>";
+                        }                        
+                        related += "</ul>";
                     }
                 }
-
                 if (firstChild && firstChild.path) {
                     childUrl = pathPages + firstChild.path.substring(1);
                 }
@@ -522,7 +600,7 @@ module.exports = function (config) {
                     }
                     if (indexOfKid < (kidsLevel.length - 1) && kidsLevel[indexOfKid + 1].path) {
                         nextUrl = pathPages + kidsLevel[indexOfKid + 1].path.substring(1);
-                    }
+                    }                
                 }
                 if (!pageTitle) {
                     pageTitle = relativePath;
@@ -531,8 +609,8 @@ module.exports = function (config) {
                         pageTitle = pageTitle.substring(pathPartOffset + 1);
                     }
                     var extensionPartOffset = pageTitle.lastIndexOf('.');
-                    if( extensionPartOffset > 0 ) {
-                        pageTitle = pageTitle.substring(0,extensionPartOffset);                        
+                    if (extensionPartOffset > 0) {
+                        pageTitle = pageTitle.substring(0, extensionPartOffset);
                     }
                 }
                 return { breadcrumbs: breadcrumbs, related: related, parentUrl: parentUrl, childUrl: childUrl, previousUrl: previousUrl, nextUrl: nextUrl, pageTitle: pageTitle };
@@ -548,20 +626,20 @@ module.exports = function (config) {
                     if (endBodyAt >= 0) {
                         htmlText = "<div " + htmlText.substring(bodyAt + 5, endBodyAt) + "</div>";
                     }
-                }                
+                }
                 var pageProcessor = require('./updatePageReferences');
-                var pageProc = { 
+                var pageProc = {
                     basepath: "/pages"
                     , imagepath: ""
-                    , pageTitle : null 
-                    , pageDescription : null 
+                    , pageTitle: null
+                    , pageDescription: null
                 };
                 var pagesAt = fromPath.indexOf("/pages");
                 if (pagesAt > 0) {
                     pageProc.basepath = fromPath.substring(0, pagesAt + 6);
                 }
                 if (absolutePath.length > 0) {
-                    if( pageProc.basepath.substring(0,absolutePath.length) != absolutePath ) { 
+                    if (pageProc.basepath.substring(0, absolutePath.length) != absolutePath) {
                         pageProc.basepath = absolutePath + pageProc.basepath.substring(1);
                     }
                 }
@@ -576,47 +654,48 @@ module.exports = function (config) {
                 tocLoader = "";
                 var navigationText = generateNavigation(tree);
                 var fullPage = standardPageTemplate;
-                var  title = navigationText.pageTitle;
+                var title = navigationText.pageTitle;
                 fullPage = fullPage.replace("<!--navparent-->", navigationText.parentUrl)
                     .replace("<!--navchild-->", navigationText.childUrl)
                     .replace("<!--navprevious-->", navigationText.previousUrl)
                     .replace("<!--navnext-->", navigationText.nextUrl)
                     .replace("<!--search--->", absolutePath + "pages/search")
                     .replace("<!--pagetopic--->", title)
-                    .replace("<!--pagedescription--->", pageProc.pageDescription);
+                    .replace("<!--pagedescription--->", pageProc.pageDescription)
+                    .replace("<!--library--->", GenerateLibrary(config.library));
                 fullPage = fullPage.replace("__filter__", thisFiltername).replace("<!--tocloader-->", tocLoader).replace("<!--related-->", navigationText.related).replace("<!--breadcrumbs-->", navigationText.breadcrumbs).replace("<!--body-->", htmlText);
                 return fullPage;
             };
             var findClosestFilename = function (path, getFilenameCallback) {
-                var findClosest = function(path) {
+                var findClosest = function (path) {
                     path = path.toLowerCase();
                     var i;
                     var pathPartOffset = path.lastIndexOf('/');
                     var pathPart = "";
                     var namePart = path;
                     var sameToExtn = null;
-                    var sameName = null; 
-                    if( pathPartOffset >= 0 ) {
-                        pathPart = path.substring(0,pathPartOffset+1);
-                        namePart = path.substring(pathPartOffset+1);
+                    var sameName = null;
+                    if (pathPartOffset >= 0) {
+                        pathPart = path.substring(0, pathPartOffset + 1);
+                        namePart = path.substring(pathPartOffset + 1);
                         var namePartOffset = namePart.lastIndexOf('.');
-                        if( namePartOffset > 0 ) {    
-                            namePart = namePart.substring(0,namePartOffset);                        
+                        if (namePartOffset > 0) {
+                            namePart = namePart.substring(0, namePartOffset);
                         }
-                    }                    
-                    for( i = 0 ; i < actualLinks.length ; ++i ) {
-                        var filename = actualLinks[i].toLowerCase();        
-                        if( filename == path )
+                    }
+                    for (i = 0; i < actualLinks.length; ++i) {
+                        var filename = actualLinks[i].toLowerCase();
+                        if (filename == path)
                             return filename;
                         var fileNameOffset = filename.lastIndexOf('/');
-                        if( fileNameOffset >= 0 ) {
-                            var filenameName = filename.substring(fileNameOffset+1);
+                        if (fileNameOffset >= 0) {
+                            var filenameName = filename.substring(fileNameOffset + 1);
                             var filenamePartOffset = filenameName.lastIndexOf('.');
-                            if( filenamePartOffset > 0 ) {    
-                                filenameName = filenameName.substring(0,filenamePartOffset);                        
+                            if (filenamePartOffset > 0) {
+                                filenameName = filenameName.substring(0, filenamePartOffset);
                             }
-                            if( filenameName == namePart ) {
-                                if( pathPart == filename.substring(0,fileNameOffset+1) ) {
+                            if (filenameName == namePart) {
+                                if (pathPart == filename.substring(0, fileNameOffset + 1)) {
                                     sameToExtn = actualLinks[i];
                                 } else {
                                     sameName = actualLinks[i];
@@ -624,42 +703,42 @@ module.exports = function (config) {
                             }
                         }
                     }
-                    if( sameToExtn )
+                    if (sameToExtn)
                         return sameToExtn;
                     return sameName;
                 };
-                if( actualLinks ) {
-                    getFilenameCallback( findClosest(path) );                     
+                if (actualLinks) {
+                    getFilenameCallback(findClosest(path));
                 } else {
                     fs.readFile(config.generated + config.flatfile, function (errFiles, dataFiles) {
-                        if( errFiles ) {
+                        if (errFiles) {
                             getFilenameCallback(null);
                         } else {
                             var files = JSON.parse(dataFiles);
                             var i;
                             actualLinks = [];
-                            for( i = 0 ; i < files.length ; ++i ) {
+                            for (i = 0; i < files.length; ++i) {
                                 actualLinks.push(files[i].path);
                             }
-                            getFilenameCallback( findClosest(path) );
+                            getFilenameCallback(findClosest(path));
                         }
                     });
-                }                
+                }
             };
             var findClosestLink = function (err, path, resolvedLink) {
                 // First lowercase the path (for case insensite compares)
                 var lcpath = path.toLowerCase();
                 var brokenLinkFile = config.generated + "broken/" + replaceAll(lcpath, "/", "_");
-                fs.readFile( brokenLinkFile, "utf8", function (errbroke, databroke) {
+                fs.readFile(brokenLinkFile, "utf8", function (errbroke, databroke) {
                     if (errbroke) {
                         // Need to perform a lookup
-                        findClosestFilename("/"+relativePath, function (actualFilename) {
+                        findClosestFilename("/" + relativePath, function (actualFilename) {
                             if (actualFilename) {
                                 var actualExtensionPos = actualFilename.lastIndexOf('.');
-                                var actualExtension = ""; 
+                                var actualExtension = "";
                                 if (actualExtensionPos > 0)
                                     actualExtension = actualFilename.substring(actualExtensionPos + 1).toLowerCase();
-                                if( actualExtension == "xml" ) {
+                                if (actualExtension == "xml") {
                                     var ListUtilities = require('./listutilities');
                                     var lu = new ListUtilities(config);
                                     actualFilename = actualFilename.replace(".xml", ".xml_html");
@@ -667,19 +746,19 @@ module.exports = function (config) {
                                         if (errActual) {
                                             resolvedLink(err, null);
                                         } else {
-                                            dataActual = dataActual + "<!--Broken Link To:"+page+"-->";
-                                            fs.writeFile( brokenLinkFile, dataActual, function (err) {
+                                            dataActual = dataActual + "<!--Broken Link To:" + page + "-->";
+                                            fs.writeFile(brokenLinkFile, dataActual, function (err) {
                                                 resolvedLink(null, dataActual);
                                             });
-                                        }                                        
-                                    });                                    
+                                        }
+                                    });
                                 } else {
                                     fs.readFile(config.source + actualFilename, "utf8", function (errActual, dataActual) {
                                         if (errActual) {
                                             resolvedLink(err, null);
                                         } else {
-                                            dataActual = dataActual + "<!--Broken Link To:"+page+"-->";
-                                            fs.writeFile( brokenLinkFile, dataActual, function (err) {
+                                            dataActual = dataActual + "<!--Broken Link To:" + page + "-->";
+                                            fs.writeFile(brokenLinkFile, dataActual, function (err) {
                                                 resolvedLink(null, dataActual);
                                             });
                                         }
@@ -701,7 +780,7 @@ module.exports = function (config) {
                 page = page.replace(".xml", ".xml_html");
                 lu.loadOrCreateTranslatedPage(this.config, page, (this.config.filter_name ? this.config.filter_name : defaultFilter), function (err, data, type) {
                     if (err) {
-                        findClosestLink(err, relativePath, function (err2, badLinkData ) {
+                        findClosestLink(err, relativePath, function (err2, badLinkData) {
                             if (err2) {
                                 callback(err2, null);
                             } else {
@@ -792,33 +871,33 @@ module.exports = function (config) {
                     }
                     searchResults += "</ul>";
                     // data
-                    callback(null, standardSearchTemplate.replace("<!--body-->", searchResults).replace("<!--search--->", absolutePath + "pages/search").replace("<!--searchpattern--->", req.query.pattern), "html");
+                    callback(null, standardSearchTemplate.replace("<!--body-->", searchResults).replace("<!--search--->", absolutePath + "pages/search").replace("<!--searchpattern--->", req.query.pattern).replace("<!--library--->", GenerateLibrary(config.library)), "html");
                 }
             }, offset, limit);
         } else if (page == "/unknown_reference" && req.query.page) {
             var content = standardSearchTemplate;
             var searchForPattern = unescape(req.query.page);
-            if( searchForPattern.lastIndexOf("/") >= 0) {
-                searchForPattern = searchForPattern.substring(searchForPattern.lastIndexOf("/")+1);
+            if (searchForPattern.lastIndexOf("/") >= 0) {
+                searchForPattern = searchForPattern.substring(searchForPattern.lastIndexOf("/") + 1);
             }
-            if( searchForPattern.lastIndexOf(".") > 0) {
-                searchForPattern = searchForPattern.substring(0,searchForPattern.lastIndexOf("."));
+            if (searchForPattern.lastIndexOf(".") > 0) {
+                searchForPattern = searchForPattern.substring(0, searchForPattern.lastIndexOf("."));
             }
             content = content.replace("<!--searchpattern--->", searchForPattern).replace("<!--search--->", absolutePath + "pages/search");
-            content = content.replace("<!--body-->","Unknown Reference '"+req.query.page+"'");
-            callback(null, content, "html");            
+            content = content.replace("<!--body-->", "Unknown Reference '" + req.query.page + "'");
+            callback(null, content, "html");
         } else if (page == "/ambiguous_reference" && req.query.page) {
             var content = standardSearchTemplate;
             var searchForPattern = unescape(req.query.page);
-            if( searchForPattern.lastIndexOf("/") >= 0) {
-                searchForPattern = searchForPattern.substring(searchForPattern.lastIndexOf("/")+1);
+            if (searchForPattern.lastIndexOf("/") >= 0) {
+                searchForPattern = searchForPattern.substring(searchForPattern.lastIndexOf("/") + 1);
             }
-            if( searchForPattern.lastIndexOf(".") > 0) {
-                searchForPattern = searchForPattern.substring(0,searchForPattern.lastIndexOf("."));
+            if (searchForPattern.lastIndexOf(".") > 0) {
+                searchForPattern = searchForPattern.substring(0, searchForPattern.lastIndexOf("."));
             }
             content = content.replace("<!--searchpattern--->", searchForPattern).replace("<!--search--->", absolutePath + "pages/search");
-            content = content.replace("<!--body-->","Ambiguous Reference '"+req.query.page+"'");            
-            callback(null, content, "html");            
+            content = content.replace("<!--body-->", "Ambiguous Reference '" + req.query.page + "'");
+            callback(null, content, "html");
         } else {
             // ...Else assume its a resource (i.e. JPEG/PNG etc...)
             this.get(page, callback);
@@ -856,7 +935,7 @@ module.exports = function (config) {
             var ListUtilities = require('./listutilities');
             var lu = new ListUtilities(config);
             lu.loadOrCreateIndexPage(this.config, decodeURI(page), (this.config.filter_name ? this.config.filter_name : defaultFilter), callback);
-        } else if (extension == "xml_html" && config.translateXML) {
+        } else if (extension == "xml_html" && config.events.translateXML) {
             var ListUtilities = require('./listutilities');
             var lu = new ListUtilities(config);
             lu.loadOrCreateTranslatedPage(this.config, decodeURI(page), (this.config.filter_name ? this.config.filter_name : defaultFilter), callback);
@@ -1109,8 +1188,9 @@ module.exports = function (config) {
         // Get all the 'filters' that we need to regenerate...
         for (var configName in filters) {
             filterNames.push({ filterName: configName, altToc: null });
-            for (i = 0; i < config.altTocs.length; ++i) {
-                filterNames.push({ filterName: configName, altToc: config.altTocs[i] });
+            var altTocs = config.tocData.altTocs;
+            for (i = 0; i < altTocs.length; ++i) {
+                filterNames.push({ filterName: configName, altToc: altTocs[i] });
             }
         }
 
@@ -1251,6 +1331,9 @@ module.exports = function (config) {
         lu.cleanupIndexPages(config);
         // generated pages will be rebuilt on demand...
         var rebuildContent = function (help) {
+            if( config.events.beforeRefresh ) {
+                config.events.beforeRefresh();
+            }            
             var handler = function (err, result) {
                 if (err) {
                     callback(err, null);
@@ -1779,7 +1862,7 @@ module.exports = function (config) {
         "config": function (hlp, path, req, res) {
             res.type('json');
             hlp.onSendExpress(res);
-            res.send(JSON.stringify({ escapes: config.escapes, keywords: config.keywords, altTocs: config.altTocs, proxy: config.proxy, absolutePath: absolutePath }));
+            res.send(JSON.stringify({ escapes: config.escapes, keywords: config.keywords, altTocs: config.tocData.altTocs, proxy: config.proxy, absolutePath: absolutePath }));
         },
         "diag": function (hlp, path, req, res) {
             res.type('json');
@@ -1804,15 +1887,15 @@ module.exports = function (config) {
         },
         "files.json": function (hlp, path, req, res) {
             fs.readFile(config.generated + config.flatfile, function (errFiles, dataFiles) {
-                if( errFiles ) {
+                if (errFiles) {
                     res.status(404).send(config.flatfile + ' Not found');
                 } else {
                     var files = JSON.parse(dataFiles);
                     var i;
                     var links = [];
-                    for( i = 0 ; i < files.length ; ++i ) {
+                    for (i = 0; i < files.length; ++i) {
                         links.push(files[i].path);
-                    }                    
+                    }
                     res.type('json');
                     hlp.onSendExpress(res);
                     res.send(JSON.stringify(links));

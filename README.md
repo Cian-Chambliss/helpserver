@@ -404,6 +404,7 @@ help.status(function (stats) {
 
 ## Release History
 
+* 1.0.99 Added 'library' option.
 * 1.0.92 Completed reverse proxy path logic. 
 * 1.0.86 Added html5 appcache support for the 'pages' endpoint - this caches large TOC entries. 
 * 1.0.82 Don't emply redirect for default page.  This change added to allow for support for reverse proxy server. 

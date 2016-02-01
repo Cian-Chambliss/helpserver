@@ -27,6 +27,7 @@ white-space: nowrap;
 #branding {
 width: 120px;
 display:inline-block;
+vertical-align: top;
 }
 #header .logo a {
 background-image: url(http://www.alphasoftware.com/newsite/images/alpha-software-logo.png);
@@ -39,6 +40,7 @@ height: 30px;
 display: inline-block;
 text-indent: -9999px;
 }
+
 
 #main-menu {
 display:inline-block;
@@ -58,9 +60,54 @@ padding: 5px 10px;
 color: #eee;
 }
 
-#main-menu a:hover {
+/*#main-menu a:hover {
 color: #eee;
 background: #798490;
+}*/
+
+#library{
+    list-style:none;
+}
+#library li{
+    float:left;
+    margin-right:10px;
+    position:relative;
+}
+#library a{
+    display:block;
+    padding:5px;
+    color:#fff;
+    text-decoration:none;
+}
+
+/*--- DROPDOWN ---*/
+#library ul{
+    background: #f1f1f1;
+    list-style:none;
+    position:absolute;
+    padding:0px;
+    margin:0px;
+    left:-9999px; /* Hide off-screen when not needed (this is more accessible than display:none;) */
+}
+#library ul li{
+    padding:0px;
+    margin:0px;
+    display: block;    
+    float:none;
+}
+#library ul a{
+    white-space:nowrap; /* Stop text wrapping and creating multi-line dropdown items */
+    color: #000;
+    display:block;
+    padding:10px;
+}
+#library li:hover ul{ /* Display the dropdown on hover */
+    left:0; /* Bring back on-screen when needed */
+}
+
+#library ul a:hover{
+    color:#158ccc;
+    background: #ccc;
 }
 
 
