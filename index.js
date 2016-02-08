@@ -20,7 +20,7 @@ module.exports = function (config) {
     var absolutePath = "/";
     var actualLinks = null;
     var logoHREF = (config.logoHref || "http://www.google.com");
-    
+
     if (config.proxy) {
         var proxyBasePath = null;
         var proxyHostStart = config.proxy.indexOf("://");
@@ -138,7 +138,7 @@ module.exports = function (config) {
         };
 
         if (!config.hasOwnProperty('tocData')) {
-            config.tocData = { };
+            config.tocData = {};
         }
         if (!config.tocData.hasOwnProperty('altTocs')) {
             config.tocData.altTocs = [];
@@ -308,7 +308,7 @@ module.exports = function (config) {
         }
     }
     var altTocs = config.tocData.altTocs;
-    if ( altTocs && altTocs.length) {
+    if (altTocs && altTocs.length) {
         for (i = 0; i < altTocs.length; ++i) {
             pagesManifestArray.push("/toc_loader/" + replaceAll(altTocs[i], "/", "_") + "__filter__" + (config.structurefile || "tree.json").replace(".json", ".js"));
         }
@@ -384,55 +384,55 @@ module.exports = function (config) {
         var tocName = treeName.replace(".json", ".js");
         var extension = null;
         var extensionPos = page.lastIndexOf('.');
-        var GenerateLibrary = function (book,nested) {
+        var GenerateLibrary = function (book, nested) {
             var i;
             var html = "";
             if (book && book.length > 0) {
-                if( nested )
+                if (nested)
                     html = "<ul>";
-                else    
+                else
                     html = "<ul id=\"library\" >";
                 for (i = 0; i < book.length; ++i) {
                     html += "<li>";
                     if (book[i].href) {
                         html += "<a href=\"" + book[i].href + "\" >" + book[i].title + "</a>";
                     } else {
-                        html +=  "<a href=\"#\">"+ book[i].title+ "</a>";
+                        html += "<a href=\"#\">" + book[i].title + "</a>";
                     }
                     if (book[i].books) {
-                        html += GenerateLibrary(book[i].books,true);
+                        html += GenerateLibrary(book[i].books, true);
                     }
                     html += "</li>";
                 }
                 html += "</ul>"
             }
             return html;
-        };        
-        var harvestBreadcrumbs = function (book,breadcrumbs,basePath) {
+        };
+        var harvestBreadcrumbs = function (book, breadcrumbs, basePath) {
             var i;
             var match = null;
             if (book && book.length > 0) {
                 for (i = 0; i < book.length; ++i) {
                     if (book[i].breadcrumb) {
                         breadcrumbs.push(book[i]);
-                        if( book[i].href ) {
-                            if( !basePath ) {
+                        if (book[i].href) {
+                            if (!basePath) {
                                 var pathLen = book[i].href.lastIndexOf('/');
-                                if( pathLen >= 0 ) {
-                                     var pathCompare = book[i].href.substring(0,pathLen+1);
-                                     if(pathCompare == '/' || pathCompare == '/pages/') {
-                                         match = book[i].breadcrumb; 
-                                     }
-                                }                                                     
-                            } else if( book[i].href.indexOf(basePath) >= 0 ) {
+                                if (pathLen >= 0) {
+                                    var pathCompare = book[i].href.substring(0, pathLen + 1);
+                                    if (pathCompare == '/' || pathCompare == '/pages/') {
+                                        match = book[i].breadcrumb;
+                                    }
+                                }
+                            } else if (book[i].href.indexOf(basePath) >= 0) {
                                 match = book[i].breadcrumb;
                             }
                         }
                     }
                     if (book[i].books) {
-                       var test = harvestBreadcrumbs(book[i].books,breadcrumbs,basePath);
-                       if( test )
-                          match = test;
+                        var test = harvestBreadcrumbs(book[i].books, breadcrumbs, basePath);
+                        if (test)
+                            match = test;
                     }
                 }
             }
@@ -442,9 +442,9 @@ module.exports = function (config) {
         if (extensionPos > 0)
             extension = page.substring(extensionPos + 1).toLowerCase();
 
-        if( extension == "html" || extension == "xml" || extension == "md" ) {
+        if (extension == "html" || extension == "xml" || extension == "md") {
             var altTocs = config.tocData.altTocs
-            if ( altTocs && altTocs.length > 0) {
+            if (altTocs && altTocs.length > 0) {
                 var deepestAltToc = null;
                 var i;
                 var searchPath = "/" + relativePath.toLowerCase();
@@ -506,27 +506,27 @@ module.exports = function (config) {
                         return null;
                     };
                     var branches = recurseNavTree(tree.children);
-                    var booksBranches = [];                    
-                    var currentBook = harvestBreadcrumbs(config.library,booksBranches, deepestAltToc );
-                    if( booksBranches.length < 2 ) {
+                    var booksBranches = [];
+                    var currentBook = harvestBreadcrumbs(config.library, booksBranches, deepestAltToc);
+                    if (booksBranches.length < 2) {
                         currentBook = null;
-                    }    
-                    if( !kidsLevel && !currentBook ) {
-                         kidsLevel = tree.children;
-                    }                    
-                        
-                    if ( branches || currentBook ) {
+                    }
+                    if (!kidsLevel && !currentBook) {
+                        kidsLevel = tree.children;
+                    }
+
+                    if (branches || currentBook) {
                         //breadcrumbs = "<ul>";
                         //breadcrumb
-                        if( currentBook ) {
+                        if (currentBook) {
                             breadcrumbs += "<li>";
                             breadcrumbs += "Main";
-                            breadcrumbs += "</li>";                            
+                            breadcrumbs += "</li>";
                         }
                         if (tree.path) {
                             breadcrumbs += "<li>";
                             breadcrumbs += "<a href=\"" + pathPages + tree.path.substring(1) + "\">";
-                            if( currentBook ) {
+                            if (currentBook) {
                                 breadcrumbs += currentBook;
                             } else if (!tree.title || tree.title == '/') {
                                 breadcrumbs += "Main";
@@ -536,7 +536,7 @@ module.exports = function (config) {
                             breadcrumbs += "</a>";
                             breadcrumbs += "</li>";
                         }
-                        if( branches && branches.length > 0 ) {
+                        if (branches && branches.length > 0) {
                             for (var i = 0; i < branches.length - 1; ++i) {
                                 breadcrumbs += "<li>";
                                 if (branches[i].path) {
@@ -572,7 +572,7 @@ module.exports = function (config) {
                             }
                         }
                         related += "</ul>";
-                    } else if( currentBook ) {
+                    } else if (currentBook) {
                         related = "<ul>";
                         for (var i = 0; i < booksBranches.length; ++i) {
                             related += "<li>";
@@ -584,7 +584,7 @@ module.exports = function (config) {
                             related += booksBranches[i].breadcrumb;
                             related += "</a>";
                             related += "</li>";
-                        }                        
+                        }
                         related += "</ul>";
                     }
                 }
@@ -600,7 +600,7 @@ module.exports = function (config) {
                     }
                     if (indexOfKid < (kidsLevel.length - 1) && kidsLevel[indexOfKid + 1].path) {
                         nextUrl = pathPages + kidsLevel[indexOfKid + 1].path.substring(1);
-                    }                
+                    }
                 }
                 if (!pageTitle) {
                     pageTitle = relativePath;
@@ -773,6 +773,7 @@ module.exports = function (config) {
                     }
                 });
             };
+
             if (extension == "xml") {
                 // First Pre-process XML using XSLT...
                 var ListUtilities = require('./listutilities');
@@ -809,463 +810,499 @@ module.exports = function (config) {
                         }
                     }
                 });
-            } else {
-                fs.readFile(config.source + relativePath, "utf8", function (err, data) {
-                    if (err) {
-                        findClosestLink(err, relativePath, function (err2, badLinkData) {
-                            if (err2) {
-                                callback(err2, null);
-                            } else {
-                                if (!treeData[treeName]) {
-                                    fs.readFile(config.generated + treeName, "utf8", function (err, jsonTreeData) {
-                                        if (!err) {
-                                            treeData[treeName] = JSON.parse(jsonTreeData);
-                                        }
-                                        callback(null, processWebPage(badLinkData, treeData[treeName]), "html");
-                                    });
-                                } else {
-                                    callback(null, processWebPage(badLinkData, treeData[treeName]), "html");
-                                }
-                            }
-                        });
-                    } else {
-                        if (!treeData[treeName]) {
-                            fs.readFile(config.generated + treeName, "utf8", function (err, jsonTreeData) {
-                                if (!err) {
-                                    treeData[treeName] = JSON.parse(jsonTreeData);
-                                }
-                                callback(null, processWebPage(data, treeData[treeName]), "html");
-                            });
-                        } else {
-                            callback(null, processWebPage(data, treeData[treeName]), "html");
-                        }
-                    }
-                });
-            }
-        } else if (page == "/search" && req.query.pattern) {
-            var offset = 0;
-            var limit = 50;
-            if (req.query.limit)
-                limit = parseInt(req.query.limit);
-            if (req.query.offset)
-                offset = parseInt(req.query.offset);
-            hlp.search(req.query.pattern, function (err, data) {
-                if (err) {
-                    callback(null, "Error: " + err, "html");
-                } else {
-                    var i = 0;
-                    var searchResults = "<ul>";
-                    if (data.length > 0) {
-                        var ListUtilities = require('./listutilities');
-                        var lu = new ListUtilities(config);
-                        for (i = 0; i < data.length; ++i) {
-                            searchResults += "<li>";
-                            searchResults += "<a href=\"" + pathPages + data[i].path.substring(1) + "\">";
-                            searchResults += lu.removeDigitPrefix(data[i].title);
-                            searchResults += "</a>";
-                            searchResults += "</li>";
-
-                        }
-                    } else {
-                        searchResults += "<li>No Results Found</li>";
-                    }
-                    searchResults += "</ul>";
-                    // data
-                    callback(null, standardSearchTemplate.replace("<!--body-->", searchResults).replace("<!--search--->", absolutePath + "pages/search").replace("<!--searchpattern--->", req.query.pattern).replace("<!--library--->", GenerateLibrary(config.library)), "html");
-                }
-            }, offset, limit);
-        } else if (page == "/unknown_reference" && req.query.page) {
-            var content = standardSearchTemplate;
-            var searchForPattern = unescape(req.query.page);
-            if (searchForPattern.lastIndexOf("/") >= 0) {
-                searchForPattern = searchForPattern.substring(searchForPattern.lastIndexOf("/") + 1);
-            }
-            if (searchForPattern.lastIndexOf(".") > 0) {
-                searchForPattern = searchForPattern.substring(0, searchForPattern.lastIndexOf("."));
-            }
-            content = content.replace("<!--searchpattern--->", searchForPattern).replace("<!--search--->", absolutePath + "pages/search");
-            content = content.replace("<!--body-->", "Unknown Reference '" + req.query.page + "'");
-            callback(null, content, "html");
-        } else if (page == "/ambiguous_reference" && req.query.page) {
-            var content = standardSearchTemplate;
-            var searchForPattern = unescape(req.query.page);
-            if (searchForPattern.lastIndexOf("/") >= 0) {
-                searchForPattern = searchForPattern.substring(searchForPattern.lastIndexOf("/") + 1);
-            }
-            if (searchForPattern.lastIndexOf(".") > 0) {
-                searchForPattern = searchForPattern.substring(0, searchForPattern.lastIndexOf("."));
-            }
-            content = content.replace("<!--searchpattern--->", searchForPattern).replace("<!--search--->", absolutePath + "pages/search");
-            content = content.replace("<!--body-->", "Ambiguous Reference '" + req.query.page + "'");
-            callback(null, content, "html");
-        } else {
-            // ...Else assume its a resource (i.e. JPEG/PNG etc...)
-            this.get(page, callback);
-        }
-    };
-    HelpServerUtil.prototype.getTocLoader = function (page, fromPath, callback) {
-        page = decodeURI(page);
-        var relativePath = page.substring(1);
-        var jsonToJsPage = function (json) {
-            var completedPage = page;
-            var endPath = completedPage.lastIndexOf('/');
-            if (endPath >= 0) {
-                completedPage = completedPage.substring(endPath + 1);
-            }
-            // Simple populate
-            return "tableOfContents.populateTree(" + json + ',"' + completedPage + '");';
-        };  
-        // USE JSON file as basis for TOC - if query parameters limit view, return a sparse TOC
-        fs.readFile(config.generated + relativePath + "on", "utf8", function (err, data) {
-            if (err) {
-                callback(err, null);
-            } else {
-                callback(null, jsonToJsPage(data), "html");
-            }
-        });
-    };
-    // Get a help page or resource (image css). or help resource
-    HelpServerUtil.prototype.get = function (page, callback) {
-        var extension = null;
-        var extensionPos = page.lastIndexOf('.');
-        if (extensionPos > 0)
-            extension = page.substring(extensionPos + 1).toLowerCase();
-        var relativePath = unescape(page.substring(1));
-        if (!extension) {
-            var ListUtilities = require('./listutilities');
-            var lu = new ListUtilities(config);
-            lu.loadOrCreateIndexPage(this.config, decodeURI(page), (this.config.filter_name ? this.config.filter_name : defaultFilter), callback);
-        } else if (extension == "xml_html" && config.events.translateXML) {
-            var ListUtilities = require('./listutilities');
-            var lu = new ListUtilities(config);
-            lu.loadOrCreateTranslatedPage(this.config, decodeURI(page), (this.config.filter_name ? this.config.filter_name : defaultFilter), callback);
-        } else if (extension == "html" || extension == "htm" || extension == "xml") {
-            if (page.indexOf("/index.") > 0) {
-                if (page.indexOf("/index.xml") > 0
-                    || page.indexOf("/index.md") > 0
-                    || page.indexOf("/index.html") > 0
-                    ) {
+            } else if (page.indexOf("/index.html") > 0) {
                     // Support <!--list--> generically 
                     var ListUtilities = require('./listutilities');
                     var lu = new ListUtilities(config);
-                    lu.loadOrCreateIndexPage(this.config, decodeURI(page), (this.config.filter_name ? this.config.filter_name : defaultFilter), callback);
+                    lu.loadOrCreateIndexPage(this.config, decodeURI(page), (this.config.filter_name ? this.config.filter_name : defaultFilter), function (err, data, type) {
+                        if (err) {
+                            findClosestLink(err, relativePath, function (err2, badLinkData) {
+                                if (err2) {
+                                    callback(err2, null);
+                                } else {
+                                    if (!treeData[treeName]) {
+                                        fs.readFile(config.generated + treeName, "utf8", function (err, jsonTreeData) {
+                                            if (!err) {
+                                                treeData[treeName] = JSON.parse(jsonTreeData);
+                                            }
+                                            callback(null, processWebPage(badLinkData, treeData[treeName]), "html");
+                                        });
+                                    } else {
+                                        callback(null, processWebPage(badLinkData, treeData[treeName]), "html");
+                                    }
+                                }
+                            });
+                        } else {
+                            if (!treeData[treeName]) {
+                                fs.readFile(config.generated + treeName, "utf8", function (err, jsonTreeData) {
+                                    if (!err) {
+                                        treeData[treeName] = JSON.parse(jsonTreeData);
+                                    }
+                                    callback(null, processWebPage(data, treeData[treeName]), "html");
+                                });
+                            } else {
+                                callback(null, processWebPage(data, treeData[treeName]), "html");
+                            }
+                        }
+                    });
+                } else {
+                    fs.readFile(config.source + relativePath, "utf8", function (err, data) {
+                        if (err) {
+                            findClosestLink(err, relativePath, function (err2, badLinkData) {
+                                if (err2) {
+                                    callback(err2, null);
+                                } else {
+                                    if (!treeData[treeName]) {
+                                        fs.readFile(config.generated + treeName, "utf8", function (err, jsonTreeData) {
+                                            if (!err) {
+                                                treeData[treeName] = JSON.parse(jsonTreeData);
+                                            }
+                                            callback(null, processWebPage(badLinkData, treeData[treeName]), "html");
+                                        });
+                                    } else {
+                                        callback(null, processWebPage(badLinkData, treeData[treeName]), "html");
+                                    }
+                                }
+                            });
+                        } else {
+                            if (!treeData[treeName]) {
+                                fs.readFile(config.generated + treeName, "utf8", function (err, jsonTreeData) {
+                                    if (!err) {
+                                        treeData[treeName] = JSON.parse(jsonTreeData);
+                                    }
+                                    callback(null, processWebPage(data, treeData[treeName]), "html");
+                                });
+                            } else {
+                                callback(null, processWebPage(data, treeData[treeName]), "html");
+                            }
+                        }
+                    });
+                }
+            } else if (page == "/search" && req.query.pattern) {
+                var offset = 0;
+                var limit = 50;
+                if (req.query.limit)
+                    limit = parseInt(req.query.limit);
+                if (req.query.offset)
+                    offset = parseInt(req.query.offset);
+                hlp.search(req.query.pattern, function (err, data) {
+                    if (err) {
+                        callback(null, "Error: " + err, "html");
+                    } else {
+                        var i = 0;
+                        var searchResults = "<ul>";
+                        if (data.length > 0) {
+                            var ListUtilities = require('./listutilities');
+                            var lu = new ListUtilities(config);
+                            for (i = 0; i < data.length; ++i) {
+                                searchResults += "<li>";
+                                searchResults += "<a href=\"" + pathPages + data[i].path.substring(1) + "\">";
+                                searchResults += lu.removeDigitPrefix(data[i].title);
+                                searchResults += "</a>";
+                                searchResults += "</li>";
+
+                            }
+                        } else {
+                            searchResults += "<li>No Results Found</li>";
+                        }
+                        searchResults += "</ul>";
+                        // data
+                        callback(null, standardSearchTemplate.replace("<!--body-->", searchResults).replace("<!--search--->", absolutePath + "pages/search").replace("<!--searchpattern--->", req.query.pattern).replace("<!--library--->", GenerateLibrary(config.library)), "html");
+                    }
+                }, offset, limit);
+            } else if (page == "/unknown_reference" && req.query.page) {
+                var content = standardSearchTemplate;
+                var searchForPattern = unescape(req.query.page);
+                if (searchForPattern.lastIndexOf("/") >= 0) {
+                    searchForPattern = searchForPattern.substring(searchForPattern.lastIndexOf("/") + 1);
+                }
+                if (searchForPattern.lastIndexOf(".") > 0) {
+                    searchForPattern = searchForPattern.substring(0, searchForPattern.lastIndexOf("."));
+                }
+                content = content.replace("<!--searchpattern--->", searchForPattern).replace("<!--search--->", absolutePath + "pages/search");
+                content = content.replace("<!--body-->", "Unknown Reference '" + req.query.page + "'");
+                callback(null, content, "html");
+            } else if (page == "/ambiguous_reference" && req.query.page) {
+                var content = standardSearchTemplate;
+                var searchForPattern = unescape(req.query.page);
+                if (searchForPattern.lastIndexOf("/") >= 0) {
+                    searchForPattern = searchForPattern.substring(searchForPattern.lastIndexOf("/") + 1);
+                }
+                if (searchForPattern.lastIndexOf(".") > 0) {
+                    searchForPattern = searchForPattern.substring(0, searchForPattern.lastIndexOf("."));
+                }
+                content = content.replace("<!--searchpattern--->", searchForPattern).replace("<!--search--->", absolutePath + "pages/search");
+                content = content.replace("<!--body-->", "Ambiguous Reference '" + req.query.page + "'");
+                callback(null, content, "html");
+            } else {
+                // ...Else assume its a resource (i.e. JPEG/PNG etc...)
+                this.get(page, callback);
+            }
+        };
+        HelpServerUtil.prototype.getTocLoader = function (page, fromPath, callback) {
+            page = decodeURI(page);
+            var relativePath = page.substring(1);
+            var jsonToJsPage = function (json) {
+                var completedPage = page;
+                var endPath = completedPage.lastIndexOf('/');
+                if (endPath >= 0) {
+                    completedPage = completedPage.substring(endPath + 1);
+                }
+                // Simple populate
+                return "tableOfContents.populateTree(" + json + ',"' + completedPage + '");';
+            };  
+            // USE JSON file as basis for TOC - if query parameters limit view, return a sparse TOC
+            fs.readFile(config.generated + relativePath + "on", "utf8", function (err, data) {
+                if (err) {
+                    callback(err, null);
+                } else {
+                    callback(null, jsonToJsPage(data), "html");
+                }
+            });
+        };
+        // Get a help page or resource (image css). or help resource
+        HelpServerUtil.prototype.get = function (page, callback) {
+            var extension = null;
+            var extensionPos = page.lastIndexOf('.');
+            if (extensionPos > 0)
+                extension = page.substring(extensionPos + 1).toLowerCase();
+            var relativePath = unescape(page.substring(1));
+            if (!extension) {
+                var ListUtilities = require('./listutilities');
+                var lu = new ListUtilities(config);
+                lu.loadOrCreateIndexPage(this.config, decodeURI(page), (this.config.filter_name ? this.config.filter_name : defaultFilter), callback);
+            } else if (extension == "xml_html" && config.events.translateXML) {
+                var ListUtilities = require('./listutilities');
+                var lu = new ListUtilities(config);
+                lu.loadOrCreateTranslatedPage(this.config, decodeURI(page), (this.config.filter_name ? this.config.filter_name : defaultFilter), callback);
+            } else if (extension == "html" || extension == "htm" || extension == "xml") {
+                if (page.indexOf("/index.") > 0) {
+                    if (page.indexOf("/index.xml") > 0
+                        || page.indexOf("/index.md") > 0
+                        || page.indexOf("/index.html") > 0
+                        ) {
+                        // Support <!--list--> generically 
+                        var ListUtilities = require('./listutilities');
+                        var lu = new ListUtilities(config);
+                        lu.loadOrCreateIndexPage(this.config, decodeURI(page), (this.config.filter_name ? this.config.filter_name : defaultFilter), callback);
+                    } else {
+                        fs.readFile(config.source + relativePath, "utf8", function (err, data) {
+                            if (err) {
+                                callback(err, null);
+                            } else {
+                                callback(null, data, "html");
+                            }
+                        });
+                    }
                 } else {
                     fs.readFile(config.source + relativePath, "utf8", function (err, data) {
                         if (err) {
                             callback(err, null);
                         } else {
-                            callback(null, data, "html");
+                            var redirectPos = -1;
+                            if (data.length < 1024) {
+                                // Look for refresh
+                                redirectPos = data.indexOf('<!--redirect:');
+                                if (redirectPos >= 0) {
+                                    data = data.substring(redirectPos + 13);
+                                    redirectPos = data.indexOf('-->');
+                                    if (redirectPos > 0) {
+                                        data = data.substring(0, redirectPos);
+                                    }
+                                    var lastPathPos = data.lastIndexOf('/');
+                                    var basePath = '/';
+                                    if (lastPathPos > 0) {
+                                        basePath = data.substring(0, lastPathPos + 1);
+                                    }
+                                    fs.readFile(config.source + data, "utf8", function (err, dataredirect) {
+                                        if (err) {
+                                            callback(err, null);
+                                        } else {
+                                            callback(null, "<!--base:" + basePath + "-->" + dataredirect, "html");
+                                        }
+                                    });
+                                }
+                            }
+                            if (redirectPos < 0) {
+                                callback(null, data, "html");
+                            }
+                        }
+                    });
+                }
+            } else if (extension == "md") {
+                fs.readFile(config.source + relativePath, "utf8", function (err, data) {
+                    if (err) {
+                        callback(err, null);
+                    } else {
+                        var marked = require('marked');
+                        callback(null, marked(data), "html");
+                    }
+                });
+            } else if (extension == "css" || extension == "svg") {
+                var helpServerFile = relativePath.lastIndexOf("helpserver-");
+                if (helpServerFile > -1) {
+                    loadAssetUTF8(relativePath.substr(helpServerFile), function (err, data) {
+                        if (err) {
+                            console.log(modulePath + 'assets/' + relativePath.substr(helpServerFile));
+                            callback(err, null);
+                        } else {
+                            callback(null, data, extension);
+                        }
+                    });
+                } else {
+                    fs.readFile(config.source + relativePath, "utf8", function (err, data) {
+                        if (err) {
+                            var endPath = relativePath.indexOf('/');
+                            if (endPath >= 0)
+                                relativePath = relativePath.substring(endPath + 1);
+                            loadAssetUTF8(relativePath, function (err, data) {
+                                if (err) {
+                                    console.log(modulePath + 'assets/' + relativePath.substr(helpServerFile));
+                                    callback(err, null);
+                                } else {
+                                    callback(null, data, extension);
+                                }
+                            });
+                        } else {
+                            callback(null, data, extension);
+                        }
+                    });
+                }
+            } else if (extension == "js") {
+                var helpServerFile = relativePath.lastIndexOf("helpserver-");
+                if (helpServerFile > -1) {
+                    fs.readFile(modulePath + 'assets/' + relativePath.substr(helpServerFile), "utf8", function (err, data) {
+                        if (err) {
+                            var endPath = relativePath.indexOf('/');
+                            if (endPath >= 0)
+                                relativePath = relativePath.substring(endPath + 1);
+                            loadAssetUTF8(relativePath, function (err, data) {
+                                if (err) {
+                                    console.log(modulePath + 'assets/' + relativePath.substr(helpServerFile));
+                                    callback(err, null);
+                                } else {
+                                    if (absolutePath.length > 1) {
+                                        if (relativePath.indexOf("helpserver-main.js") >= 0) {
+                                            data = data.replace('absolutePath: "/"', 'absolutePath: "' + absolutePath + '"');
+                                        }
+                                    }
+                                    callback(null, data, extension);
+                                }
+                            });
+                        } else {
+                            if (absolutePath.length > 1) {
+                                if (relativePath.indexOf("helpserver-main.js") >= 0) {
+                                    data = data.replace('absolutePath: "/"', 'absolutePath: "' + absolutePath + '"');
+                                }
+                            }
+                            callback(null, data, "js");
+                        }
+                    });
+                } else {
+                    fs.readFile(config.source + relativePath, "utf8", function (err, data) {
+                        if (err) {
+                            callback(err, null);
+                        } else {
+                            callback(null, data, "js");
                         }
                     });
                 }
             } else {
-                fs.readFile(config.source + relativePath, "utf8", function (err, data) {
+                fs.readFile(config.source + relativePath, function (err, data) {
                     if (err) {
                         callback(err, null);
                     } else {
-                        var redirectPos = -1;
-                        if (data.length < 1024) {
-                            // Look for refresh
-                            redirectPos = data.indexOf('<!--redirect:');
-                            if (redirectPos >= 0) {
-                                data = data.substring(redirectPos + 13);
-                                redirectPos = data.indexOf('-->');
-                                if (redirectPos > 0) {
-                                    data = data.substring(0, redirectPos);
-                                }
-                                var lastPathPos = data.lastIndexOf('/');
-                                var basePath = '/';
-                                if (lastPathPos > 0) {
-                                    basePath = data.substring(0, lastPathPos + 1);
-                                }
-                                fs.readFile(config.source + data, "utf8", function (err, dataredirect) {
-                                    if (err) {
-                                        callback(err, null);
-                                    } else {
-                                        callback(null, "<!--base:" + basePath + "-->" + dataredirect, "html");
-                                    }
-                                });
-                            }
-                        }
-                        if (redirectPos < 0) {
-                            callback(null, data, "html");
-                        }
+                        callback(null, data, "extension");
                     }
-                });
-            }
-        } else if (extension == "md") {
-            fs.readFile(config.source + relativePath, "utf8", function (err, data) {
-                if (err) {
-                    callback(err, null);
-                } else {
-                    var marked = require('marked');
-                    callback(null, marked(data), "html");
                 }
-            });
-        } else if (extension == "css" || extension == "svg") {
-            var helpServerFile = relativePath.lastIndexOf("helpserver-");
-            if (helpServerFile > -1) {
-                loadAssetUTF8(relativePath.substr(helpServerFile), function (err, data) {
-                    if (err) {
-                        console.log(modulePath + 'assets/' + relativePath.substr(helpServerFile));
-                        callback(err, null);
-                    } else {
-                        callback(null, data, extension);
-                    }
-                });
-            } else {
-                fs.readFile(config.source + relativePath, "utf8", function (err, data) {
-                    if (err) {
-                        var endPath = relativePath.indexOf('/');
-                        if (endPath >= 0)
-                            relativePath = relativePath.substring(endPath + 1);
-                        loadAssetUTF8(relativePath, function (err, data) {
-                            if (err) {
-                                console.log(modulePath + 'assets/' + relativePath.substr(helpServerFile));
-                                callback(err, null);
-                            } else {
-                                callback(null, data, extension);
-                            }
-                        });
-                    } else {
-                        callback(null, data, extension);
-                    }
-                });
+                    );
             }
-        } else if (extension == "js") {
-            var helpServerFile = relativePath.lastIndexOf("helpserver-");
-            if (helpServerFile > -1) {
-                fs.readFile(modulePath + 'assets/' + relativePath.substr(helpServerFile), "utf8", function (err, data) {
-                    if (err) {
-                        var endPath = relativePath.indexOf('/');
-                        if (endPath >= 0)
-                            relativePath = relativePath.substring(endPath + 1);
-                        loadAssetUTF8(relativePath, function (err, data) {
-                            if (err) {
-                                console.log(modulePath + 'assets/' + relativePath.substr(helpServerFile));
-                                callback(err, null);
-                            } else {
-                                if (absolutePath.length > 1) {
-                                    if (relativePath.indexOf("helpserver-main.js") >= 0) {
-                                        data = data.replace('absolutePath: "/"', 'absolutePath: "' + absolutePath + '"');
-                                    }
-                                }
-                                callback(null, data, extension);
-                            }
-                        });
-                    } else {
-                        if (absolutePath.length > 1) {
-                            if (relativePath.indexOf("helpserver-main.js") >= 0) {
-                                data = data.replace('absolutePath: "/"', 'absolutePath: "' + absolutePath + '"');
-                            }
-                        }
-                        callback(null, data, "js");
-                    }
-                });
-            } else {
-                fs.readFile(config.source + relativePath, "utf8", function (err, data) {
-                    if (err) {
-                        callback(err, null);
-                    } else {
-                        callback(null, data, "js");
-                    }
-                });
-            }
-        } else {
-            fs.readFile(config.source + relativePath, function (err, data) {
-                if (err) {
-                    callback(err, null);
-                } else {
-                    callback(null, data, "extension");
-                }
-            }
-                );
-        }
-    };
+        };
 
-    var readOptimizedFile = function (filename, acceptEncoding, callback) {
-        if (!acceptEncoding) {
-            acceptEncoding = '';
-        }
-        // If caller accepts 'deflated' files
-        if (acceptEncoding.match(/\bgzip\b/)) {
-            fs.readFile(filename + '.gzip', function (err, data) {
-                if (!err) {
-                    callback(err, data, 'gzip');
-                } else {
-                    // fallback to the source file
-                    if (acceptEncoding.match(/\bdeflate\b/)) {
-                        // .. First look for .deflate file
-                        fs.readFile(filename + '.deflate', function (err, data) {
-                            if (!err) {
-                                callback(err, data, 'deflate');
-                            } else {
-                                // fallback to the source file
-                                fs.readFile(filename, 'utf8', function (err, data) {
-                                    callback(err, data, null);
-                                });
-                            }
+        var readOptimizedFile = function (filename, acceptEncoding, callback) {
+            if (!acceptEncoding) {
+                acceptEncoding = '';
+            }
+            // If caller accepts 'deflated' files
+            if (acceptEncoding.match(/\bgzip\b/)) {
+                fs.readFile(filename + '.gzip', function (err, data) {
+                    if (!err) {
+                        callback(err, data, 'gzip');
+                    } else {
+                        // fallback to the source file
+                        if (acceptEncoding.match(/\bdeflate\b/)) {
+                            // .. First look for .deflate file
+                            fs.readFile(filename + '.deflate', function (err, data) {
+                                if (!err) {
+                                    callback(err, data, 'deflate');
+                                } else {
+                                    // fallback to the source file
+                                    fs.readFile(filename, 'utf8', function (err, data) {
+                                        callback(err, data, null);
+                                    });
+                                }
+                            });
+                        }
+                    }
+                });
+            } else if (acceptEncoding.match(/\bdeflate\b/)) {
+                // .. First look for .deflate file
+                fs.readFile(filename + '.deflate', function (err, data) {
+                    if (!err) {
+                        callback(err, data, 'deflate');
+                    } else {
+                        // fallback to the source file
+                        fs.readFile(filename, 'utf8', function (err, data) {
+                            callback(err, data, null);
                         });
                     }
-                }
-            });
-        } else if (acceptEncoding.match(/\bdeflate\b/)) {
-            // .. First look for .deflate file
-            fs.readFile(filename + '.deflate', function (err, data) {
-                if (!err) {
-                    callback(err, data, 'deflate');
-                } else {
-                    // fallback to the source file
-                    fs.readFile(filename, 'utf8', function (err, data) {
-                        callback(err, data, null);
-                    });
-                }
-            });
-        } else {
-            // Just read the file.
-            fs.readFile(filename, 'utf8', function (err, data) {
-                callback(err, data, null);
-            });
-        }
-    };
+                });
+            } else {
+                // Just read the file.
+                fs.readFile(filename, 'utf8', function (err, data) {
+                    callback(err, data, null);
+                });
+            }
+        };
   
-    // Get the table of contents
-    HelpServerUtil.prototype.gettree = function (page, acceptEncoding, callback) {
-        readOptimizedFile(this.config.generated + (this.config.filter_name ? this.config.filter_name : defaultFilter) + this.config.htmlfile, acceptEncoding, callback);
-    };
+        // Get the table of contents
+        HelpServerUtil.prototype.gettree = function (page, acceptEncoding, callback) {
+            readOptimizedFile(this.config.generated + (this.config.filter_name ? this.config.filter_name : defaultFilter) + this.config.htmlfile, acceptEncoding, callback);
+        };
 
-    // Get the table of contents
-    HelpServerUtil.prototype.gettreejson = function (page, acceptEncoding, callback) {
-        readOptimizedFile(this.config.generated + (this.config.filter_name ? this.config.filter_name : defaultFilter) + this.config.structurefile, acceptEncoding, callback);
-    };
+        // Get the table of contents
+        HelpServerUtil.prototype.gettreejson = function (page, acceptEncoding, callback) {
+            readOptimizedFile(this.config.generated + (this.config.filter_name ? this.config.filter_name : defaultFilter) + this.config.structurefile, acceptEncoding, callback);
+        };
 
-    HelpServerUtil.prototype.getAltToc = function (page, acceptEncoding, callback) {
-        var extensionPos = page.lastIndexOf('.');
-        if (extensionPos > 0) {
-            if (page.substring(extensionPos).toLowerCase() == '.json') {
-                page = page.substring(0, extensionPos) + "/";
+        HelpServerUtil.prototype.getAltToc = function (page, acceptEncoding, callback) {
+            var extensionPos = page.lastIndexOf('.');
+            if (extensionPos > 0) {
+                if (page.substring(extensionPos).toLowerCase() == '.json') {
+                    page = page.substring(0, extensionPos) + "/";
+                }
             }
-        }
-        var generatedTopic = config.generated + replaceAll(page, "/", "_") + (this.config.filter_name ? this.config.filter_name : defaultFilter) + "tree.json";
-        readOptimizedFile(generatedTopic, acceptEncoding, callback);
-    };
+            var generatedTopic = config.generated + replaceAll(page, "/", "_") + (this.config.filter_name ? this.config.filter_name : defaultFilter) + "tree.json";
+            readOptimizedFile(generatedTopic, acceptEncoding, callback);
+        };
 
    
-    // Generate table of contents and optionally populate the search engine with plaintext version of the data
-    HelpServerUtil.prototype.generate = function (callback) {
-        if (!callback) {
-            callback = function (err, result) {
-                if (err) {
-                    console.log("Error :" + err);
-                } else {
-                    console.log("Generate complete!");
-                }
-            };
-        }
-        if (typeof (callback) !== 'function') {
-            throw new Error('First parameter must be a callback function');
-        }
-        var buildlist = require('./buildlist');
-        buildlist(config, callback);
-    };
-  
-    // After any indices are generated, we should make sure to update the filter
-    HelpServerUtil.prototype.generateFiltered = function (callback) {
-        var filterNames = [];
-        var rememberErr = null;
-        var i;
-
-        if (!callback) {
-            callback = function (err, result) {
-                if (err) {
-                    console.log("Error :" + err);
-                } else {
-                    console.log("Generate complete!");
-                }
-            };
-        }
-
-        // Get all the 'filters' that we need to regenerate...
-        for (var configName in filters) {
-            filterNames.push({ filterName: configName, altToc: null });
-            var altTocs = config.tocData.altTocs;
-            for (i = 0; i < altTocs.length; ++i) {
-                filterNames.push({ filterName: configName, altToc: altTocs[i] });
-            }
-        }
-
-        // look through all the filters...
-        if (filterNames.length > 0) {
-            var async = require('async');
-            var zlib = require('zlib');
-            var elasticquery = require("./elasticquery");
-            var ListUtilities = require('./listutilities');
-            var topicsPath = config.generated + "topics/";
-
-            console.log('Generating filters');
-
-            async.eachSeries(filterNames, function (filterEntry, callbackLoop) {
-                var cfg = filters[filterEntry.filterName];
-                console.log('Generate filter for ' + filterEntry.filterName);
-
-                var handleQueryResults = function (err, results) {
+        // Generate table of contents and optionally populate the search engine with plaintext version of the data
+        HelpServerUtil.prototype.generate = function (callback) {
+            if (!callback) {
+                callback = function (err, result) {
                     if (err) {
-                        rememberErr = err;
-                        callbackLoop();
-                        return;
+                        console.log("Error :" + err);
+                    } else {
+                        console.log("Generate complete!");
                     }
-                    var lu = new ListUtilities(cfg);
-                    results.sort(function compare(a, b) {
-                        if (a.title < b.title)
-                            return -1;
-                        if (a.title > b.title)
-                            return 1;
-                        return 0;
-                    });
+                };
+            }
+            if (typeof (callback) !== 'function') {
+                throw new Error('First parameter must be a callback function');
+            }
+            var buildlist = require('./buildlist');
+            buildlist(config, callback);
+        };
+  
+        // After any indices are generated, we should make sure to update the filter
+        HelpServerUtil.prototype.generateFiltered = function (callback) {
+            var filterNames = [];
+            var rememberErr = null;
+            var i;
 
-                    var tree = lu.treeFromList(results, filterEntry.altToc);
-                    var treeUL = lu.treeToUL(tree.children);
+            if (!callback) {
+                callback = function (err, result) {
+                    if (err) {
+                        console.log("Error :" + err);
+                    } else {
+                        console.log("Generate complete!");
+                    }
+                };
+            }
 
-                    console.log('Saving filtered list...');
+            // Get all the 'filters' that we need to regenerate...
+            for (var configName in filters) {
+                filterNames.push({ filterName: configName, altToc: null });
+                var altTocs = config.tocData.altTocs;
+                for (i = 0; i < altTocs.length; ++i) {
+                    filterNames.push({ filterName: configName, altToc: altTocs[i] });
+                }
+            }
 
-                    fs.readFile(cfg.templatefile, "utf8", function (err, templateData) {
+            // look through all the filters...
+            if (filterNames.length > 0) {
+                var async = require('async');
+                var zlib = require('zlib');
+                var elasticquery = require("./elasticquery");
+                var ListUtilities = require('./listutilities');
+                var topicsPath = config.generated + "topics/";
+
+                console.log('Generating filters');
+
+                async.eachSeries(filterNames, function (filterEntry, callbackLoop) {
+                    var cfg = filters[filterEntry.filterName];
+                    console.log('Generate filter for ' + filterEntry.filterName);
+
+                    var handleQueryResults = function (err, results) {
                         if (err) {
                             rememberErr = err;
                             callbackLoop();
                             return;
                         }
-                        treeUL = templateData.replace("{{placeholder}}", treeUL);
-                        var filterFilebaseName = cfg.generated + cfg.filter_name + cfg.htmlfile;
-                        var filterStuctureName = cfg.generated + cfg.filter_name + cfg.structurefile;
-                        if (filterEntry.altToc) {
-                            var altTocClean = replaceAll(filterEntry.altToc, '/', '_')
-                            filterFilebaseName = cfg.generated + altTocClean + cfg.filter_name + cfg.htmlfile;
-                            filterStuctureName = cfg.generated + altTocClean + cfg.filter_name + cfg.structurefile;
-                        }
-                        fs.writeFile(filterFilebaseName, treeUL, function (err) {
-                            zlib.deflate(treeUL, function (err, packeddata) {
-                                fs.writeFile(filterFilebaseName + '.deflate', packeddata, function (err) {
-                                    if (err) {
-                                        rememberErr = err;
-                                        callbackLoop();
-                                        return;
-                                    }
-                                    var jsonString = JSON.stringify(tree);
-                                    console.log('Zipping json...');
-                                    fs.writeFile(filterStuctureName, jsonString, function (err) {
-                                        zlib.deflate(jsonString, function (err, packeddata2) {
-                                            console.log('DEFLATE...');
-                                            fs.writeFile(filterStuctureName + ".deflate", packeddata2, function (err) {
-                                                if (err) {
-                                                    rememberErr = err;
-                                                }
-                                                zlib.gzip(jsonString, function (err, packeddata3) {
-                                                    console.log('GZIP...');
-                                                    fs.writeFile(filterStuctureName + ".gzip", packeddata3, function (err) {
-                                                        if (err) {
-                                                            rememberErr = err;
-                                                        }
-                                                        callbackLoop();
+                        var lu = new ListUtilities(cfg);
+                        results.sort(function compare(a, b) {
+                            if (a.title < b.title)
+                                return -1;
+                            if (a.title > b.title)
+                                return 1;
+                            return 0;
+                        });
+
+                        var tree = lu.treeFromList(results, filterEntry.altToc);
+                        var treeUL = lu.treeToUL(tree.children);
+
+                        console.log('Saving filtered list...');
+
+                        fs.readFile(cfg.templatefile, "utf8", function (err, templateData) {
+                            if (err) {
+                                rememberErr = err;
+                                callbackLoop();
+                                return;
+                            }
+                            treeUL = templateData.replace("{{placeholder}}", treeUL);
+                            var filterFilebaseName = cfg.generated + cfg.filter_name + cfg.htmlfile;
+                            var filterStuctureName = cfg.generated + cfg.filter_name + cfg.structurefile;
+                            if (filterEntry.altToc) {
+                                var altTocClean = replaceAll(filterEntry.altToc, '/', '_')
+                                filterFilebaseName = cfg.generated + altTocClean + cfg.filter_name + cfg.htmlfile;
+                                filterStuctureName = cfg.generated + altTocClean + cfg.filter_name + cfg.structurefile;
+                            }
+                            fs.writeFile(filterFilebaseName, treeUL, function (err) {
+                                zlib.deflate(treeUL, function (err, packeddata) {
+                                    fs.writeFile(filterFilebaseName + '.deflate', packeddata, function (err) {
+                                        if (err) {
+                                            rememberErr = err;
+                                            callbackLoop();
+                                            return;
+                                        }
+                                        var jsonString = JSON.stringify(tree);
+                                        console.log('Zipping json...');
+                                        fs.writeFile(filterStuctureName, jsonString, function (err) {
+                                            zlib.deflate(jsonString, function (err, packeddata2) {
+                                                console.log('DEFLATE...');
+                                                fs.writeFile(filterStuctureName + ".deflate", packeddata2, function (err) {
+                                                    if (err) {
+                                                        rememberErr = err;
+                                                    }
+                                                    zlib.gzip(jsonString, function (err, packeddata3) {
+                                                        console.log('GZIP...');
+                                                        fs.writeFile(filterStuctureName + ".gzip", packeddata3, function (err) {
+                                                            if (err) {
+                                                                rememberErr = err;
+                                                            }
+                                                            callbackLoop();
+                                                        });
                                                     });
                                                 });
                                             });
@@ -1274,605 +1311,348 @@ module.exports = function (config) {
                                 });
                             });
                         });
-                    });
-                };
-                if (cfg.topPage) {
-                    var manifestFile = config.generated + "manifest/_" + replaceAll(unescape(cfg.topPage), '/', '_').replace(".html", ".json");
-                    fs.readFile(manifestFile, function (err, data) {
-                        if (err)
-                            console.log("Error reading " + manifestFile);
-                        if (!err && data && data !== "")
-                            cfg.topPageMetadata = JSON.parse(data);
+                    };
+                    if (cfg.topPage) {
+                        var manifestFile = config.generated + "manifest/_" + replaceAll(unescape(cfg.topPage), '/', '_').replace(".html", ".json");
+                        fs.readFile(manifestFile, function (err, data) {
+                            if (err)
+                                console.log("Error reading " + manifestFile);
+                            if (!err && data && data !== "")
+                                cfg.topPageMetadata = JSON.parse(data);
+                            elasticquery(cfg, '', handleQueryResults, 0, 100000);
+                        });
+                    } else {
                         elasticquery(cfg, '', handleQueryResults, 0, 100000);
-                    });
-                } else {
-                    elasticquery(cfg, '', handleQueryResults, 0, 100000);
-                }
-            }, function () {
-                if (rememberErr)
-                    callback(rememberErr, null);
-                else
-                    callback(null, true);
-            });
-        } else {
-            console.log('No filters defined');
+                    }
+                }, function () {
+                    if (rememberErr)
+                        callback(rememberErr, null);
+                    else
+                        callback(null, true);
+                });
+            } else {
+                console.log('No filters defined');
+            };
         };
-    };
   
   
-    // Generate entire index (generate had to be run) 
-    HelpServerUtil.prototype.buildindex = function (callback) {
-        var genFiltered = this.generateFiltered;
-        if (!callback) {
-            callback = function (err, result) {
-                if (err) {
-                    console.log("Error :" + err);
-                } else {
-                    console.log("BuildIndex complete!");
-                }
-            };
-        }
-        if (typeof (callback) !== 'function') {
-            throw new Error('First parameter must be a callback function');
-        }
-        var buildlist = require('./buildindex');
-        buildlist(config, function (err, info) {
-            genFiltered(function (err2, result2) {
-                callback(err, info);
+        // Generate entire index (generate had to be run) 
+        HelpServerUtil.prototype.buildindex = function (callback) {
+            var genFiltered = this.generateFiltered;
+            if (!callback) {
+                callback = function (err, result) {
+                    if (err) {
+                        console.log("Error :" + err);
+                    } else {
+                        console.log("BuildIndex complete!");
+                    }
+                };
+            }
+            if (typeof (callback) !== 'function') {
+                throw new Error('First parameter must be a callback function');
+            }
+            var buildlist = require('./buildindex');
+            buildlist(config, function (err, info) {
+                genFiltered(function (err2, result2) {
+                    callback(err, info);
+                });
             });
-        });
-    };
+        };
   
-    // refresh help from repo, and rebuild TOC 
-    HelpServerUtil.prototype.refresh = function (callback) {
-        // Remove all generated pages....
-        var ListUtilities = require('./listutilities');
-        var lu = new ListUtilities(config);
-        lu.cleanupIndexPages(config);
-        // generated pages will be rebuilt on demand...
-        var rebuildContent = function (help) {
-            if( config.events.beforeRefresh ) {
-                config.events.beforeRefresh();
-            }            
-            var handler = function (err, result) {
-                if (err) {
-                    callback(err, null);
-                } else {
-                    callback(null, { updated: true });
+        // refresh help from repo, and rebuild TOC 
+        HelpServerUtil.prototype.refresh = function (callback) {
+            // Remove all generated pages....
+            var ListUtilities = require('./listutilities');
+            var lu = new ListUtilities(config);
+            lu.cleanupIndexPages(config);
+            // generated pages will be rebuilt on demand...
+            var rebuildContent = function (help) {
+                if (config.events.beforeRefresh) {
+                    config.events.beforeRefresh();
                 }
-            };
-            var buildlist = require('./buildlist');
-            buildlist(config, function (err, result) {
-                if (config.search) {
-                    var updateindex = require('./updateindex');
-                    updateindex(config, function () {
+                var handler = function (err, result) {
+                    if (err) {
+                        callback(err, null);
+                    } else {
+                        callback(null, { updated: true });
+                    }
+                };
+                var buildlist = require('./buildlist');
+                buildlist(config, function (err, result) {
+                    if (config.search) {
+                        var updateindex = require('./updateindex');
+                        updateindex(config, function () {
+                            help.generateFiltered(function (err2, result2) {
+                                handler(err, result);
+                            })
+                        });
+                    } else {
                         help.generateFiltered(function (err2, result2) {
                             handler(err, result);
-                        })
+                        });
+                    }
+                });
+            };
+            // optional step 1 - update the content using git...
+            if (config.useGit) {
+                var updatesource = require('./updatesource');
+                var help = this;
+                updatesource(config, function (err, result) {
+                    if (err) {
+                        console.log('Update did not work ' + err);
+                        serverHealth.gitResult = 'Update did not work ' + err;
+                    } else {
+                        console.log('Update succeeded!');
+                        serverHealth.gitResult = 'Update succeeded!';
+                        serverHealth.gitPullCount++;
+                        rebuildContent(help);
+                        ++serverHealth.revisionCount;
+                        // Force a reload of the tree cache
+                        treeData = {};
+                        actualLinks = null;
+                        fs.writeFile(config.generated + "revision.txt", "" + serverHealth.revisionCount, function (err) {
+                            if (err) {
+                                console.log("Error saving revision");
+                            }
+                        });
+                    }
+                });
+            } else {
+                rebuildContent(this);
+            }
+        };
+
+        // perform a pattern seach, returns 'path' portion of help
+        HelpServerUtil.prototype.search = function (pattern, callback, startAt, limit) {
+            if (!callback || typeof (callback) !== 'function') {
+                throw new Error('Second parameter must be a callback function');
+            }
+            if (!pattern || typeof (pattern) !== 'string') {
+                callback(new Error('First parameter must be a string'), []);
+            } else if (!config.hasOwnProperty('search')) {
+                callback(new Error('Search were settings not specified'), []);
+            } else {
+                var elasticquery = require("./elasticquery");
+                if (limit && limit > 0 && startAt >= 0)
+                    elasticquery(this.config, pattern, callback, startAt, limit);
+                else
+                    elasticquery(this.config, pattern, callback);
+            }
+        };
+   
+        // Get metadata for am item
+        HelpServerUtil.prototype.getmetadata = function (path, callback) {
+            var manifestFile = config.generated + "manifest/" + replaceAll(unescape(path), '/', '_').replace(".html", ".json");
+            fs.readFile(manifestFile, function (err, data) {
+                if (err || !data) {
+                    callback("{}");
+                } else {
+                    var textData = data;
+                    if (!textData.indexOf)
+                        textData = textData.toString('utf8');
+                    var obj = JSON.parse(textData);
+                    if (obj.metadata)
+                        callback(obj.metadata);
+                    else
+                        callback({});
+                }
+            });
+        };
+  
+ 
+        // Set metadata for am item
+        HelpServerUtil.prototype.setmetadata = function (path, metadata, callback, batchMode) {
+            var help = this;
+            debugger;
+            try {
+                if (path && path !== '/') {
+                    var relativePath = unescape(path.substring(1));
+                    var fn = config.source + relativePath;
+                    fs.readFile(fn, "utf8", function (err, data) {
+                        if (err) {
+                            console.log('setmetadata ' + err);
+                            callback(false);
+                        } else {
+                            var newMetaData = '<!---HELPMETADATA: ' + JSON.stringify(metadata) + ' --->';
+                            var pos = data.lastIndexOf('<!---HELPMETADATA:');
+                            var newData = data;
+                            if (pos >= 0) {
+                                var subStr = data.substring(pos);
+                                var endPos = subStr.indexOf('--->');
+                                if (endPos >= 0) {
+                                    subStr = subStr.substring(0, endPos + 4);
+                                    newData = data.replace(subStr, newMetaData);
+                                }
+                            } else {
+                                var pos = data.lastIndexOf('</body');
+                                if (pos > 0) {
+                                    newData = data.substring(0, pos) + "\n" + newMetaData + "\n" + data.substring(pos);
+                                } else {
+                                    newData = data + "\n" + newMetaData;
+                                }
+                            }
+                            if (newData != data) {
+                                debugger;
+                                fs.writeFile(fn, newData, function () {
+                                    if (err) {
+                                        console.log('setmetadata write ' + err);
+                                        callback(metadata);
+                                    } else if (batchMode || metadata.norefresh) {
+                                        callback(metadata);
+                                    } else {
+                                        help.refresh(function () {
+                                            callback(metadata);
+                                        });
+                                    }
+                                });
+                            } else {
+                                callback(metadata);
+                            }
+                        }
                     });
                 } else {
-                    help.generateFiltered(function (err2, result2) {
-                        handler(err, result);
+                    // Array support - for multiple pages...
+                    var sanitizedCommands = [];
+                    var outputArray = [];
+                    var async = require('async');
+                    var sresult = metadata.toString();
+                    if (metadata && metadata.pages && metadata.pages.length) {
+                        var i;
+                        if ((typeof (metadata.pages[0])) == "string") {
+                            // Get metadata for multiple pages....
+                            for (i = 0; i < metadata.pages.length; ++i) {
+                                if (typeof (metadata.pages[i]) == "string") {
+                                    sanitizedCommands.push(metadata.pages[i]);
+                                }
+                            }
+                            async.eachSeries(sanitizedCommands, function (path, callbackLoop) {
+                                help.getmetadata(path, function (data) {
+                                    outputArray.push({ path: path, metadata: data });
+                                    callbackLoop();
+                                });
+                            }, function () {
+                                callback(outputArray);
+                            });
+                        } else {
+                            // Set metadata for multiple pages....
+                            for (i = 0; i < metadata.pages.length; ++i) {
+                                var mdata = metadata.pages[i];
+                                if (typeof (mdata) == "object") {
+                                    if (mdata.path && mdata.metadata && typeof mdata.metadata == "object") {
+                                        sanitizedCommands.push(mdata);
+                                    }
+                                }
+                            }
+                            var lastCmd = sanitizedCommands[sanitizedCommands.length - 1].path;
+                            async.eachSeries(sanitizedCommands, function (mdata, callbackLoop) {
+                                if (metadata.patch) {
+                                    help.patchmetadata(mdata.path, mdata.metadata, function (result) {
+                                        outputArray.push({ path: path, set: result });
+                                        callbackLoop();
+                                    }, (mdata.path !== lastCmd || metadata.norefresh));
+                                } else {
+                                    help.setmetadata(mdata.path, mdata.metadata, function (result) {
+                                        outputArray.push({ path: path, set: result });
+                                        callbackLoop();
+                                    }, (mdata.path !== lastCmd || metadata.norefresh));
+                                }
+                            }, function () {
+                                callback(outputArray);
+                            });
+                        }
+                    } else {
+                        callback([]);
+                    }
+                }
+            } catch (err) {
+                console.log(err + " data " + JSON.stringify(metadata));
+                callback(false);
+            }
+        };
+
+        // Patch metadata gets the old metadata, and merges in changes...  
+        HelpServerUtil.prototype.patchmetadata = function (path, metadata, callback, batchMode) {
+            var help = this;
+            help.getmetadata(path, function (data) {
+                var propName;
+                for (propName in metadata) {
+                    data[propName] = metadata[propName];
+                }
+                help.setmetadata(path, data, function (result) {
+                    callback(data);
+                }, (batchMode || metadata.norefresh));
+            });
+        };
+
+
+        HelpServerUtil.prototype.isAdmin = function () {
+            return this.config.isAdmin ? true : false;
+        };
+
+        // Create required table of contents and index files...
+        HelpServerUtil.prototype.initializeIfFirstTime = function (callback) {
+            var genFiltered = this.generateFiltered;
+            this.status(function (stats) {
+                if (stats.htmlTreeExists) {
+                    // we don't need to regenerated the tree
+                    if (stats.filtersMissing > 0) {
+                        genFiltered(function (err2, result2) {
+                            callback(err2, result2);
+                        });
+                    } else {
+                        callback(null, true);
+                    }
+                } else if (config.search && !stats.indexServiceRunning) {
+                    callback(new Error('Cannot initialize indexes without ' + config.search.provider + ' instance running.'), false);
+                } else {
+                    help.generate(function (err, result) {
+                        if (err)
+                            callback(err, false);
+                        else {
+                            console.log('Help generated');
+                            // Then build the index
+                            help.buildindex(function (err, result) {
+                                if (err)
+                                    callback(err, false);
+                                else {
+                                    if (stats.filtersMissing > 0) {
+                                        genFiltered(function (err2, result2) {
+                                            callback(err2, result2);
+                                        });
+                                    } else {
+                                        callback(null, true);
+                                    }
+                                }
+                            });
+                        }
                     });
                 }
             });
         };
-        // optional step 1 - update the content using git...
-        if (config.useGit) {
-            var updatesource = require('./updatesource');
-            var help = this;
-            updatesource(config, function (err, result) {
-                if (err) {
-                    console.log('Update did not work ' + err);
-                    serverHealth.gitResult = 'Update did not work ' + err;
-                } else {
-                    console.log('Update succeeded!');
-                    serverHealth.gitResult = 'Update succeeded!';
-                    serverHealth.gitPullCount++;
-                    rebuildContent(help);
-                    ++serverHealth.revisionCount;
-                    // Force a reload of the tree cache
-                    treeData = {};
-                    actualLinks = null;
-                    fs.writeFile(config.generated + "revision.txt", "" + serverHealth.revisionCount, function (err) {
-                        if (err) {
-                            console.log("Error saving revision");
-                        }
-                    });
-                }
-            });
-        } else {
-            rebuildContent(this);
-        }
-    };
 
-    // perform a pattern seach, returns 'path' portion of help
-    HelpServerUtil.prototype.search = function (pattern, callback, startAt, limit) {
-        if (!callback || typeof (callback) !== 'function') {
-            throw new Error('Second parameter must be a callback function');
-        }
-        if (!pattern || typeof (pattern) !== 'string') {
-            callback(new Error('First parameter must be a string'), []);
-        } else if (!config.hasOwnProperty('search')) {
-            callback(new Error('Search were settings not specified'), []);
-        } else {
-            var elasticquery = require("./elasticquery");
-            if (limit && limit > 0 && startAt >= 0)
-                elasticquery(this.config, pattern, callback, startAt, limit);
-            else
-                elasticquery(this.config, pattern, callback);
-        }
-    };
-   
-    // Get metadata for am item
-    HelpServerUtil.prototype.getmetadata = function (path, callback) {
-        var manifestFile = config.generated + "manifest/" + replaceAll(unescape(path), '/', '_').replace(".html", ".json");
-        fs.readFile(manifestFile, function (err, data) {
-            if (err || !data) {
-                callback("{}");
-            } else {
-                var textData = data;
-                if (!textData.indexOf)
-                    textData = textData.toString('utf8');
-                var obj = JSON.parse(textData);
-                if (obj.metadata)
-                    callback(obj.metadata);
-                else
-                    callback({});
-            }
-        });
-    };
-  
- 
-    // Set metadata for am item
-    HelpServerUtil.prototype.setmetadata = function (path, metadata, callback, batchMode) {
-        var help = this;
-        debugger;
-        try {
-            if (path && path !== '/') {
-                var relativePath = unescape(path.substring(1));
-                var fn = config.source + relativePath;
-                fs.readFile(fn, "utf8", function (err, data) {
-                    if (err) {
-                        console.log('setmetadata ' + err);
-                        callback(false);
-                    } else {
-                        var newMetaData = '<!---HELPMETADATA: ' + JSON.stringify(metadata) + ' --->';
-                        var pos = data.lastIndexOf('<!---HELPMETADATA:');
-                        var newData = data;
-                        if (pos >= 0) {
-                            var subStr = data.substring(pos);
-                            var endPos = subStr.indexOf('--->');
-                            if (endPos >= 0) {
-                                subStr = subStr.substring(0, endPos + 4);
-                                newData = data.replace(subStr, newMetaData);
-                            }
-                        } else {
-                            var pos = data.lastIndexOf('</body');
-                            if (pos > 0) {
-                                newData = data.substring(0, pos) + "\n" + newMetaData + "\n" + data.substring(pos);
-                            } else {
-                                newData = data + "\n" + newMetaData;
-                            }
-                        }
-                        if (newData != data) {
-                            debugger;
-                            fs.writeFile(fn, newData, function () {
-                                if (err) {
-                                    console.log('setmetadata write ' + err);
-                                    callback(metadata);
-                                } else if (batchMode || metadata.norefresh) {
-                                    callback(metadata);
-                                } else {
-                                    help.refresh(function () {
-                                        callback(metadata);
-                                    });
-                                }
-                            });
-                        } else {
-                            callback(metadata);
-                        }
-                    }
-                });
-            } else {
-                // Array support - for multiple pages...
-                var sanitizedCommands = [];
-                var outputArray = [];
-                var async = require('async');
-                var sresult = metadata.toString();
-                if (metadata && metadata.pages && metadata.pages.length) {
-                    var i;
-                    if ((typeof (metadata.pages[0])) == "string") {
-                        // Get metadata for multiple pages....
-                        for (i = 0; i < metadata.pages.length; ++i) {
-                            if (typeof (metadata.pages[i]) == "string") {
-                                sanitizedCommands.push(metadata.pages[i]);
-                            }
-                        }
-                        async.eachSeries(sanitizedCommands, function (path, callbackLoop) {
-                            help.getmetadata(path, function (data) {
-                                outputArray.push({ path: path, metadata: data });
-                                callbackLoop();
-                            });
-                        }, function () {
-                            callback(outputArray);
-                        });
-                    } else {
-                        // Set metadata for multiple pages....
-                        for (i = 0; i < metadata.pages.length; ++i) {
-                            var mdata = metadata.pages[i];
-                            if (typeof (mdata) == "object") {
-                                if (mdata.path && mdata.metadata && typeof mdata.metadata == "object") {
-                                    sanitizedCommands.push(mdata);
-                                }
-                            }
-                        }
-                        var lastCmd = sanitizedCommands[sanitizedCommands.length - 1].path;
-                        async.eachSeries(sanitizedCommands, function (mdata, callbackLoop) {
-                            if (metadata.patch) {
-                                help.patchmetadata(mdata.path, mdata.metadata, function (result) {
-                                    outputArray.push({ path: path, set: result });
-                                    callbackLoop();
-                                }, (mdata.path !== lastCmd || metadata.norefresh));
-                            } else {
-                                help.setmetadata(mdata.path, mdata.metadata, function (result) {
-                                    outputArray.push({ path: path, set: result });
-                                    callbackLoop();
-                                }, (mdata.path !== lastCmd || metadata.norefresh));
-                            }
-                        }, function () {
-                            callback(outputArray);
-                        });
-                    }
-                } else {
-                    callback([]);
+
+        HelpServerUtil.prototype.onSendExpress = function (res) {
+            if (this.config.responseHeader) {
+                var headerName;
+                for (headerName in this.config.responseHeader) {
+                    res.header(headerName, this.config.responseHeader[headerName]);
                 }
             }
-        } catch (err) {
-            console.log(err + " data " + JSON.stringify(metadata));
-            callback(false);
-        }
-    };
+        };
 
-    // Patch metadata gets the old metadata, and merges in changes...  
-    HelpServerUtil.prototype.patchmetadata = function (path, metadata, callback, batchMode) {
-        var help = this;
-        help.getmetadata(path, function (data) {
-            var propName;
-            for (propName in metadata) {
-                data[propName] = metadata[propName];
-            }
-            help.setmetadata(path, data, function (result) {
-                callback(data);
-            }, (batchMode || metadata.norefresh));
-        });
-    };
+        var help = new HelpServerUtil(config);
 
+        var expressHandler = {
+            "blank": function (hlp, path, req, res) {
+                hlp.onSendExpress(res);
+                res.send('&nbsp;');
+            },
 
-    HelpServerUtil.prototype.isAdmin = function () {
-        return this.config.isAdmin ? true : false;
-    };
-
-    // Create required table of contents and index files...
-    HelpServerUtil.prototype.initializeIfFirstTime = function (callback) {
-        var genFiltered = this.generateFiltered;
-        this.status(function (stats) {
-            if (stats.htmlTreeExists) {
-                // we don't need to regenerated the tree
-                if (stats.filtersMissing > 0) {
-                    genFiltered(function (err2, result2) {
-                        callback(err2, result2);
-                    });
-                } else {
-                    callback(null, true);
-                }
-            } else if (config.search && !stats.indexServiceRunning) {
-                callback(new Error('Cannot initialize indexes without ' + config.search.provider + ' instance running.'), false);
-            } else {
-                help.generate(function (err, result) {
-                    if (err)
-                        callback(err, false);
-                    else {
-                        console.log('Help generated');
-                        // Then build the index
-                        help.buildindex(function (err, result) {
-                            if (err)
-                                callback(err, false);
-                            else {
-                                if (stats.filtersMissing > 0) {
-                                    genFiltered(function (err2, result2) {
-                                        callback(err2, result2);
-                                    });
-                                } else {
-                                    callback(null, true);
-                                }
-                            }
-                        });
+            "main": function (hlp, path, req, res) {
+                loadAssetUTF8("main.html", function (err, data) {
+                    if (absolutePath.length > 1) {
+                        data = replaceAll(data, '"/assets', '"' + absolutePath + "assets");
                     }
-                });
-            }
-        });
-    };
-
-
-    HelpServerUtil.prototype.onSendExpress = function (res) {
-        if (this.config.responseHeader) {
-            var headerName;
-            for (headerName in this.config.responseHeader) {
-                res.header(headerName, this.config.responseHeader[headerName]);
-            }
-        }
-    };
-
-    var help = new HelpServerUtil(config);
-
-    var expressHandler = {
-        "blank": function (hlp, path, req, res) {
-            hlp.onSendExpress(res);
-            res.send('&nbsp;');
-        },
-
-        "main": function (hlp, path, req, res) {
-            loadAssetUTF8("main.html", function (err, data) {
-                if (absolutePath.length > 1) {
-                    data = replaceAll(data, '"/assets', '"' + absolutePath + "assets");
-                }
-                if (err) {
-                    res.status(404).send(path + ' Not found');
-                } else {
-                    res.type('html');
-                    hlp.onSendExpress(res);
-                    res.send(data);
-                }
-            });
-        },
-        "pages": function (hlp, path, req, res) {
-            hlp.getPage(path, req.path, req, function (err, data, type) {
-                if (err) {
-                    hlp.onSendExpress(res);
-                    res.send(err);
-                } else {
-                    if (type) {
-                        res.type(type);
-                    }
-                    hlp.onSendExpress(res);
-                    res.send(data);
-                }
-            });
-        },
-        "appcache": function (hlp, path, req, res) {
-            var manifest = replaceAll(pagesManifest, "__filter__", path.substring(1).replace(".appcache", ""));
-            manifest = manifest.replace("__helpversionnumber__", "" + serverHealth.revisionCount);
-            res.type("text/cache-manifest");
-            hlp.onSendExpress(res);
-            res.send(manifest);
-        },
-        "toc_loader": function (hlp, path, req, res) {
-            hlp.getTocLoader(path, req.path, function (err, data, type) {
-                if (err) {
-                    hlp.onSendExpress(res);
-                    res.send(err);
-                } else {
-                    if (type) {
-                        res.type(type);
-                    }
-                    hlp.onSendExpress(res);
-                    res.send(data);
-                }
-            });
-        },
-        "edit": function (hlp, path, req, res) {
-            loadAssetUTF8("edit.html", function (err, data) {
-                if (err) {
-                    res.status(404).send(path + ' Not found');
-                } else {
-                    res.type('html');
-                    hlp.onSendExpress(res);
-                    res.send(data);
-                }
-            });
-        },
-        "search_panel": function (hlp, path, req, res) {
-            loadAssetUTF8("search.html", function (err, data) {
-                if (err) {
-                    res.status(404).send(path + ' Not found');
-                } else {
-                    res.type('html');
-                    hlp.onSendExpress(res);
-                    res.send(data);
-                }
-            });
-        },
-        "toc": function (hlp, path, req, res) {
-            var acceptEncoding = req.headers['accept-encoding'];
-            var userAgent = req.headers['user-agent'];
-            if (userAgent.indexOf("Trident/") > 0)
-                acceptEncoding = null;
-            hlp.gettree(path, acceptEncoding, function (err, data, encoding) {
-                if (err) {
-                    res.type('html');
-                    hlp.onSendExpress(res);
-                    res.send('error ' + err);
-                } else {
-                    if (encoding) {
-                        res.set({ 'Content-Encoding': encoding, 'Content-Type': 'text/html; charset=utf-8' });
-                        hlp.onSendExpress(res);
-                        res.send(data);
-                    } else {
-                        res.type('html');
-                        hlp.onSendExpress(res);
-                        res.send(data);
-                    }
-                }
-            });
-        },
-        "toc.json": function (hlp, path, req, res) {
-            var acceptEncoding = req.headers['accept-encoding'];
-            var userAgent = req.headers['user-agent'];
-            if (userAgent.indexOf("Trident/") > 0)
-                acceptEncoding = null;
-            hlp.gettreejson(path, acceptEncoding, function (err, data, encoding) {
-                if (err) {
-                    res.type('json');
-                    hlp.onSendExpress(res);
-                    res.send('error ' + err);
-                } else {
-                    if (encoding) {
-                        res.set({ 'Content-Encoding': encoding, 'Content-Type': 'text/json; charset=utf-8' });
-                        hlp.onSendExpress(res);
-                        res.send(data);
-                    } else {
-                        res.type('html');
-                        hlp.onSendExpress(res);
-                        res.send(data);
-                    }
-                }
-            });
-        },
-        "assets": function (hlp, path, req, res) {
-            hlp.get(path, function (err, data, type) {
-                if (err) {
-                    hlp.onSendExpress(res);
-                    res.send(err);
-                } else {
-                    if (type) {
-                        res.type(type);
-                    }
-                    hlp.onSendExpress(res);
-                    res.send(data);
-                }
-            });
-        },
-
-        "help": function (hlp, path, req, res) {
-            hlp.get(path, function (err, data, type) {
-                if (err) {
-                    hlp.onSendExpress(res);
-                    res.send(err);
-                } else {
-                    if (type) {
-                        res.type(type);
-                    }
-                    hlp.onSendExpress(res);
-                    res.send(data);
-                }
-            });
-        },
-        "altToc": function (hlp, path, req, res) {
-            var acceptEncoding = req.headers['accept-encoding'];
-            var userAgent = req.headers['user-agent'];
-            if (userAgent.indexOf("Trident/") > 0)
-                acceptEncoding = null;
-            hlp.getAltToc(path, acceptEncoding, function (err, data, encoding) {
-                if (err) {
-                    hlp.onSendExpress(res);
-                    res.send(err);
-                } else {
-                    if (encoding) {
-                        res.set({ 'Content-Encoding': encoding, 'Content-Type': 'text/json; charset=utf-8' });
-                        hlp.onSendExpress(res);
-                        res.send(data);
-                    } else {
-                        res.type('html');
-                        hlp.onSendExpress(res);
-                        res.send(data);
-                    }
-                }
-            });
-        },
-
-        "search": function (hlp, path, req, res) {
-            var offset = 0;
-            var limit = 0;
-            if (req.query.limit)
-                limit = parseInt(req.query.limit);
-            if (req.query.offset)
-                offset = parseInt(req.query.offset);
-            hlp.search(req.query.pattern, function (err, data) {
-                if (err) {
-                    hlp.onSendExpress(res);
-                    res.send(JSON.stringify([{ 'error': err }]));
-                } else {
-                    hlp.onSendExpress(res);
-                    var i = 0;
-                    if (data.length > 0) {
-                        var ListUtilities = require('./listutilities');
-                        var lu = new ListUtilities(config);
-                        for (i = 0; i < data.length; ++i) {
-                            data[i].title = lu.removeDigitPrefix(data[i].title);
-                        }
-                    }
-                    res.send(JSON.stringify(data));
-                }
-            }, offset, limit);
-        },
-
-        "refresh": function (hlp, path, req, res) {
-            if (hlp.isAdmin() || req.connection.remoteAddress == "::ffff:127.0.0.1") {
-                if (req.method == 'POST') {
-                    serverHealth.refreshCount++;
-                    if (!global.refresh_locked) {
-                        serverHealth.busyInRefresh = true;
-                        global.refresh_locked = true;
-                        hlp.refresh(function (err, result) {
-                            global.refresh_locked = false;
-                            serverHealth.busyInRefresh = false;
-                            res.end("complete");
-                        });
-                    } else {
-                        res.end("busy");
-                    }
-                } else {
-                    loadAssetUTF8("refresh.html", function (err, data) {
-                        if (err) {
-                            res.status(404).send(path + ' Not found');
-                        } else {
-                            res.type('html');
-                            hlp.onSendExpress(res);
-                            res.send(data);
-                        }
-                    });
-                }
-            } else {
-                res.status(401).send('Not authorized from ' + req.connection.remoteAddress);
-            }
-        },
-        "metadata": function (hlp, path, req, res) {
-            if (req.method == 'POST') {
-                if (hlp.isAdmin()) {
-                    if (req.body) {
-                        hlp.setmetadata(path, req.body, function (data) {
-                            hlp.onSendExpress(res);
-                            res.send(JSON.stringify({ result: data }));
-                        });
-                    } else {
-                        res.status(400).send('Bad request - body is missing');
-                    }
-                } else {
-                    res.status(401).send('Not authorized');
-                }
-            } else {
-                hlp.getmetadata(path, function (data) {
-                    res.type('json');
-                    hlp.onSendExpress(res);
-                    res.send(JSON.stringify(data));
-                });
-            }
-        },
-        "config": function (hlp, path, req, res) {
-            res.type('json');
-            hlp.onSendExpress(res);
-            res.send(JSON.stringify({ escapes: config.escapes, keywords: config.keywords, altTocs: config.tocData.altTocs, proxy: config.proxy, absolutePath: absolutePath }));
-        },
-        "diag": function (hlp, path, req, res) {
-            res.type('json');
-            hlp.onSendExpress(res);
-            serverHealth.whoCalled = req.connection.remoteAddress;
-            res.send(JSON.stringify(serverHealth));
-        },
-        "xslt": function (hlp, path, req, res) {
-            if (config.xslt) {
-                loadAssetUTF8(config.xslt, function (err, data) {
                     if (err) {
                         res.status(404).send(path + ' Not found');
                     } else {
@@ -1881,157 +1661,413 @@ module.exports = function (config) {
                         res.send(data);
                     }
                 });
-            } else {
-                res.status(404).send(path + ' Not found');
-            }
-        },
-        "files.json": function (hlp, path, req, res) {
-            fs.readFile(config.generated + config.flatfile, function (errFiles, dataFiles) {
-                if (errFiles) {
-                    res.status(404).send(config.flatfile + ' Not found');
-                } else {
-                    var files = JSON.parse(dataFiles);
-                    var i;
-                    var links = [];
-                    for (i = 0; i < files.length; ++i) {
-                        links.push(files[i].path);
+            },
+            "pages": function (hlp, path, req, res) {
+                hlp.getPage(path, req.path, req, function (err, data, type) {
+                    if (err) {
+                        hlp.onSendExpress(res);
+                        res.send(err);
+                    } else {
+                        if (type) {
+                            res.type(type);
+                        }
+                        hlp.onSendExpress(res);
+                        res.send(data);
                     }
-                    res.type('json');
-                    hlp.onSendExpress(res);
-                    res.send(JSON.stringify(links));
-                }
-            });
-        },
-        "topic": function (hlp, path, req, res) {
-            var searchResultProcess = function (err, data) {
-                if (err) {
-                    hlp.onSendExpress(res);
-                    res.send("");
-                } else {
-                    // search through the data
-                    var foundItem = null;
-                    var i;
-                    if (data.length > 1) {
-                        for (i = 0; i < data.length; ++i) {
-                            if (data[i].title.toLowerCase() == req.query.topic.toLowerCase()) {
-                                foundItem = data[i];
+                });
+            },
+            "appcache": function (hlp, path, req, res) {
+                var manifest = replaceAll(pagesManifest, "__filter__", path.substring(1).replace(".appcache", ""));
+                manifest = manifest.replace("__helpversionnumber__", "" + serverHealth.revisionCount);
+                res.type("text/cache-manifest");
+                hlp.onSendExpress(res);
+                res.send(manifest);
+            },
+            "toc_loader": function (hlp, path, req, res) {
+                hlp.getTocLoader(path, req.path, function (err, data, type) {
+                    if (err) {
+                        hlp.onSendExpress(res);
+                        res.send(err);
+                    } else {
+                        if (type) {
+                            res.type(type);
+                        }
+                        hlp.onSendExpress(res);
+                        res.send(data);
+                    }
+                });
+            },
+            "edit": function (hlp, path, req, res) {
+                loadAssetUTF8("edit.html", function (err, data) {
+                    if (err) {
+                        res.status(404).send(path + ' Not found');
+                    } else {
+                        res.type('html');
+                        hlp.onSendExpress(res);
+                        res.send(data);
+                    }
+                });
+            },
+            "search_panel": function (hlp, path, req, res) {
+                loadAssetUTF8("search.html", function (err, data) {
+                    if (err) {
+                        res.status(404).send(path + ' Not found');
+                    } else {
+                        res.type('html');
+                        hlp.onSendExpress(res);
+                        res.send(data);
+                    }
+                });
+            },
+            "toc": function (hlp, path, req, res) {
+                var acceptEncoding = req.headers['accept-encoding'];
+                var userAgent = req.headers['user-agent'];
+                if (userAgent.indexOf("Trident/") > 0)
+                    acceptEncoding = null;
+                hlp.gettree(path, acceptEncoding, function (err, data, encoding) {
+                    if (err) {
+                        res.type('html');
+                        hlp.onSendExpress(res);
+                        res.send('error ' + err);
+                    } else {
+                        if (encoding) {
+                            res.set({ 'Content-Encoding': encoding, 'Content-Type': 'text/html; charset=utf-8' });
+                            hlp.onSendExpress(res);
+                            res.send(data);
+                        } else {
+                            res.type('html');
+                            hlp.onSendExpress(res);
+                            res.send(data);
+                        }
+                    }
+                });
+            },
+            "toc.json": function (hlp, path, req, res) {
+                var acceptEncoding = req.headers['accept-encoding'];
+                var userAgent = req.headers['user-agent'];
+                if (userAgent.indexOf("Trident/") > 0)
+                    acceptEncoding = null;
+                hlp.gettreejson(path, acceptEncoding, function (err, data, encoding) {
+                    if (err) {
+                        res.type('json');
+                        hlp.onSendExpress(res);
+                        res.send('error ' + err);
+                    } else {
+                        if (encoding) {
+                            res.set({ 'Content-Encoding': encoding, 'Content-Type': 'text/json; charset=utf-8' });
+                            hlp.onSendExpress(res);
+                            res.send(data);
+                        } else {
+                            res.type('html');
+                            hlp.onSendExpress(res);
+                            res.send(data);
+                        }
+                    }
+                });
+            },
+            "assets": function (hlp, path, req, res) {
+                hlp.get(path, function (err, data, type) {
+                    if (err) {
+                        hlp.onSendExpress(res);
+                        res.send(err);
+                    } else {
+                        if (type) {
+                            res.type(type);
+                        }
+                        hlp.onSendExpress(res);
+                        res.send(data);
+                    }
+                });
+            },
+
+            "help": function (hlp, path, req, res) {
+                hlp.get(path, function (err, data, type) {
+                    if (err) {
+                        hlp.onSendExpress(res);
+                        res.send(err);
+                    } else {
+                        if (type) {
+                            res.type(type);
+                        }
+                        hlp.onSendExpress(res);
+                        res.send(data);
+                    }
+                });
+            },
+            "altToc": function (hlp, path, req, res) {
+                var acceptEncoding = req.headers['accept-encoding'];
+                var userAgent = req.headers['user-agent'];
+                if (userAgent.indexOf("Trident/") > 0)
+                    acceptEncoding = null;
+                hlp.getAltToc(path, acceptEncoding, function (err, data, encoding) {
+                    if (err) {
+                        hlp.onSendExpress(res);
+                        res.send(err);
+                    } else {
+                        if (encoding) {
+                            res.set({ 'Content-Encoding': encoding, 'Content-Type': 'text/json; charset=utf-8' });
+                            hlp.onSendExpress(res);
+                            res.send(data);
+                        } else {
+                            res.type('html');
+                            hlp.onSendExpress(res);
+                            res.send(data);
+                        }
+                    }
+                });
+            },
+
+            "search": function (hlp, path, req, res) {
+                var offset = 0;
+                var limit = 0;
+                if (req.query.limit)
+                    limit = parseInt(req.query.limit);
+                if (req.query.offset)
+                    offset = parseInt(req.query.offset);
+                hlp.search(req.query.pattern, function (err, data) {
+                    if (err) {
+                        hlp.onSendExpress(res);
+                        res.send(JSON.stringify([{ 'error': err }]));
+                    } else {
+                        hlp.onSendExpress(res);
+                        var i = 0;
+                        if (data.length > 0) {
+                            var ListUtilities = require('./listutilities');
+                            var lu = new ListUtilities(config);
+                            for (i = 0; i < data.length; ++i) {
+                                data[i].title = lu.removeDigitPrefix(data[i].title);
                             }
                         }
-                        if (!foundItem)
-                            foundItem = data[0];
+                        res.send(JSON.stringify(data));
                     }
-                    if (foundItem) {
-                        if (foundItem.hash) {
-                            help.onSendExpress(res);
-                            res.send(foundItem.path + "#" + foundItem.hash);
+                }, offset, limit);
+            },
+
+            "refresh": function (hlp, path, req, res) {
+                if (hlp.isAdmin() || req.connection.remoteAddress == "::ffff:127.0.0.1") {
+                    if (req.method == 'POST') {
+                        serverHealth.refreshCount++;
+                        if (!global.refresh_locked) {
+                            serverHealth.busyInRefresh = true;
+                            global.refresh_locked = true;
+                            hlp.refresh(function (err, result) {
+                                global.refresh_locked = false;
+                                serverHealth.busyInRefresh = false;
+                                res.end("complete");
+                            });
                         } else {
-                            help.onSendExpress(res);
-                            res.send(foundItem.path);
+                            res.end("busy");
                         }
                     } else {
-                        // TBD - show the 'not-found' page with results...
-                        help.onSendExpress(res);
-                        res.send("");
+                        loadAssetUTF8("refresh.html", function (err, data) {
+                            if (err) {
+                                res.status(404).send(path + ' Not found');
+                            } else {
+                                res.type('html');
+                                hlp.onSendExpress(res);
+                                res.send(data);
+                            }
+                        });
                     }
+                } else {
+                    res.status(401).send('Not authorized from ' + req.connection.remoteAddress);
                 }
-            };
-            if (req.query.hint) {
-                // Look for file match first (i.e. relative lookup)
-                var endOfPath = req.query.hint.lastIndexOf('/');
-                if (endOfPath > 0) {
-                    fs.readdir(config.source + req.query.hint.substring(0, endOfPath), function (err, list) {
-                        var resolved = false;
-                        if (!err && list) {
-                            var find = req.query.hint.substring(endOfPath + 1).toLowerCase();
-                            if (list.length > 0) {
-                                var i;
-                                for (i = 0; i < list.length; ++i) {
-                                    if (list[i].toLowerCase().indexOf(find) >= 0) {
-                                        resolved = true;
-                                        help.onSendExpress(res);
-                                        res.send(req.query.hint.substring(0, endOfPath) + "/" + list[i]);
-                                        break;
+            },
+            "metadata": function (hlp, path, req, res) {
+                if (req.method == 'POST') {
+                    if (hlp.isAdmin()) {
+                        if (req.body) {
+                            hlp.setmetadata(path, req.body, function (data) {
+                                hlp.onSendExpress(res);
+                                res.send(JSON.stringify({ result: data }));
+                            });
+                        } else {
+                            res.status(400).send('Bad request - body is missing');
+                        }
+                    } else {
+                        res.status(401).send('Not authorized');
+                    }
+                } else {
+                    hlp.getmetadata(path, function (data) {
+                        res.type('json');
+                        hlp.onSendExpress(res);
+                        res.send(JSON.stringify(data));
+                    });
+                }
+            },
+            "config": function (hlp, path, req, res) {
+                res.type('json');
+                hlp.onSendExpress(res);
+                res.send(JSON.stringify({ escapes: config.escapes, keywords: config.keywords, altTocs: config.tocData.altTocs, proxy: config.proxy, absolutePath: absolutePath }));
+            },
+            "diag": function (hlp, path, req, res) {
+                res.type('json');
+                hlp.onSendExpress(res);
+                serverHealth.whoCalled = req.connection.remoteAddress;
+                res.send(JSON.stringify(serverHealth));
+            },
+            "xslt": function (hlp, path, req, res) {
+                if (config.xslt) {
+                    loadAssetUTF8(config.xslt, function (err, data) {
+                        if (err) {
+                            res.status(404).send(path + ' Not found');
+                        } else {
+                            res.type('html');
+                            hlp.onSendExpress(res);
+                            res.send(data);
+                        }
+                    });
+                } else {
+                    res.status(404).send(path + ' Not found');
+                }
+            },
+            "files.json": function (hlp, path, req, res) {
+                fs.readFile(config.generated + config.flatfile, function (errFiles, dataFiles) {
+                    if (errFiles) {
+                        res.status(404).send(config.flatfile + ' Not found');
+                    } else {
+                        var files = JSON.parse(dataFiles);
+                        var i;
+                        var links = [];
+                        for (i = 0; i < files.length; ++i) {
+                            links.push(files[i].path);
+                        }
+                        res.type('json');
+                        hlp.onSendExpress(res);
+                        res.send(JSON.stringify(links));
+                    }
+                });
+            },
+            "topic": function (hlp, path, req, res) {
+                var searchResultProcess = function (err, data) {
+                    if (err) {
+                        hlp.onSendExpress(res);
+                        res.send("");
+                    } else {
+                        // search through the data
+                        var foundItem = null;
+                        var i;
+                        if (data.length > 1) {
+                            for (i = 0; i < data.length; ++i) {
+                                if (data[i].title.toLowerCase() == req.query.topic.toLowerCase()) {
+                                    foundItem = data[i];
+                                }
+                            }
+                            if (!foundItem)
+                                foundItem = data[0];
+                        }
+                        if (foundItem) {
+                            if (foundItem.hash) {
+                                help.onSendExpress(res);
+                                res.send(foundItem.path + "#" + foundItem.hash);
+                            } else {
+                                help.onSendExpress(res);
+                                res.send(foundItem.path);
+                            }
+                        } else {
+                            // TBD - show the 'not-found' page with results...
+                            help.onSendExpress(res);
+                            res.send("");
+                        }
+                    }
+                };
+                if (req.query.hint) {
+                    // Look for file match first (i.e. relative lookup)
+                    var endOfPath = req.query.hint.lastIndexOf('/');
+                    if (endOfPath > 0) {
+                        fs.readdir(config.source + req.query.hint.substring(0, endOfPath), function (err, list) {
+                            var resolved = false;
+                            if (!err && list) {
+                                var find = req.query.hint.substring(endOfPath + 1).toLowerCase();
+                                if (list.length > 0) {
+                                    var i;
+                                    for (i = 0; i < list.length; ++i) {
+                                        if (list[i].toLowerCase().indexOf(find) >= 0) {
+                                            resolved = true;
+                                            help.onSendExpress(res);
+                                            res.send(req.query.hint.substring(0, endOfPath) + "/" + list[i]);
+                                            break;
+                                        }
                                     }
                                 }
                             }
-                        }
-                        if (!resolved)
-                            hlp.search(req.query.topic, searchResultProcess);
-                    });
+                            if (!resolved)
+                                hlp.search(req.query.topic, searchResultProcess);
+                        });
+                    } else {
+                        hlp.search(req.query.topic, searchResultProcess);
+                    }
                 } else {
                     hlp.search(req.query.topic, searchResultProcess);
                 }
-            } else {
-                hlp.search(req.query.topic, searchResultProcess);
             }
-        }
-    };
+        };
    
-    // Express generic entry point
-    HelpServerUtil.prototype.expressuse = function (req, res) {
-        var pathValue = req.path;
-        var altConfig = help;
+        // Express generic entry point
+        HelpServerUtil.prototype.expressuse = function (req, res) {
+            var pathValue = req.path;
+            var altConfig = help;
         
-        // Strip off the absolute path if present (allows direct testing of site)
-        if (absolutePath.length > 1) {
-            if (pathValue.indexOf(absolutePath) == 0) {
-                pathValue = pathValue.substring(absolutePath.length - 1);
-            } else {
-                console.log('Warning Unprotected path' + pathValue);
+            // Strip off the absolute path if present (allows direct testing of site)
+            if (absolutePath.length > 1) {
+                if (pathValue.indexOf(absolutePath) == 0) {
+                    pathValue = pathValue.substring(absolutePath.length - 1);
+                } else {
+                    console.log('Warning Unprotected path' + pathValue);
+                }
             }
-        }
 
-        if (config.replacePath) {
-            var i;
-            for (i = 0; i < config.replacePath.length; ++i) {
-                if (pathValue.substring(0, config.replacePath[i].from.length) == config.replacePath[i].from) {
-                    pathValue = config.replacePath[i].to + pathValue.substring(config.replacePath[i].from.length);
-                    break;
+            if (config.replacePath) {
+                var i;
+                for (i = 0; i < config.replacePath.length; ++i) {
+                    if (pathValue.substring(0, config.replacePath[i].from.length) == config.replacePath[i].from) {
+                        pathValue = config.replacePath[i].to + pathValue.substring(config.replacePath[i].from.length);
+                        break;
+                    }
                 }
             }
-        }
-        var items = pathValue.split('/');
-        if (!pathValue || pathValue == '' || pathValue == '/') {
-            if (config.defaultPage && config.defaultPage != '' && config.defaultPage != '/') {
-                pathValue = config.defaultPage;
-                items = pathValue.split('/');
-            }
-        }
-        var handler = expressHandler[items[1]];
-        if (handler) {
-            if (config.defaultPage && config.defaultPage != '' && config.defaultPage != '/') {
-                var defaultItems = config.defaultPage.split('/');
-                if (config.defaultPage.length > 1) {
-                    altConfig = configurationObjects[defaultItems[1]]
+            var items = pathValue.split('/');
+            if (!pathValue || pathValue == '' || pathValue == '/') {
+                if (config.defaultPage && config.defaultPage != '' && config.defaultPage != '/') {
+                    pathValue = config.defaultPage;
+                    items = pathValue.split('/');
                 }
             }
-            handler(altConfig, '/' + items.slice(2).join('/'), req, res);
-        } else {
-            altConfig = configurationObjects[items[1]];
-            if (altConfig) {
-                handler = expressHandler[items[2]];
-                if (handler) {
-                    handler(altConfig, '/' + items.slice(3).join('/'), req, res);
+            var handler = expressHandler[items[1]];
+            if (handler) {
+                if (config.defaultPage && config.defaultPage != '' && config.defaultPage != '/') {
+                    var defaultItems = config.defaultPage.split('/');
+                    if (config.defaultPage.length > 1) {
+                        altConfig = configurationObjects[defaultItems[1]]
+                    }
+                }
+                handler(altConfig, '/' + items.slice(2).join('/'), req, res);
+            } else {
+                altConfig = configurationObjects[items[1]];
+                if (altConfig) {
+                    handler = expressHandler[items[2]];
+                    if (handler) {
+                        handler(altConfig, '/' + items.slice(3).join('/'), req, res);
+                    } else {
+                        res.status(404).send(pathValue + ' Not found');
+                    }
                 } else {
                     res.status(404).send(pathValue + ' Not found');
                 }
-            } else {
-                res.status(404).send(pathValue + ' Not found');
             }
-        }
-    };
+        };
   
-    // If webhookport is defined, lets listen on it
-    if (config.webhookPort) {
-        var webhooklisten = require("./webhooklisten");
-        webhooklisten(config, help);
-    }
+        // If webhookport is defined, lets listen on it
+        if (config.webhookPort) {
+            var webhooklisten = require("./webhooklisten");
+            webhooklisten(config, help);
+        }
 
 
-    for (var configName in configurations) {
-        // Create a helpservice object with a different config...
-        configurationObjects[configName] = new HelpServerUtil(configurations[configName]);
+        for (var configName in configurations) {
+            // Create a helpservice object with a different config...
+            configurationObjects[configName] = new HelpServerUtil(configurations[configName]);
+        };
+
+        return help;
     };
-
-    return help;
-};

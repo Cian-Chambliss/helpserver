@@ -718,11 +718,15 @@ module.exports = function (config) {
         } else {
             indexTemplatePos = path.indexOf("/index.md");
             if (indexTemplatePos > 0) {
+                path = path.substring(0, indexTemplatePos);
                 generatedTopic += ".md";
                 genereratedExtension = ".md";
             } else {            
                 indexTemplatePos = path.indexOf("/index.html");
-                generatedTopic += ".html";
+                if (indexTemplatePos > 0) {
+                    generatedTopic += ".html";
+                    path = path.substring(0, indexTemplatePos);
+                }
             }
         }
         fs.readFile(generatedTopic, "utf8", function (err, data) {
@@ -759,7 +763,11 @@ module.exports = function (config) {
                                                 testPath = testPath.substring(0, lastPos);
                                                 if (lPath.length <= testPath.length) {
                                                     if (testPath.substring(0, lPath.length) == lPath) {
-                                                        if (children[i].path.indexOf("/index.xml") == lPath.length && children[i].children) {
+                                                        if ( (children[i].path.indexOf("/index.xml") == lPath.length 
+                                                          || children[i].path.indexOf("/index.html") == lPath.length 
+                                                            ) 
+                                                           && children[i].children
+                                                            ) {
                                                             return children[i].children;
                                                         } else {
                                                             return children;
