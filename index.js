@@ -1641,6 +1641,85 @@ module.exports = function (config) {
         };
 
         var help = new HelpServerUtil(config);
+        
+        
+        var topicResolveLow = function(hlp, path, req, res,raw) {
+              var searchResultProcess = function (err, data) {
+                    if (err) {
+                        hlp.onSendExpress(res);
+                        res.send("");
+                    } else {
+                        // search through the data
+                        var foundItem = null;
+                        var i;
+                        if (data.length > 1) {
+                            for (i = 0; i < data.length; ++i) {
+                                if (data[i].title.toLowerCase() == req.query.topic.toLowerCase()) {
+                                    foundItem = data[i];
+                                }
+                            }
+                            if (!foundItem)
+                                foundItem = data[0];
+                        }
+                        if (foundItem) {
+                            if (foundItem.hash) {
+                                if( raw ) {
+                                    help.onSendExpress(res);
+                                    res.send(foundItem.path + "#" + foundItem.hash);
+                                } else {
+                                    res.redirect('/pages'+foundItem.path + "#" + foundItem.hash);
+                                }
+                            } else if( raw ) {                                
+                                help.onSendExpress(res);
+                                res.send(foundItem.path);
+                            } else {
+                                res.redirect('/pages'+foundItem.path);
+                            }
+                        } else if( raw ) { 
+                            // TBD - show the 'not-found' page with results...
+                            help.onSendExpress(res);
+                            res.send("");
+                        } else {
+                            res.redirect('/pages/search?topic='+req.query.topic);
+                        }
+                    }
+                };
+                if (req.query.hint) {
+                    // Look for file match first (i.e. relative lookup)
+                    var endOfPath = req.query.hint.lastIndexOf('/');
+                    if (endOfPath > 0) {
+                        fs.readdir(config.source + req.query.hint.substring(0, endOfPath), function (err, list) {
+                            var resolved = false;
+                            if (!err && list) {
+                                var find = req.query.hint.substring(endOfPath + 1).toLowerCase();
+                                if (list.length > 0) {
+                                    var i;
+                                    for (i = 0; i < list.length; ++i) {
+                                        if (list[i].toLowerCase().indexOf(find) >= 0) {
+                                            resolved = true;
+                                            help.onSendExpress(res);
+                                            if( raw ) {
+                                                res.send(req.query.hint.substring(0, endOfPath) + "/" + list[i]);
+                                            } else {
+                                                req.redirect('/pages'+req.query.hint.substring(0, endOfPath) + "/" + list[i]);
+                                            }
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                            if (!resolved) {
+                                 hlp.search(req.query.topic, searchResultProcess);
+                            }                            
+                        });
+                    } else {
+                        hlp.search(req.query.topic, searchResultProcess);
+                    }
+                } else {
+                    hlp.search(req.query.topic, searchResultProcess);
+                }
+        };
+
 
         var expressHandler = {
             "blank": function (hlp, path, req, res) {
@@ -1939,70 +2018,13 @@ module.exports = function (config) {
                 });
             },
             "topic": function (hlp, path, req, res) {
-                var searchResultProcess = function (err, data) {
-                    if (err) {
-                        hlp.onSendExpress(res);
-                        res.send("");
-                    } else {
-                        // search through the data
-                        var foundItem = null;
-                        var i;
-                        if (data.length > 1) {
-                            for (i = 0; i < data.length; ++i) {
-                                if (data[i].title.toLowerCase() == req.query.topic.toLowerCase()) {
-                                    foundItem = data[i];
-                                }
-                            }
-                            if (!foundItem)
-                                foundItem = data[0];
-                        }
-                        if (foundItem) {
-                            if (foundItem.hash) {
-                                help.onSendExpress(res);
-                                res.send(foundItem.path + "#" + foundItem.hash);
-                            } else {
-                                help.onSendExpress(res);
-                                res.send(foundItem.path);
-                            }
-                        } else {
-                            // TBD - show the 'not-found' page with results...
-                            help.onSendExpress(res);
-                            res.send("");
-                        }
-                    }
-                };
-                if (req.query.hint) {
-                    // Look for file match first (i.e. relative lookup)
-                    var endOfPath = req.query.hint.lastIndexOf('/');
-                    if (endOfPath > 0) {
-                        fs.readdir(config.source + req.query.hint.substring(0, endOfPath), function (err, list) {
-                            var resolved = false;
-                            if (!err && list) {
-                                var find = req.query.hint.substring(endOfPath + 1).toLowerCase();
-                                if (list.length > 0) {
-                                    var i;
-                                    for (i = 0; i < list.length; ++i) {
-                                        if (list[i].toLowerCase().indexOf(find) >= 0) {
-                                            resolved = true;
-                                            help.onSendExpress(res);
-                                            res.send(req.query.hint.substring(0, endOfPath) + "/" + list[i]);
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                            if (!resolved)
-                                hlp.search(req.query.topic, searchResultProcess);
-                        });
-                    } else {
-                        hlp.search(req.query.topic, searchResultProcess);
-                    }
-                } else {
-                    hlp.search(req.query.topic, searchResultProcess);
-                }
+                topicResolveLow(hlp, path, req, res,true);
+            },
+            "topicPage": function (hlp, path, req, res) {
+                topicResolveLow(hlp, path, req, res,false);
             }
         };
-   
+        
         // Express generic entry point
         HelpServerUtil.prototype.expressuse = function (req, res) {
             var pathValue = req.path;
