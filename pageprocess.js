@@ -12,6 +12,7 @@ module.exports = function (config, data, page, callbackPage) {
     var extensionStart = ofn.lastIndexOf('.');
     var extension = ofn.substring(extensionStart).toLowerCase();
     var manifestFile = config.generated + "manifest/" + ofn.substring(0, extensionStart) + ".json";
+    var overrideTitle = null;
     var normalizeREF = function (srcName, ref) {
         if (ref.substr(0, 1) != '/' && ref.substr(0, 5) != 'http:' && ref.substr(0, 6) != 'https:' && ref.substr(0, 11) != 'javascript:') {
             var parts = srcName.split('/');
@@ -35,7 +36,16 @@ module.exports = function (config, data, page, callbackPage) {
         data = marked(textData);
     } else if (extension == '.xml') {
         // use XSLT (if defined)
-        ;
+        if( config.events.extractTitle ) {
+            var textData = data;
+            if (!textData.indexOf)
+                textData = textData.toString('utf8');
+            overrideTitle = config.events.extractTitle(textData);
+            if( overrideTitle ) {
+                page.title = overrideTitle; 
+                page.metadata = { title : overrideTitle };
+            }            
+        }
     }
     if (config.metadata) {
         var textData = data;

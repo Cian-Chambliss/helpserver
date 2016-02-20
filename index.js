@@ -2060,7 +2060,10 @@ module.exports = function (config) {
                 if (config.defaultPage && config.defaultPage != '' && config.defaultPage != '/') {
                     var defaultItems = config.defaultPage.split('/');
                     if (config.defaultPage.length > 1) {
-                        altConfig = configurationObjects[defaultItems[1]]
+                        var lookupConfig = configurationObjects[defaultItems[1]];
+                        if( lookupConfig ) {
+                            altConfig = lookupConfig;
+                        }
                     }
                 }
                 handler(altConfig, '/' + items.slice(2).join('/'), req, res);
