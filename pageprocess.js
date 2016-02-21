@@ -84,6 +84,9 @@ module.exports = function (config, data, page, callbackPage) {
         var subTOC = null;
         var tocStack = [];
         var checkForMerge = [];
+        var lastText = null;
+        var tagH1 = null;
+        var tagTitle = null;
         var findInToc = function (tocItem, name) {
             var i;
             for (i = 0; i < tocItem.length; ++i) {
@@ -152,7 +155,7 @@ module.exports = function (config, data, page, callbackPage) {
                     if (attribs.class && attribs.class == 'helpserver_toc') {
                         tocDiv = divDepth;
                     }
-                    ++divDepth;
+                    ++divDepth;                    
                 } else if (name === "ul") {
                     if (tocDiv >= 0) {
                         ++tocDepth;
@@ -165,6 +168,7 @@ module.exports = function (config, data, page, callbackPage) {
             },
             ontext: function (text) {
                 text = stringJs(text).decodeHTMLEntities().s;
+                lastText = text;
                 if (config.search)
                     plainText += stringJs(text);
                 if (tocHash || childBranch) {
@@ -226,6 +230,14 @@ module.exports = function (config, data, page, callbackPage) {
                         }
                         --tocDepth;
                     }
+                } else if (name === "title") {
+                     if( !tagTitle ) {
+                         tagTitle = lastText;
+                     }
+                } else if (name === "h1") {
+                     if( !tagH1 ) {
+                         tagH1 = lastText;
+                     }                   
                 }
             }
         });
@@ -243,6 +255,17 @@ module.exports = function (config, data, page, callbackPage) {
         if (subTOC) {
             page.toc = subTOC;
             haveConfigData = true;
+        }
+        
+        if(!tagTitle && page.title == "index") {
+            tagTitle = tagH1;
+        }
+        if( tagTitle ) {
+            overrideTitle = tagTitle;
+            if( overrideTitle ) {
+                page.title = overrideTitle; 
+                page.metadata = { title : overrideTitle };
+            }                        
         }
         var fs = require('fs');        
         var commitPageManifest = function () {
