@@ -38,7 +38,7 @@ module.exports = function (config, data, page, callbackPage) {
         // use XSLT (if defined)
         if( config.events.extractTitle ) {
             var textData = data;
-            if (!textData.indexOf)
+            if ( !textData.indexOf || !textData.substring )
                 textData = textData.toString('utf8');
             overrideTitle = config.events.extractTitle(textData);
             if( overrideTitle ) {
