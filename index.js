@@ -20,6 +20,7 @@ module.exports = function (config) {
     var absolutePath = "/";
     var actualLinks = null;
     var logoHREF = (config.logoHref || "http://www.google.com");
+    var topmostPage = config.topmostPage || "";
 
     if (config.proxy) {
         var proxyBasePath = null;
@@ -374,6 +375,7 @@ module.exports = function (config) {
     }
 
     var treeData = {};
+    var parentIndexData = {};
     HelpServerUtil.prototype.getPage = function (page, fromPath, req, callback) {
         var hlp = this;
         page = decodeURI(page);
@@ -460,10 +462,10 @@ module.exports = function (config) {
                 if (deepestAltToc) {
                     var deepestAltTocFN = replaceAll(deepestAltToc, "/", "_");
                     tocName = deepestAltTocFN + tocName;
-                    treeName = deepestAltTocFN + treeName;
+                    treeName = deepestAltTocFN + treeName;                   
                 }
             }
-            var generateNavigation = function (tree) {
+            var generateNavigation = function (tree,relatedPageOrder) {
                 var breadcrumbs = "";
                 var related = "";
                 var parentUrl = "#";
@@ -510,17 +512,31 @@ module.exports = function (config) {
                     var currentBook = harvestBreadcrumbs(config.library, booksBranches, deepestAltToc);
                     if (booksBranches.length < 2) {
                         currentBook = null;
-                    }
-                    if (!kidsLevel && !currentBook) {
+                    } else if( !currentBook && config.library ) {
+                        booksBranches = [];
+                        kidsLevel = null;
+                        branches = null;
+                    } 
+                    if (!kidsLevel && !currentBook && !config.library ) {
                         kidsLevel = tree.children;
                     }
-
-                    if (branches || currentBook) {
+                    if( page == topmostPage && !currentBook && config.library ) {
+                        breadcrumbs += "<li>";
+                        breadcrumbs += "Main";
+                        breadcrumbs += "</li>";
+                        if( config.library ) {
+                            kidsLevel = null;   
+                        }
+                    } else if (branches || currentBook) {
                         //breadcrumbs = "<ul>";
                         //breadcrumb
                         if (currentBook) {
                             breadcrumbs += "<li>";
-                            breadcrumbs += "Main";
+                            if( topmostPage.length > 1 ) {
+                                breadcrumbs += "<a href=\"" + pathPages + topmostPage.substring(1) + "\">Main</a>";
+                            } else {
+                                breadcrumbs += "Main";
+                            }
                             breadcrumbs += "</li>";
                         }
                         if (tree.path) {
@@ -556,7 +572,16 @@ module.exports = function (config) {
                         }
                         //breadcrumbs += "</ul>";                        
                     }
-                    if (kidsLevel) {
+                    if( relatedPageOrder.reorder ) {
+                        related = "<ul>";
+                        for (var i = 0; i < relatedPageOrder.links.length ; ++i ) {
+                            var linkitem = relatedPageOrder.links[i];
+                            related += "<li><a href=\"" +linkitem.href+"\">";
+                            related += linkitem.text;
+                            related += "</a></li>";                            
+                        }
+                        related += "</ul>";
+                    } else if (kidsLevel) {
                         related = "<ul>";
                         for (var i = 0; i < kidsLevel.length; ++i) {
                             if (kidsLevel[i].path) {
@@ -616,7 +641,7 @@ module.exports = function (config) {
                 return { breadcrumbs: breadcrumbs, related: related, parentUrl: parentUrl, childUrl: childUrl, previousUrl: previousUrl, nextUrl: nextUrl, pageTitle: pageTitle };
             };
 
-            var processWebPage = function (htmlText, tree) {
+            var processWebPage = function (htmlText, tree, relatedPageOrder ) {
                 var lowText = htmlText.toLowerCase();
                 var descriptionTagPos = lowText.indexOf("<meta name=\"description\"");
                 var titleTagPos = lowText.indexOf("<title");
@@ -652,7 +677,7 @@ module.exports = function (config) {
                 htmlText = pageProcessor(config, htmlText, pageProc);
                 var tocLoader = "<script src=\"" + absolutePath + "toc_loader/" + tocName + "\" defer></script>";
                 tocLoader = "";
-                var navigationText = generateNavigation(tree);
+                var navigationText = generateNavigation(tree,relatedPageOrder);
                 var fullPage = standardPageTemplate;
                 var title = navigationText.pageTitle;
                 fullPage = fullPage.replace("<!--navparent-->", navigationText.parentUrl)
@@ -663,7 +688,16 @@ module.exports = function (config) {
                     .replace("<!--pagetopic--->", title)
                     .replace("<!--pagedescription--->", pageProc.pageDescription)
                     .replace("<!--library--->", GenerateLibrary(config.library));
+                    
+                var replaceDollar = false;    
+                if( htmlText.indexOf("'$'") >= 0 ) {
+                    htmlText = replaceAll(htmlText,"'$'","'__helpserver_dollar_placeholder__'");
+                    replaceDollar = true;
+                }
                 fullPage = fullPage.replace("__filter__", thisFiltername).replace("<!--tocloader-->", tocLoader).replace("<!--related-->", navigationText.related).replace("<!--breadcrumbs-->", navigationText.breadcrumbs).replace("<!--body-->", htmlText);
+                if( replaceDollar ) {
+                    fullPage = replaceAll(fullPage,"__helpserver_dollar_placeholder__","$");                                        
+                }
                 return fullPage;
             };
             var findClosestFilename = function (path, getFilenameCallback) {
@@ -725,6 +759,95 @@ module.exports = function (config) {
                     });
                 }
             };
+            var getPageParentAndCallback = function(data) {
+                var treePtr = treeData[treeName]; 
+                var parentIndexFile = "";
+                if( treePtr ) {
+                    var pagePathLength = page.lastIndexOf('/');
+                    if( pagePathLength > 0 ) {
+                        var fname = page.substring(pagePathLength+1);
+                        parentIndexFile = page.substring(0,pagePathLength);
+                        if( fname == "index.html" || fname == "index.xml" || fname == "index.md" ) {
+                            pagePathLength = parentIndexFile.lastIndexOf('/');
+                            if( pagePathLength > 0 ) {
+                                parentIndexFile = page.substring(0,pagePathLength+1);
+                            } else {
+                                parentIndexFile = "";
+                            }
+                        } else {
+                            parentIndexFile += "/";
+                        }
+                        if( parentIndexFile.length > 0 ) {
+                            var lookForIndexPage = function(treeBranch) {
+                                if( treeBranch.path ) {
+                                    var endOfPath = treeBranch.path.lastIndexOf('/');
+                                    if( endOfPath >= 0 ) {
+                                        ++endOfPath;
+                                        var fname = treeBranch.path.substring(endOfPath);
+                                        if( fname == "index.html" || fname == "index.xml" || fname == "index.md" ) {
+                                            if( treeBranch.path.substring(0,endOfPath) == parentIndexFile ) {
+                                                parentIndexFile = treeBranch.path;
+                                                return true;
+                                            }                                            
+                                        }
+                                    }
+                                }
+                                if( treeBranch.children ) {
+                                    var i;
+                                    for( i = 0 ; i < treeBranch.children.length ; ++i ) {
+                                        if( lookForIndexPage(treeBranch.children[i]) )
+                                           return true;
+                                    }
+                                }
+                                return false;
+                            };
+                            if( !lookForIndexPage(treePtr) ) {
+                                parentIndexFile = "";
+                            }
+                        }
+                    }
+                }
+                if( parentIndexFile.length > 0 ) {
+                    var parentIndexPtr = parentIndexData[parentIndexFile];
+                    if( parentIndexPtr ) {
+                        callback(null, processWebPage(data, treePtr,parentIndexPtr), "html");                        
+                    } else {
+                        fs.readFile( config.source + parentIndexFile.substring(1), "utf8" , function(err,parentData) {
+                            if( err ) {
+                                parentData = "";
+                            }
+                            if( parentData.indexOf("<!--orderchildren-->") >= 0 ) {
+                                var extractLocalLinks = require("./extractLocalLinks.js");
+                                var treeLocalLinks = extractLocalLinks(parentData);
+                                if( treeLocalLinks.length > 0 ) {
+                                    parentIndexData[parentIndexFile] = { reorder : true , links : treeLocalLinks };
+                                } else {
+                                    parentIndexData[parentIndexFile] = { reorder : false };
+                                }
+                            } else {
+                                parentIndexData[parentIndexFile] = { reorder : false };
+                            }
+                            parentIndexPtr = parentIndexData[parentIndexFile];
+                            callback(null, processWebPage(data, treePtr,parentIndexPtr), "html");
+                        });
+                    }                      
+                } else {                
+                    callback(null, processWebPage(data, treePtr,{ reorder : false }), "html");
+                }
+            };
+            var processPageAndCallback = function(data) {
+                if (!treeData[treeName]) {
+                    fs.readFile(config.generated + treeName, "utf8", function (err, jsonTreeData) {
+                        if (!err) {
+                            treeData[treeName] = JSON.parse(jsonTreeData);
+                        }
+                        getPageParentAndCallback(data);
+                    });
+                } else {
+                    getPageParentAndCallback(data);
+                }
+            };
+            
             var findClosestLink = function (err, path, resolvedLink) {
                 // First lowercase the path (for case insensite compares)
                 var lcpath = path.toLowerCase();
@@ -785,29 +908,11 @@ module.exports = function (config) {
                             if (err2) {
                                 callback(err2, null);
                             } else {
-                                if (!treeData[treeName]) {
-                                    fs.readFile(config.generated + treeName, "utf8", function (err, jsonTreeData) {
-                                        if (!err) {
-                                            treeData[treeName] = JSON.parse(jsonTreeData);
-                                        }
-                                        callback(null, processWebPage(badLinkData, treeData[treeName]), "html");
-                                    });
-                                } else {
-                                    callback(null, processWebPage(badLinkData, treeData[treeName]), "html");
-                                }
+                                processPageAndCallback(badLinkData);
                             }
                         });
                     } else {
-                        if (!treeData[treeName]) {
-                            fs.readFile(config.generated + treeName, "utf8", function (err, jsonTreeData) {
-                                if (!err) {
-                                    treeData[treeName] = JSON.parse(jsonTreeData);
-                                }
-                                callback(null, processWebPage(data, treeData[treeName]), "html");
-                            });
-                        } else {
-                            callback(null, processWebPage(data, treeData[treeName]), "html");
-                        }
+                         processPageAndCallback(data);
                     }
                 });
             } else if (page.indexOf("/index.html") > 0) {
@@ -820,29 +925,11 @@ module.exports = function (config) {
                                 if (err2) {
                                     callback(err2, null);
                                 } else {
-                                    if (!treeData[treeName]) {
-                                        fs.readFile(config.generated + treeName, "utf8", function (err, jsonTreeData) {
-                                            if (!err) {
-                                                treeData[treeName] = JSON.parse(jsonTreeData);
-                                            }
-                                            callback(null, processWebPage(badLinkData, treeData[treeName]), "html");
-                                        });
-                                    } else {
-                                        callback(null, processWebPage(badLinkData, treeData[treeName]), "html");
-                                    }
+                                    processPageAndCallback(badLinkData);
                                 }
                             });
                         } else {
-                            if (!treeData[treeName]) {
-                                fs.readFile(config.generated + treeName, "utf8", function (err, jsonTreeData) {
-                                    if (!err) {
-                                        treeData[treeName] = JSON.parse(jsonTreeData);
-                                    }
-                                    callback(null, processWebPage(data, treeData[treeName]), "html");
-                                });
-                            } else {
-                                callback(null, processWebPage(data, treeData[treeName]), "html");
-                            }
+                            processPageAndCallback(data);
                         }
                     });
                 } else {
@@ -852,29 +939,11 @@ module.exports = function (config) {
                                 if (err2) {
                                     callback(err2, null);
                                 } else {
-                                    if (!treeData[treeName]) {
-                                        fs.readFile(config.generated + treeName, "utf8", function (err, jsonTreeData) {
-                                            if (!err) {
-                                                treeData[treeName] = JSON.parse(jsonTreeData);
-                                            }
-                                            callback(null, processWebPage(badLinkData, treeData[treeName]), "html");
-                                        });
-                                    } else {
-                                        callback(null, processWebPage(badLinkData, treeData[treeName]), "html");
-                                    }
+                                    processPageAndCallback(badLinkData);
                                 }
                             });
                         } else {
-                            if (!treeData[treeName]) {
-                                fs.readFile(config.generated + treeName, "utf8", function (err, jsonTreeData) {
-                                    if (!err) {
-                                        treeData[treeName] = JSON.parse(jsonTreeData);
-                                    }
-                                    callback(null, processWebPage(data, treeData[treeName]), "html");
-                                });
-                            } else {
-                                callback(null, processWebPage(data, treeData[treeName]), "html");
-                            }
+                            processPageAndCallback(data);
                         }
                     });
                 }
@@ -890,26 +959,30 @@ module.exports = function (config) {
                         callback(null, "Error: " + err, "html");
                     } else {
                         var i = 0;
-                        var searchResults = "<ul>";
+                        var searchResults = "<dl>";
                         if (data.length > 0) {
                             var ListUtilities = require('./listutilities');
                             var lu = new ListUtilities(config);
                             for (i = 0; i < data.length; ++i) {
-                                searchResults += "<li>";
+                                searchResults += "<dt>";
                                 searchResults += "<a href=\"" + pathPages + data[i].path.substring(1) + "\">";
                                 searchResults += lu.removeDigitPrefix(data[i].title);
                                 searchResults += "</a>";
-                                searchResults += "</li>";
-
+                                searchResults += "</dt>";
+                                if( data[i].description ) {
+                                    searchResults += "<dd>";
+                                    searchResults += data[i].description;
+                                    searchResults += "</dd>";
+                                }
                             }
                         } else {
-                            searchResults += "<li>No Results Found</li>";
+                            searchResults += "<dt>No Results Found</dt>";
                         }
-                        searchResults += "</ul>";
+                        searchResults += "</dl>";
                         // data
                         callback(null, standardSearchTemplate.replace("<!--body-->", searchResults).replace("<!--search--->", absolutePath + "pages/search").replace("<!--searchpattern--->", req.query.pattern).replace("<!--library--->", GenerateLibrary(config.library)), "html");
                     }
-                }, offset, limit);
+                }, offset, limit, true);
             } else if (page == "/unknown_reference" && req.query.page) {
                 var content = standardSearchTemplate;
                 var searchForPattern = unescape(req.query.page);
@@ -1409,6 +1482,7 @@ module.exports = function (config) {
                         ++serverHealth.revisionCount;
                         // Force a reload of the tree cache
                         treeData = {};
+                        parentIndexData = {};
                         actualLinks = null;
                         fs.writeFile(config.generated + "revision.txt", "" + serverHealth.revisionCount, function (err) {
                             if (err) {
@@ -1423,7 +1497,7 @@ module.exports = function (config) {
         };
 
         // perform a pattern seach, returns 'path' portion of help
-        HelpServerUtil.prototype.search = function (pattern, callback, startAt, limit) {
+        HelpServerUtil.prototype.search = function (pattern, callback, startAt, limit, getDescription ) {
             if (!callback || typeof (callback) !== 'function') {
                 throw new Error('Second parameter must be a callback function');
             }
@@ -1434,9 +1508,9 @@ module.exports = function (config) {
             } else {
                 var elasticquery = require("./elasticquery");
                 if (limit && limit > 0 && startAt >= 0)
-                    elasticquery(this.config, pattern, callback, startAt, limit);
+                    elasticquery(this.config, pattern, callback, startAt, limit,getDescription);
                 else
-                    elasticquery(this.config, pattern, callback);
+                    elasticquery(this.config, pattern, callback,null,null,getDescription);
             }
         };
    
@@ -1899,10 +1973,13 @@ module.exports = function (config) {
             "search": function (hlp, path, req, res) {
                 var offset = 0;
                 var limit = 0;
+                var getDescription = false;
                 if (req.query.limit)
                     limit = parseInt(req.query.limit);
                 if (req.query.offset)
                     offset = parseInt(req.query.offset);
+                if (req.query.description)
+                    getDescription = true;
                 hlp.search(req.query.pattern, function (err, data) {
                     if (err) {
                         hlp.onSendExpress(res);
@@ -1919,7 +1996,7 @@ module.exports = function (config) {
                         }
                         res.send(JSON.stringify(data));
                     }
-                }, offset, limit);
+                }, offset, limit , getDescription );
             },
 
             "refresh": function (hlp, path, req, res) {

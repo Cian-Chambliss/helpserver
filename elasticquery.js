@@ -1,4 +1,4 @@
-module.exports = function (config, pattern, callback, startAt, maximum) {
+module.exports = function (config, pattern, callback, startAt, maximum , getDescription ) {
   var helpSystemIndex = config.search.index;
   var elasticsearch = require('elasticsearch');
   var client = new elasticsearch.Client({
@@ -35,13 +35,19 @@ module.exports = function (config, pattern, callback, startAt, maximum) {
   if (!maximum) {
     maximum = 10;
   }
+  var columnSelection = null;
+  if( getDescription ) {
+      columnSelection = ["title", "path", "description" , "metadata" , "toc" ]
+  } else {
+      columnSelection = ["title", "path", "metadata" , "toc" ]
+  }
   client.search({
     index: helpSystemIndex,
     body: {
       from: startAt,
       size: maximum,
       query: queryDef,
-      _source: ["title", "path", "metadata" , "toc" ]
+      _source: columnSelection
     }
   }, function (error, response) {
       if (error) {
@@ -52,13 +58,28 @@ module.exports = function (config, pattern, callback, startAt, maximum) {
         var i;
         for (i = 0; i < srcArray.length; ++i) {
           var item = srcArray[i]._source;
+          var description = item.description || "";
           if (item.metadata && item.metadata.group) {
             if (item.metadata && item.metadata.pagename ) {
-              if (item.metadata.istopic) {
-                results.push({ title: item.title, path: item.path, group: item.metadata.group, istopic: item.metadata.istopic , pagename : item.metadata.pagename });
+              if( getDescription ) {
+                    if (item.metadata.istopic) {
+                        results.push({ title: item.title, description : description , path: item.path, group: item.metadata.group, istopic: item.metadata.istopic , pagename : item.metadata.pagename });
+                    } else {
+                        results.push({ title: item.title, description : description ,path: item.path, group: item.metadata.group , pagename : item.metadata.pagename });
+                    }                    
               } else {
-                results.push({ title: item.title, path: item.path, group: item.metadata.group , pagename : item.metadata.pagename });
+                    if (item.metadata.istopic) {
+                        results.push({ title: item.title, path: item.path, group: item.metadata.group, istopic: item.metadata.istopic , pagename : item.metadata.pagename });
+                    } else {
+                        results.push({ title: item.title, path: item.path, group: item.metadata.group , pagename : item.metadata.pagename });
+                    }
               }              
+            } else if( getDescription ) {
+              if (item.metadata.istopic) {
+                results.push({ title: item.title,description : description , path: item.path, group: item.metadata.group, istopic: item.metadata.istopic });
+              } else {
+                results.push({ title: item.title,description : description , path: item.path, group: item.metadata.group });
+              }
             } else {              
               if (item.metadata.istopic) {
                 results.push({ title: item.title, path: item.path, group: item.metadata.group, istopic: item.metadata.istopic });
@@ -66,15 +87,19 @@ module.exports = function (config, pattern, callback, startAt, maximum) {
                 results.push({ title: item.title, path: item.path, group: item.metadata.group });
               }
             }
+          } else if( getDescription ) {
+            if (item.metadata && item.metadata.pagename ) {
+              results.push({ title: item.title,description : description , path: item.path , pagename : item.metadata.pagename });
+            } else {
+              results.push({ title: item.title,description : description , path: item.path });
+            }
           } else {
             if (item.metadata && item.metadata.pagename ) {
               results.push({ title: item.title, path: item.path , pagename : item.metadata.pagename });
             } else {
               results.push({ title: item.title, path: item.path });
             }
-          }            
-          
-            
+          } 
           if( item.toc ) {
             results[ results.length - 1 ].toc = item.toc;
           }  

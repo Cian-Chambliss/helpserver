@@ -8,6 +8,35 @@ module.exports = function (config, data, pageProc) {
     var inPara = false;
     var paragraph = "";
     var getPlainText = true;
+    var getLinks = false;    
+    var linksDefinition = "";
+    var replaceLinks = [];
+    var processEmbeddedLinks = function(linksDef) {
+        var parts = linksDef.split("<a");
+        if( parts.length > 1 ) {
+            var i;
+            for( i = 1 ; i < parts.length ; ++i ) {
+                var content = parts[i].split(">");
+                if( content.length > 1 ) {
+                    var tagAttribs = content[0];
+                    if( pageProc.basepath ) {
+                        var hrefPos = tagAttribs.indexOf("href=");
+                        if( hrefPos >= 0 ) {
+                            var replaceAttrib = tagAttribs.substring(hrefPos+5).trim();
+                            if( replaceAttrib.substring(0,1) == '"' || replaceAttrib.substring(0,1) == "'" ) {
+                                if( replaceAttrib.substring(1,2) == '/' ) {
+                                    tagAttribs = tagAttribs.substring(0,hrefPos+6) + pageProc.basepath + replaceAttrib.substring(1);
+                                }
+                            }
+                        }
+                    }
+                    content = content[1].split("</a")[0];
+                    replaceLinks.push({ search : "["+content+"]" , replace : "<a "+tagAttribs+">"+content+"</a>" });
+                }
+            }
+        }
+    };
+    
     var parser = new htmlparser.Parser({
         onopentag: function (name, attribs) {
             if (attribs.href) {
@@ -26,6 +55,10 @@ module.exports = function (config, data, pageProc) {
                          pageProc.pageDescription = attribs.content;
                      }
                  }
+            } else if( name == "script" ) {
+                 if( attribs.id == "definePageLinks" || attribs.type=="text/xmldata" ) {                      
+                      getLinks = true;
+                 }
             }
         },
         ontext: function (text) {
@@ -38,6 +71,8 @@ module.exports = function (config, data, pageProc) {
                     getPlainText  = false;
                     paragraph = sentence.join('.'); 
                 }
+            } else if( getLinks ) {
+                linksDefinition += text;
             }
         },
         onclosetag: function (name) {
@@ -45,6 +80,13 @@ module.exports = function (config, data, pageProc) {
                 inTitle = false;
             } else if( name == "p" ) {                
                 inPara = false;
+            } else if( name == "script" ) {
+                if( getLinks ) {
+                    getLinks = false;
+                    if( linksDefinition != "" ) {
+                        processEmbeddedLinks(linksDefinition);
+                    }
+                }                
             }
         }
     });
@@ -62,6 +104,13 @@ module.exports = function (config, data, pageProc) {
                 }
             }
         }
+    }
+    if( replaceLinks.length > 0 ) {
+        for (i = 0; i < replaceLinks.length; ++i) {
+            while (data.indexOf(replaceLinks[i].search) >= 0) {
+                data = data.replace(replaceLinks[i].search, replaceLinks[i].replace);
+            }
+        }        
     }
     if( !pageProc.pageDescription ) {
         while (paragraph.indexOf('\r') >= 0) {

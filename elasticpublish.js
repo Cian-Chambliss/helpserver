@@ -11,7 +11,7 @@ module.exports = function (config, callback ) {
   var helpSystemType = config.search.type;
   var ProgressBar = require('progress');
   var unpublished = [];
-  var publishStats = { published: 0, errors: 0, errorList: [] };
+  var publishStats = { published: 0, errors: 0, errorList: [] };  
   var replaceAll = function (str, find, replace) {
     while (str.indexOf(find) >= 0)
       str = str.replace(find, replace);
@@ -34,6 +34,10 @@ module.exports = function (config, callback ) {
       async.eachSeries(list, function (fo, callbackLoop) {
         var fn = replaceAll(replaceAll(fo.path, '/', '_'), '\\', '_');
         fn = fn.replace(".html", ".txt");
+        var description = "";
+        if( fo.description ) {
+            description = fo.description;
+        }
         fs.readFile(plainTextPath + fn, "utf8", function (err, content) {
           if (err && !fo.isDelete) {
             bar.tick();
@@ -119,6 +123,7 @@ module.exports = function (config, callback ) {
                             var bodyContent = {
                                 title: fo.title + " / " +helpEntryTitle,
                                 path: fo.path + "#" + helpEntryHash,
+                                description: description,
                                 content: subcontent,
                                 tags: tags,
                                 status: status,
@@ -153,6 +158,7 @@ module.exports = function (config, callback ) {
                       title: fo.title,
                       path: fo.path,
                       content: content,
+                      description: description,
                       tags: tags,
                       status: status,
                       metadata: metadataInst                  

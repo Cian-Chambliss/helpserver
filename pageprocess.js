@@ -13,6 +13,7 @@ module.exports = function (config, data, page, callbackPage) {
     var extension = ofn.substring(extensionStart).toLowerCase();
     var manifestFile = config.generated + "manifest/" + ofn.substring(0, extensionStart) + ".json";
     var overrideTitle = null;
+    var extractedDescrition = null;
     var normalizeREF = function (srcName, ref) {
         if (ref.substr(0, 1) != '/' && ref.substr(0, 5) != 'http:' && ref.substr(0, 6) != 'https:' && ref.substr(0, 11) != 'javascript:') {
             var parts = srcName.split('/');
@@ -45,6 +46,12 @@ module.exports = function (config, data, page, callbackPage) {
                 page.title = overrideTitle; 
                 page.metadata = { title : overrideTitle };
             }            
+            if( config.events.extractDescription ) {
+                extractedDescrition = config.events.extractDescription(textData);
+                if( extractedDescrition ) {
+                    page.description = extractedDescrition;
+                }
+            }
         }
     }
     if (config.metadata) {
@@ -71,6 +78,7 @@ module.exports = function (config, data, page, callbackPage) {
         var htmlparser = require("htmlparser2");
         var deps = { href: [], images: [] };
         var plainText = "";
+        var plainTextArray = [];
         var pendingPlaintextSection = null;
         var multiPage = {};
         var stringJs = require('string');
@@ -87,6 +95,7 @@ module.exports = function (config, data, page, callbackPage) {
         var lastText = null;
         var tagH1 = null;
         var tagTitle = null;
+        var inStyleOrScript = 0;
         var findInToc = function (tocItem, name) {
             var i;
             for (i = 0; i < tocItem.length; ++i) {
@@ -141,6 +150,10 @@ module.exports = function (config, data, page, callbackPage) {
                         if (attribs.name) {
                             var item = findInToc(subTOC, attribs.name);
                             if (item && item.hash) {
+                                if( plainTextArray.length > 0 ) {
+                                    plainText = plainTextArray.join("")+plainText;
+                                    plainTextArray = [];                                    
+                                }
                                 if (pendingPlaintextSection && plainText.length > 0) {
                                     multiPage[pendingPlaintextSection] = plainText;
                                 }
@@ -164,13 +177,20 @@ module.exports = function (config, data, page, callbackPage) {
                         else
                             tocStack[tocDepth] = [];
                     }
+                } else if (name === "style" || name === "script" ) {
+                    ++inStyleOrScript;
                 }
             },
             ontext: function (text) {
                 text = stringJs(text).decodeHTMLEntities().s;
                 lastText = text;
-                if (config.search)
+                if (config.search && inStyleOrScript == 0 ) {
                     plainText += stringJs(text);
+                    if( plainText.length > 8000 ) {
+                        plainTextArray.push(plainText);
+                        plainText = "";
+                    }
+                }
                 if (tocHash || childBranch) {
                     if (tocHash && childBranch) {
                         if (childFlattenValue && childFlattenValue > 0)
@@ -231,18 +251,27 @@ module.exports = function (config, data, page, callbackPage) {
                         --tocDepth;
                     }
                 } else if (name === "title") {
-                     if( !tagTitle ) {
+                     if( !tagTitle && extension != '.xml' ) {
                          tagTitle = lastText;
                      }
                 } else if (name === "h1") {
                      if( !tagH1 ) {
                          tagH1 = lastText;
                      }                   
+                } else if (name === "style" || name === "script" ) {
+                    --inStyleOrScript;
                 }
             }
         });
         parser.write(data);
         parser.end();
+        
+        // If 'chunks' array was allocated (for big buffers - flush the content)
+        if( plainTextArray.length > 0 ) {
+            plainText = plainTextArray.join("")+plainText;
+            plainTextArray = [];                                    
+        }
+        
         if (pendingPlaintextSection && plainText.length > 0) {
             multiPage[pendingPlaintextSection] = plainText;
         }
@@ -265,7 +294,10 @@ module.exports = function (config, data, page, callbackPage) {
             if( overrideTitle ) {
                 page.title = overrideTitle; 
                 page.metadata = { title : overrideTitle };
-            }                        
+            }
+        }
+        if( extractedDescrition ) {
+            page.description = extractedDescrition;
         }
         var fs = require('fs');        
         var commitPageManifest = function () {
@@ -281,7 +313,7 @@ module.exports = function (config, data, page, callbackPage) {
                     }
                     fs.writeFile(plainTextPath + ofnBase + ".txt", hashList, function (err) {
                         for (var prop in multiPage) {
-                            fs.writeFile(plainTextPath + ofnBase + "__" + prop + ".txt", multiPage[prop], function (err) {
+                            fs.writeFile(plainTextPath + ofnBase + "__" + prop + ".txt", multiPage[prop].replace(/\s+/g, ' '), function (err) {
                                 --countDown;
                                 if (countDown == 0) {
                                     if (haveConfigData) {
@@ -298,12 +330,13 @@ module.exports = function (config, data, page, callbackPage) {
                 } else {
                     var plainTextPath = config.generated + "plaintext/";
                     ofn = ofn.replace(".html", ".txt");
-                    plainText = replaceAll(plainText, "\r", " ");
-                    plainText = replaceAll(plainText, "\n", " ");
-                    plainText = replaceAll(plainText, "\t", " ");
-                    plainText = replaceAll(plainText, "             ", " ");
-                    plainText = replaceAll(plainText, "  ", " ");
-                    plainText = replaceAll(plainText, "  ", " ");
+                    plainText = plainText.replace(/\s+/g, ' ');
+                    //plainText = replaceAll(plainText, "\r", " ");
+                    //plainText = replaceAll(plainText, "\n", " ");
+                    //plainText = replaceAll(plainText, "\t", " ");
+                    //plainText = replaceAll(plainText, "             ", " ");
+                    //plainText = replaceAll(plainText, "  ", " ");
+                    //plainText = replaceAll(plainText, "  ", " ");
                     fs.writeFile(plainTextPath + ofn, plainText, function (err) {
                         if (haveConfigData) {
                             fs.writeFile(manifestFile, JSON.stringify(page, null, "  "), function (err2) {

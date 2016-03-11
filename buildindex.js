@@ -92,8 +92,14 @@ module.exports = function (config, callback) {
 								callStatus.converted++;
 							}
 							if( fo.toc ) {
-								publishList.push({ title: fo.title, path: fo.path, metadata: fo.metadata , toc : fo.toc });
-							} else {
+                                if(  fo.description && fo.description.length > 0 ) {
+                                    publishList.push({ title: fo.title, description: fo.description, path: fo.path, metadata: fo.metadata , toc : fo.toc });
+                                } else {
+								    publishList.push({ title: fo.title, path: fo.path, metadata: fo.metadata , toc : fo.toc });
+                                }
+							} else if(  fo.description && fo.description.length > 0 ) {
+                                publishList.push({ title: fo.title, description: fo.description, path: fo.path, metadata: fo.metadata });
+                            } else {
 								publishList.push({ title: fo.title, path: fo.path, metadata: fo.metadata });
 							}
 							callbackLoop();
