@@ -834,23 +834,48 @@ module.exports = function (config) {
                     if( parentIndexPtr ) {
                         callback(null, processWebPage(data, treePtr,parentIndexPtr), "html");                        
                     } else {
-                        fs.readFile( config.source + parentIndexFile.substring(1), "utf8" , function(err,parentData) {
+                        fs.readFile( config.source + parentIndexFile.substring(1), "utf8" , function(err,parentData) {                            
+                            var translateIndexPage = false;
+                            var parentAbsolutePath = page.substring(0,page.lastIndexOf('/')+1);
                             if( err ) {
                                 parentData = "";
                             }
                             if( parentData.indexOf("<!--orderchildren-->") >= 0 ) {
                                 var extractLocalLinks = require("./extractLocalLinks.js");
-                                var treeLocalLinks = extractLocalLinks(parentData);
+                                var treeLocalLinks = extractLocalLinks(parentData,parentAbsolutePath);
                                 if( treeLocalLinks.length > 0 ) {
                                     parentIndexData[parentIndexFile] = { reorder : true , links : treeLocalLinks };
                                 } else {
                                     parentIndexData[parentIndexFile] = { reorder : false };
                                 }
+                            } else if( parentData.indexOf("<!--order:") >= 0 ) {
+                                // Regenerate links..
+                                translateIndexPage = true;
                             } else {
                                 parentIndexData[parentIndexFile] = { reorder : false };
                             }
-                            parentIndexPtr = parentIndexData[parentIndexFile];
-                            callback(null, processWebPage(data, treePtr,parentIndexPtr), "html");
+                            if( translateIndexPage ) {
+                                var ListUtilities = require('./listutilities');
+                                var lu = new ListUtilities(config);
+                                var parentPagepage = parentIndexFile.replace(".xml", ".xml_html");
+                                lu.loadOrCreateTranslatedPage(hlp.config, parentPagepage, (hlp.config.filter_name ? hlp.config.filter_name : defaultFilter), function (parenterr, parentGenData, parenttype) {
+                                    if (parenterr) {
+                                        parentIndexData[parentIndexFile] = { reorder : false };
+                                    } else {
+                                        var extractLocalLinks = require("./extractLocalLinks.js");
+                                        var treeLocalLinks = extractLocalLinks(parentGenData,parentAbsolutePath);
+                                        if( treeLocalLinks.length > 0 ) {
+                                            parentIndexData[parentIndexFile] = { reorder : true , links : treeLocalLinks };
+                                        } else {
+                                            parentIndexData[parentIndexFile] = { reorder : false };
+                                        }                                       
+                                    }
+                                    callback(null, processWebPage(data, treePtr,parentIndexData[parentIndexFile]), "html");
+                                });
+                            } else {
+                                parentIndexPtr = parentIndexData[parentIndexFile];
+                                callback(null, processWebPage(data, treePtr,parentIndexPtr), "html");
+                            }
                         });
                     }                      
                 } else {                

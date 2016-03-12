@@ -849,6 +849,7 @@ module.exports = function (config) {
                                         htmlText = "";
                                     if( lists.length > 0 ) {
                                         var i , j , k;
+                                        var reorderChildren = false;
                                         for( i = 0 ; i < lists.length ; ++i ) {
                                             if( orderData.length > 1 ) {
                                                 // reorder the items in the list
@@ -868,12 +869,20 @@ module.exports = function (config) {
                                                         newList = newList.concat(listRemainder);
                                                     }
                                                     lists[i].content = newList;
+                                                    reorderChildren = true;
                                                 }
                                             }
                                             if( config.events.wrapIndex ) {                                            
                                                 htmlText = lu.replaceAll(htmlText, '<!--list:'+lists[i].listDef+'-->', config.events.wrapIndex({ format  : genereratedExtension , content : lists[i].content.join("\n") }) );
                                             } else {
                                                 htmlText = lu.replaceAll(htmlText, '<!--list:'+lists[i].listDef+'-->', lists[i].content.join("\n") );
+                                            }
+                                            if( reorderChildren ) {
+                                                if( genereratedExtension == ".xml" ) {                                                    
+                                                    htmlText = htmlText.replace("<page","<page reorder-children=\"true\"");
+                                                } else {
+                                                    htmlText = htmlText.replace(">","><!--orderchildren-->");
+                                                }
                                             }                                            
                                         }
                                     }
@@ -937,7 +946,7 @@ module.exports = function (config) {
                                     for( i = 0 ; i < orderData.length ; ++i ) {
                                         orderData[i] = orderData[i].trim();
                                     }                                     
-                                }                                
+                                }     
                                 for (i = 1; i < embeddedLists.length; ++i) {
                                     var endPath = embeddedLists[i].indexOf('-->');
                                     if (endPath > 0) {
