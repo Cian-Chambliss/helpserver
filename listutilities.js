@@ -710,6 +710,7 @@ module.exports = function (config) {
         var indexTemplatePos = path.indexOf("/index.xml");
         var xmlTemplate = null;
         var lists = [];
+        var orderData = [];
         
         if (indexTemplatePos > 0) {
             path = path.substring(0, indexTemplatePos);
@@ -832,11 +833,7 @@ module.exports = function (config) {
                                           , format : genereratedExtension 
                                           , all : pageChildren
                                           }, function (snippet) {
-                                            if( pageEntry.listParent.content.indexOf("</page>") >= 0 )
-                                               console.log("!!-----Added reference to "+pathName );
-                                            else
-                                               console.log("------Added reference to "+pathName );
-                                            pageEntry.listParent.content += snippet+"\n";
+                                            pageEntry.listParent.content.push( snippet );
                                             callbackLoop();
                                         });
                                     } else {
@@ -851,15 +848,32 @@ module.exports = function (config) {
                                     else    
                                         htmlText = "";
                                     if( lists.length > 0 ) {
-                                        var i;
+                                        var i , j , k;
                                         for( i = 0 ; i < lists.length ; ++i ) {
-                                            if( lists[i].content.indexOf('</page>') >= 0 ) {
-                                                console.log("!!!++++Nested content detected" );
-                                            } 
+                                            if( orderData.length > 1 ) {
+                                                // reorder the items in the list
+                                                var listRemainder =  lists[i].content;
+                                                var newList = [];
+                                                for( j = 0 ; j < orderData.length ; ++j ) {
+                                                    for( k = 0 ; k < listRemainder.length ; ++k ) {
+                                                        if( listRemainder[k].toLowerCase().indexOf(orderData[j]) >= 0 ) {
+                                                            newList.push(listRemainder[k]);
+                                                            listRemainder.splice(k,1);
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                                if( newList.length > 0 ) {
+                                                    if( listRemainder.length > 0 ) {
+                                                        newList = newList.concat(listRemainder);
+                                                    }
+                                                    lists[i].content = newList;
+                                                }
+                                            }
                                             if( config.events.wrapIndex ) {                                            
-                                                htmlText = lu.replaceAll(htmlText, '<!--list:'+lists[i].listDef+'-->', config.events.wrapIndex({ format  : genereratedExtension , content : lists[i].content }) );
+                                                htmlText = lu.replaceAll(htmlText, '<!--list:'+lists[i].listDef+'-->', config.events.wrapIndex({ format  : genereratedExtension , content : lists[i].content.join("\n") }) );
                                             } else {
-                                                htmlText = lu.replaceAll(htmlText, '<!--list:'+lists[i].listDef+'-->', lists[i].content );
+                                                htmlText = lu.replaceAll(htmlText, '<!--list:'+lists[i].listDef+'-->', lists[i].content.join("\n") );
                                             }                                            
                                         }
                                     }
@@ -910,11 +924,20 @@ module.exports = function (config) {
                             } else {
                                 xmlTemplate = "<!--list:.-->";
                             }
-                            lists.push({ listDef: '.', fullPath: path , content : '' });
+                            lists.push({ listDef: '.', fullPath: path , content : [] });
                         } else {
-                            var embeddedLists = xmlData.split('<!--list:')
-                            if (embeddedLists.length > 1) {
+                            var embeddedLists = xmlData.split('<!--list:');
+                            if (embeddedLists.length > 1) {                                
                                 var i;
+                                var orderDataPos = xmlData.indexOf("<!--order:");
+                                if( orderDataPos >= 0 ) {
+                                    orderData = xmlData.substring(orderDataPos+10);
+                                    orderData = orderData.split("-->")[0].trim().toLowerCase();
+                                    orderData = orderData.split("\n");
+                                    for( i = 0 ; i < orderData.length ; ++i ) {
+                                        orderData[i] = orderData[i].trim();
+                                    }                                     
+                                }                                
                                 for (i = 1; i < embeddedLists.length; ++i) {
                                     var endPath = embeddedLists[i].indexOf('-->');
                                     if (endPath > 0) {
@@ -940,7 +963,7 @@ module.exports = function (config) {
                                                     fullPath += "/" + relPath;
                                                 }
                                             }
-                                            lists.push({ listDef: relPath, fullPath: fullPath , content : '' });
+                                            lists.push({ listDef: relPath, fullPath: fullPath , content : [] });
                                         }
                                     }
                                 }
@@ -957,7 +980,7 @@ module.exports = function (config) {
                     } else {
                         xmlTemplate = "<!--list:.-->";
                     }
-                    lists.push({ listDef: '.', fullPath: path , content : '' });
+                    lists.push({ listDef: '.', fullPath: path , content : [] });
                     generatePage();
                 }
             } else {

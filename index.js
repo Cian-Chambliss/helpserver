@@ -644,8 +644,26 @@ module.exports = function (config) {
             var processWebPage = function (htmlText, tree, relatedPageOrder ) {
                 var lowText = htmlText.toLowerCase();
                 var descriptionTagPos = lowText.indexOf("<meta name=\"description\"");
-                var titleTagPos = lowText.indexOf("<title");
+                var titleTagPos = lowText.indexOf("<title");                
+                var lastModifiedPos = lowText.indexOf(" http-equiv=\"last-modified\"" );
                 var bodyAt = lowText.indexOf('<body');
+                var lastModified = "";
+                if( lastModifiedPos >= 0 ) {
+                    lastModified = lowText.substring(lastModifiedPos);
+                    lastModifiedPos = lastModified.indexOf("content=");
+                    if( lastModifiedPos > 0 ) {
+                        lastModified = lastModified.substring(lastModifiedPos+8).trim();
+                        if( lastModified.substring(0,1) == "\"" ) {
+                            lastModified = lastModified.split("\"")[1];
+                            lastModified = lastModified.split("@")[0];
+                        } else {
+                            lastModified = "";                         
+                        }
+                    } else {
+                        lastModified = "";
+                    }                    
+                    //<meta http-equiv="last-modified" content="YYYY-MM-DD@hh:mm:ss TMZ" />
+                }
                 if (bodyAt >= 0) {
                     var endBodyAt = lowText.indexOf('</body');
                     if (endBodyAt >= 0) {
@@ -680,6 +698,9 @@ module.exports = function (config) {
                 var navigationText = generateNavigation(tree,relatedPageOrder);
                 var fullPage = standardPageTemplate;
                 var title = navigationText.pageTitle;
+                if( lastModified != "" ) {
+                    lastModified = "Page Last Checked on "+lastModified;
+                }
                 fullPage = fullPage.replace("<!--navparent-->", navigationText.parentUrl)
                     .replace("<!--navchild-->", navigationText.childUrl)
                     .replace("<!--navprevious-->", navigationText.previousUrl)
@@ -687,7 +708,8 @@ module.exports = function (config) {
                     .replace("<!--search--->", absolutePath + "pages/search")
                     .replace("<!--pagetopic--->", title)
                     .replace("<!--pagedescription--->", pageProc.pageDescription)
-                    .replace("<!--library--->", GenerateLibrary(config.library));
+                    .replace("<!--library--->", GenerateLibrary(config.library))
+                    .replace("<!--lastmodified--->", lastModified);
                     
                 var replaceDollar = false;    
                 if( htmlText.indexOf("'$'") >= 0 ) {

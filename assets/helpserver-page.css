@@ -4,8 +4,7 @@ padding: 0px;
 margin: 0px;
 }
 .container {
-max-width: 1140px;
-padding: 0px 30px;
+padding: 0px 0px;
 margin: 0px auto;
 }
 #header {
@@ -145,7 +144,8 @@ font-size: 14px;
 }
 
 #bread-crumbs {
-padding: 10px 0px;
+padding: 10px;
+background-color: #cecece;
 }
 #bread-crumbs ul {
 list-style: none;
@@ -242,6 +242,17 @@ transform: rotate(90deg);
 margin-left: 260px;
 }
 
+#report-issue {
+	height: 32px;
+	background-color: #fffcc5;
+	padding: 10px;
+}
+
+#report-issue a {
+	margin-top: 8px;
+	float: right;
+	text-decoration: underline; 
+}
 
 @media screen and (max-width: 800px) {
 	#search input {
