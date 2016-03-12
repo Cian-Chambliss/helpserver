@@ -576,7 +576,11 @@ module.exports = function (config) {
                         related = "<ul>";
                         for (var i = 0; i < relatedPageOrder.links.length ; ++i ) {
                             var linkitem = relatedPageOrder.links[i];
-                            related += "<li><a href=\"../" +linkitem.href+"\">";
+                            if( page.indexOf("/index.") >= 0 && linkitem.href.substring(0,1) != '/' ) {
+                                related += "<li><a href=\"../" +linkitem.href+"\">";
+                            } else {
+                                related += "<li><a href=\"" +linkitem.href+"\">";
+                            }
                             related += linkitem.text;
                             related += "</a></li>";                            
                         }

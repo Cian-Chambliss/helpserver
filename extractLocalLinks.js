@@ -1,7 +1,7 @@
 /**
  * Extract local href anchor tags..
  */
-module.exports = function ( data ) {
+module.exports = function ( data , parentAbsolutePath ) {
     var htmlparser = require("htmlparser2");
     var pendingHRef = null;
     var anchorContents = "";
@@ -21,6 +21,9 @@ module.exports = function ( data ) {
                     }
                     if (attribs.href.substring(0, 1) != '/' && !protocol ) {
                         pendingHRef = attribs.href;
+                        anchorContents = "";
+                    } else if( parentAbsolutePath && parentAbsolutePath.length && parentAbsolutePath == attribs.href.substring(0,parentAbsolutePath.length)  ) {
+                        pendingHRef = attribs.href.substring(parentAbsolutePath.length);
                         anchorContents = "";
                     }
                 }
