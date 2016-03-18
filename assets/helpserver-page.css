@@ -4,8 +4,9 @@ padding: 0px;
 margin: 0px;
 }
 .container {
-padding: 0px 0px;
+padding: 0px 30px;
 margin: 0px auto;
+max-width: 1140px;
 }
 #header {
 height: 130px;
@@ -144,7 +145,7 @@ font-size: 14px;
 }
 
 #bread-crumbs {
-padding: 10px;
+padding: 10px 30px;
 background-color: #cecece;
 }
 #bread-crumbs ul {
@@ -236,10 +237,52 @@ padding-bottom: 2px;
 transform: rotate(90deg);
 }
 
+.search-results dt a {
+   font-size:13.5pt;
+}
+.search-results dd {
+	padding-bottom:10px;
+}
+
+.search-address {
+   font-size: small;
+   color: green;   
+}
+
+.search-description {
+   
+}
+.search-breadcrumbs {
+}
+
+.search-breadcrumbs ul {
+list-style: none;
+margin: 0px;
+padding: 0px;
+}
+.search-breadcrumbs ul li {
+display: inline-block;
+}
+.search-breadcrumbs ul li:before {
+content: "-";
+display: inline-block;
+padding: 0px 3px;
+}
+.search-breadcrumbs ul li:first-child:before {
+display: none;
+}
+.search-breadcrumbs a {
+color: #4444ff;
+text-decoration: underline;
+}
+.search-breadcrumbs a:hover {
+text-decoration: none;
+}
 
 
 #doc {
 margin-left: 260px;
+overflow-x:auto;
 }
 
 #report-issue {
@@ -255,6 +298,16 @@ margin-left: 260px;
 }
 
 @media screen and (max-width: 800px) {
+    .container {
+        padding: 0px 10px;
+    }
+    #bread-crumbs {
+        padding: 10px;
+    }
+
+    #main-menu > ul {
+        display: none;   
+    }
 	#search input {
 		width: 75px;
 	}

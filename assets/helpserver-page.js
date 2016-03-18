@@ -351,3 +351,15 @@ function initialize() {
     tableOfContents.loaded();
 
 };
+
+function initializeSearch() {
+    var addressTags = document.getElementsByClassName("search-address");
+    if( addressTags && addressTags.length ) {
+        var i;
+        for( i = 0 ; i < addressTags.length ; ++i ) {
+             if( addressTags[i].innerHTML.substr(0,1) == '/' ) {
+                 addressTags[i].innerHTML = document.location.host +  addressTags[i].innerHTML;
+             }
+        }
+    }
+}

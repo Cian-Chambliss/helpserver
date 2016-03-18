@@ -380,7 +380,6 @@ module.exports = function (config) {
         var hlp = this;
         page = decodeURI(page);
         var relativePath = page.substring(1);
-        //var generatedPage = config.generated + "topics/"+replaceAll(relativePath,"/","_");
         var thisFiltername = (this.config.filter_name ? this.config.filter_name : defaultFilter);
         var treeName = thisFiltername + this.config.structurefile;
         var tocName = treeName.replace(".json", ".js");
@@ -440,138 +439,122 @@ module.exports = function (config) {
             }
             return match;
         };
+        var generateNavigation = function (tree,relativePath,page,deepestAltToc,relatedPageOrder,getRelations) {
+            var breadcrumbs = "";
+            var related = "";
+            var parentUrl = "#";
+            var childUrl = "#";
+            var previousUrl = "#";
+            var nextUrl = "#";
+            var pageTitle = null;
 
-        if (extensionPos > 0)
-            extension = page.substring(extensionPos + 1).toLowerCase();
+            if (tree && tree.children) {
+                var searchTopic = "/" + relativePath.toLowerCase();
+                var kidsLevel = null;
+                var firstChild = null;
+                var firstChildParent = null;
+                var indexOfKid = -1;
+                var parentOfNode = null;
 
-        if (extension == "html" || extension == "xml" || extension == "md") {
-            var altTocs = config.tocData.altTocs
-            if (altTocs && altTocs.length > 0) {
-                var deepestAltToc = null;
-                var i;
-                var searchPath = "/" + relativePath.toLowerCase();
-                for (i = 0; i < altTocs.length; ++i) {
-                    var prefix = altTocs[i];
-                    if (searchPath.substring(0, prefix.length) == prefix.toLowerCase()) {
-                        if (!deepestAltToc)
-                            deepestAltToc = prefix;
-                        else if (deepestAltToc.length < prefix.length)
-                            deepestAltToc = prefix;
-                    }
-                }
-                if (deepestAltToc) {
-                    var deepestAltTocFN = replaceAll(deepestAltToc, "/", "_");
-                    tocName = deepestAltTocFN + tocName;
-                    treeName = deepestAltTocFN + treeName;                   
-                }
-            }
-            var generateNavigation = function (tree,relatedPageOrder) {
-                var breadcrumbs = "";
-                var related = "";
-                var parentUrl = "#";
-                var childUrl = "#";
-                var previousUrl = "#";
-                var nextUrl = "#";
-                var pageTitle = null;
-
-                if (tree && tree.children) {
-                    var searchTopic = "/" + relativePath.toLowerCase();
-                    var kidsLevel = null;
-                    var firstChild = null;
-                    var firstChildParent = null;
-                    var indexOfKid = -1;
-                    var parentOfNode = null;
-
-                    var recurseNavTree = function (kids) {
-                        if (kids.length) {
-                            for (var i = 0; i < kids.length; ++i) {
-                                if (kids[i].path && kids[i].path.toLowerCase() == searchTopic) {
-                                    pageTitle = kids[i].title;
-                                    kidsLevel = kids;
-                                    indexOfKid = i;
-                                    if (kids[i].children && kids[i].children.length) {
-                                        firstChild = kids[i].children[0];
-                                        firstChildParent = kids[i];
+                var recurseNavTree = function (kids) {
+                    if (kids.length) {
+                        for (var i = 0; i < kids.length; ++i) {
+                            if (kids[i].path && kids[i].path.toLowerCase() == searchTopic) {
+                                pageTitle = kids[i].title;
+                                kidsLevel = kids;
+                                indexOfKid = i;
+                                if (kids[i].children && kids[i].children.length) {
+                                    firstChild = kids[i].children[0];
+                                    firstChildParent = kids[i];
+                                }
+                                return [kids[i]];
+                            } else if (kids[i].children) {
+                                var childResult = recurseNavTree(kids[i].children);
+                                if (childResult) {
+                                    if (!parentOfNode) {
+                                        parentOfNode = kids[i];
                                     }
-                                    return [kids[i]];
-                                } else if (kids[i].children) {
-                                    var childResult = recurseNavTree(kids[i].children);
-                                    if (childResult) {
-                                        if (!parentOfNode) {
-                                            parentOfNode = kids[i];
-                                        }
-                                        return [kids[i]].concat(childResult);
-                                    }
+                                    return [kids[i]].concat(childResult);
                                 }
                             }
                         }
-                        return null;
-                    };
-                    var branches = recurseNavTree(tree.children);
-                    var booksBranches = [];
-                    var currentBook = harvestBreadcrumbs(config.library, booksBranches, deepestAltToc);
-                    if (booksBranches.length < 2) {
-                        currentBook = null;
-                    } else if( !currentBook && config.library ) {
-                        booksBranches = [];
-                        kidsLevel = null;
-                        branches = null;
-                    } 
-                    if (!kidsLevel && !currentBook && !config.library ) {
-                        kidsLevel = tree.children;
                     }
-                    if( page == topmostPage && !currentBook && config.library ) {
+                    return null;
+                };
+                var branches = recurseNavTree(tree.children);
+                var booksBranches = [];
+                var currentBook = harvestBreadcrumbs(config.library, booksBranches, deepestAltToc);
+                if (booksBranches.length < 2) {
+                    currentBook = null;
+                } else if( !currentBook && config.library ) {
+                    booksBranches = [];
+                    kidsLevel = null;
+                    branches = null;
+                } 
+                if (!kidsLevel && !currentBook && !config.library ) {
+                    kidsLevel = tree.children;
+                }
+                if( page == topmostPage && !currentBook && config.library ) {
+                    breadcrumbs += "<li>";
+                    breadcrumbs += "Main";
+                    breadcrumbs += "</li>";
+                    if( config.library ) {
+                        kidsLevel = null;   
+                    }
+                } else if (branches || currentBook) {
+                    //breadcrumbs = "<ul>";
+                    //breadcrumb
+                    if (currentBook) {
                         breadcrumbs += "<li>";
-                        breadcrumbs += "Main";
+                        if( topmostPage.length > 1 ) {
+                            breadcrumbs += "<a href=\"" + pathPages + topmostPage.substring(1) + "\">Main</a>";
+                        } else {
+                            breadcrumbs += "Main";
+                        }
                         breadcrumbs += "</li>";
-                        if( config.library ) {
-                            kidsLevel = null;   
-                        }
-                    } else if (branches || currentBook) {
-                        //breadcrumbs = "<ul>";
-                        //breadcrumb
-                        if (currentBook) {
-                            breadcrumbs += "<li>";
-                            if( topmostPage.length > 1 ) {
-                                breadcrumbs += "<a href=\"" + pathPages + topmostPage.substring(1) + "\">Main</a>";
-                            } else {
-                                breadcrumbs += "Main";
-                            }
-                            breadcrumbs += "</li>";
-                        }
-                        if (tree.path) {
-                            breadcrumbs += "<li>";
-                            breadcrumbs += "<a href=\"" + pathPages + tree.path.substring(1) + "\">";
-                            if (currentBook) {
-                                breadcrumbs += currentBook;
-                            } else if (!tree.title || tree.title == '/') {
-                                breadcrumbs += "Main";
-                            } else {
-                                breadcrumbs += tree.title;
-                            }
-                            breadcrumbs += "</a>";
-                            breadcrumbs += "</li>";
-                        }
-                        if (branches && branches.length > 0) {
-                            for (var i = 0; i < branches.length - 1; ++i) {
-                                breadcrumbs += "<li>";
-                                if (branches[i].path) {
-                                    breadcrumbs += "<a href=\"" + pathPages + branches[i].path.substring(1) + "\">";
-                                    breadcrumbs += branches[i].title;
-                                    breadcrumbs += "</a>";
-                                } else {
-                                    breadcrumbs += branches[i].title;
-                                }
-                                breadcrumbs += "</li>";
-                            }
-                        }
-                        if (pageTitle) {
-                            breadcrumbs += "<li>";
-                            breadcrumbs += pageTitle
-                            breadcrumbs += "</li>";
-                        }
-                        //breadcrumbs += "</ul>";                        
                     }
+                    if (tree.path) {
+                        breadcrumbs += "<li>";
+                        breadcrumbs += "<a href=\"" + pathPages + tree.path.substring(1) + "\">";
+                        if (currentBook) {
+                            breadcrumbs += currentBook;
+                        } else if (!tree.title || tree.title == '/') {
+                            breadcrumbs += "Main";
+                        } else {
+                            breadcrumbs += tree.title;
+                        }
+                        breadcrumbs += "</a>";
+                        breadcrumbs += "</li>";
+                    }
+                    if (branches && branches.length > 0) {
+                        for (var i = 0; i < branches.length - 1; ++i) {
+                            breadcrumbs += "<li>";
+                            if (branches[i].path) {
+                                breadcrumbs += "<a href=\"" + pathPages + branches[i].path.substring(1) + "\">";
+                                breadcrumbs += branches[i].title;
+                                breadcrumbs += "</a>";
+                            } else {
+                                breadcrumbs += branches[i].title;
+                            }
+                            breadcrumbs += "</li>";
+                        }
+                    }
+                    if( pageTitle && getRelations ) {
+                        breadcrumbs += "<li>";
+                        breadcrumbs += pageTitle
+                        breadcrumbs += "</li>";
+                    }
+                    //breadcrumbs += "</ul>";
+                } else if( topmostPage.length > 1 && getRelations ) {
+                    breadcrumbs += "<li>";
+                    if( topmostPage.length > 1 ) {
+                        breadcrumbs += "<a href=\"" + pathPages + topmostPage.substring(1) + "\">Main</a>";
+                    } else {
+                        breadcrumbs += "Main";
+                    }
+                    breadcrumbs += "</li>";
+                }
+                if( getRelations ) {
                     if( relatedPageOrder.reorder ) {
                         related = "<ul>";
                         for (var i = 0; i < relatedPageOrder.links.length ; ++i ) {
@@ -617,33 +600,68 @@ module.exports = function (config) {
                         related += "</ul>";
                     }
                 }
-                if (firstChild && firstChild.path) {
-                    childUrl = pathPages + firstChild.path.substring(1);
+            }
+            if (firstChild && firstChild.path) {
+                childUrl = pathPages + firstChild.path.substring(1);
+            }
+            if (parentOfNode && parentOfNode.path) {
+                parentUrl = pathPages + parentOfNode.path.substring(1);
+            }
+            if (kidsLevel) {
+                if (indexOfKid > 0 && kidsLevel[indexOfKid - 1].path) {
+                    previousUrl = pathPages + kidsLevel[indexOfKid - 1].path.substring(1);
                 }
-                if (parentOfNode && parentOfNode.path) {
-                    parentUrl = pathPages + parentOfNode.path.substring(1);
+                if (indexOfKid < (kidsLevel.length - 1) && kidsLevel[indexOfKid + 1].path) {
+                    nextUrl = pathPages + kidsLevel[indexOfKid + 1].path.substring(1);
                 }
-                if (kidsLevel) {
-                    if (indexOfKid > 0 && kidsLevel[indexOfKid - 1].path) {
-                        previousUrl = pathPages + kidsLevel[indexOfKid - 1].path.substring(1);
-                    }
-                    if (indexOfKid < (kidsLevel.length - 1) && kidsLevel[indexOfKid + 1].path) {
-                        nextUrl = pathPages + kidsLevel[indexOfKid + 1].path.substring(1);
+            }
+            if (!pageTitle) {
+                pageTitle = relativePath;
+                var pathPartOffset = pageTitle.lastIndexOf('/');
+                if (pathPartOffset >= 0) {
+                    pageTitle = pageTitle.substring(pathPartOffset + 1);
+                }
+                var extensionPartOffset = pageTitle.lastIndexOf('.');
+                if (extensionPartOffset > 0) {
+                    pageTitle = pageTitle.substring(0, extensionPartOffset);
+                }
+            }
+            return { breadcrumbs: breadcrumbs, related: related, parentUrl: parentUrl, childUrl: childUrl, previousUrl: previousUrl, nextUrl: nextUrl, pageTitle: pageTitle };
+        };
+        var getTreeForPath = function(searchPath) {
+            var treeName = thisFiltername + hlp.config.structurefile;
+            var tocName = treeName.replace(".json", ".js");
+            var altTocs = hlp.config.tocData.altTocs;
+            var deepestAltToc = null;
+            if (altTocs && altTocs.length > 0) {
+                var i;
+                for (i = 0; i < altTocs.length; ++i) {
+                    var prefix = altTocs[i];
+                    if (searchPath.substring(0, prefix.length) == prefix.toLowerCase()) {
+                        if (!deepestAltToc)
+                            deepestAltToc = prefix;
+                        else if (deepestAltToc.length < prefix.length)
+                            deepestAltToc = prefix;
                     }
                 }
-                if (!pageTitle) {
-                    pageTitle = relativePath;
-                    var pathPartOffset = pageTitle.lastIndexOf('/');
-                    if (pathPartOffset >= 0) {
-                        pageTitle = pageTitle.substring(pathPartOffset + 1);
-                    }
-                    var extensionPartOffset = pageTitle.lastIndexOf('.');
-                    if (extensionPartOffset > 0) {
-                        pageTitle = pageTitle.substring(0, extensionPartOffset);
-                    }
+                if (deepestAltToc) {
+                    var deepestAltTocFN = replaceAll(deepestAltToc, "/", "_");
+                    tocName = deepestAltTocFN + tocName;
+                    treeName = deepestAltTocFN + treeName;                   
                 }
-                return { breadcrumbs: breadcrumbs, related: related, parentUrl: parentUrl, childUrl: childUrl, previousUrl: previousUrl, nextUrl: nextUrl, pageTitle: pageTitle };
-            };
+            }
+            return { treeName : treeName , tocName : tocName , deepestAltToc : deepestAltToc };
+        };
+            
+        if (extensionPos > 0)
+            extension = page.substring(extensionPos + 1).toLowerCase();
+
+        if (extension == "html" || extension == "xml" || extension == "md") {
+            var pathResults = getTreeForPath( "/" + relativePath.toLowerCase() );
+            var deepestAltToc;
+            tocName = pathResults.tocName
+            treeName = pathResults.treeName;
+            deepestAltToc = pathResults.deepestAltToc;
 
             var processWebPage = function (htmlText, tree, relatedPageOrder ) {
                 var lowText = htmlText.toLowerCase();
@@ -699,9 +717,10 @@ module.exports = function (config) {
                 htmlText = pageProcessor(config, htmlText, pageProc);
                 var tocLoader = "<script src=\"" + absolutePath + "toc_loader/" + tocName + "\" defer></script>";
                 tocLoader = "";
-                var navigationText = generateNavigation(tree,relatedPageOrder);
+                var navigationText = generateNavigation(tree,relativePath,page,deepestAltToc,relatedPageOrder,true);
                 var fullPage = standardPageTemplate;
                 var title = navigationText.pageTitle;
+                var feedback = "?subject=Problem with page:"+title+" ["+page+"]"+"&body=Describe problem with the "+page+" documentation page:";
                 if( lastModified != "" ) {
                     lastModified = "Page Last Checked on "+lastModified;
                 }
@@ -713,6 +732,7 @@ module.exports = function (config) {
                     .replace("<!--pagetopic--->", title)
                     .replace("<!--pagedescription--->", pageProc.pageDescription)
                     .replace("<!--library--->", GenerateLibrary(config.library))
+                    .replace("<!--feedback-->",feedback)
                     .replace("<!--lastmodified--->", lastModified);
                     
                 var replaceDollar = false;    
@@ -1000,7 +1020,7 @@ module.exports = function (config) {
                 }
             } else if (page == "/search" && req.query.pattern) {
                 var offset = 0;
-                var limit = 50;
+                var limit = 10;
                 if (req.query.limit)
                     limit = parseInt(req.query.limit);
                 if (req.query.offset)
@@ -1009,29 +1029,52 @@ module.exports = function (config) {
                     if (err) {
                         callback(null, "Error: " + err, "html");
                     } else {
-                        var i = 0;
-                        var searchResults = "<dl>";
+                        var async = require('async');
+                        var searchResults = "<dl class=\"search-results\">";
                         if (data.length > 0) {
                             var ListUtilities = require('./listutilities');
                             var lu = new ListUtilities(config);
-                            for (i = 0; i < data.length; ++i) {
-                                searchResults += "<dt>";
-                                searchResults += "<a href=\"" + pathPages + data[i].path.substring(1) + "\">";
-                                searchResults += lu.removeDigitPrefix(data[i].title);
-                                searchResults += "</a>";
-                                searchResults += "</dt>";
-                                if( data[i].description ) {
+                            async.eachSeries(data, function (searchResultItem, callbackLoop) {
+                                var pathResults = getTreeForPath( searchResultItem.path.toLowerCase() );
+                                var treeName = pathResults.treeName;
+                                var deepestAltToc = pathResults.deepestAltToc;
+                                var addSearchItem = function(treePtr) {
+                                    searchResults += "<dt>";
+                                    searchResults += "<a href=\"" + pathPages + searchResultItem.path.substring(1) + "\">";
+                                    searchResults += lu.removeDigitPrefix(searchResultItem.title);
+                                    searchResults += "</a>";
+                                    searchResults += "</dt>";
                                     searchResults += "<dd>";
-                                    searchResults += data[i].description;
+                                    searchResults += "<div class=\"search-address\">" + pathPages + searchResultItem.path.substring(1) + "</div>";
+                                    if( searchResultItem.description ) {
+                                        searchResults += "<div class=\"search-description\">" +searchResultItem.description + "</div>";
+                                    }
+                                    var navigationText = generateNavigation(treePtr,searchResultItem.path.substring(1),searchResultItem.path,deepestAltToc,null,false);
+                                    if( navigationText.breadcrumbs ) {
+                                        searchResults += "<div class=\"search-breadcrumbs\"><ul>" +  navigationText.breadcrumbs+ "</ul></div>";
+                                    }
                                     searchResults += "</dd>";
-                                }
-                            }
+                                    callbackLoop();
+                                };
+                                if (treeName && !treeData[treeName]) {
+                                    fs.readFile(config.generated + treeName, "utf8", function (err, jsonTreeData) {
+                                        if (!err) {
+                                            treeData[treeName] = JSON.parse(jsonTreeData);
+                                        }
+                                        addSearchItem(treeData[treeName]);
+                                    });
+                                } else {
+                                    addSearchItem(treeData[treeName]);
+                                }                               
+                            },function() {
+                                searchResults += "</dl>";
+                                callback(null, standardSearchTemplate.replace("<!--body-->", searchResults).replace("<!--search--->", absolutePath + "pages/search").replace("<!--searchpattern--->", req.query.pattern).replace("<!--library--->", GenerateLibrary(config.library)), "html");
+                            });
                         } else {
                             searchResults += "<dt>No Results Found</dt>";
+                            searchResults += "</dl>";
+                            callback(null, standardSearchTemplate.replace("<!--body-->", searchResults).replace("<!--search--->", absolutePath + "pages/search").replace("<!--searchpattern--->", req.query.pattern).replace("<!--library--->", GenerateLibrary(config.library)), "html");
                         }
-                        searchResults += "</dl>";
-                        // data
-                        callback(null, standardSearchTemplate.replace("<!--body-->", searchResults).replace("<!--search--->", absolutePath + "pages/search").replace("<!--searchpattern--->", req.query.pattern).replace("<!--library--->", GenerateLibrary(config.library)), "html");
                     }
                 }, offset, limit, true);
             } else if (page == "/unknown_reference" && req.query.page) {
@@ -1236,7 +1279,7 @@ module.exports = function (config) {
                     if (err) {
                         callback(err, null);
                     } else {
-                        callback(null, data, "extension");
+                        callback(null, data, extension);
                     }
                 }
                     );
