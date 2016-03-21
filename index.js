@@ -1488,8 +1488,31 @@ module.exports = function (config) {
                                 cfg.topPageMetadata = JSON.parse(data);
                             elasticquery(cfg, '', handleQueryResults, 0, 100000);
                         });
-                    } else {
+                    } else if( cfg.search ) {
                         elasticquery(cfg, '', handleQueryResults, 0, 100000);
+                    } else {
+                        // Return ALL records...
+                        //      columnSelection = ["title", "path", "metadata" , "toc" ]
+                        var leadPath = path.resolve( cfg.source ).toLowerCase();
+                        fs.readFile( cfg.generated + cfg.flatfile , "utf8" , function(err,flatList) {
+                             var data = [] , rawData = null;
+                             if( !err ) {
+                                 try {
+                                     rawData = JSON.parse(flatList);
+                                     var i;
+                                     for( i = 0 ; i < rawData.length ; ++i ) {
+                                         var pathName = rawData[i].file;
+                                         if( pathName.toLowerCase().substring(0,leadPath.length) == leadPath ) {
+                                             pathName = pathName.substring(leadPath.length);
+                                         }
+                                         data.push({title : rawData[i].title , path : pathName });
+                                     }
+                                 } catch( err ) {
+                                     
+                                 }
+                             }
+                             handleQueryResults(err,data);
+                        });
                     }
                 }, function () {
                     if (rememberErr)
