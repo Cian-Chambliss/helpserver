@@ -1494,6 +1494,7 @@ module.exports = function (config) {
                         // Return ALL records...
                         //      columnSelection = ["title", "path", "metadata" , "toc" ]
                         var leadPath = path.resolve( cfg.source ).toLowerCase();
+                        leadPath = replaceAll(leadPath,'\\','/');
                         fs.readFile( cfg.generated + cfg.flatfile , "utf8" , function(err,flatList) {
                              var data = [] , rawData = null;
                              if( !err ) {
@@ -1502,6 +1503,7 @@ module.exports = function (config) {
                                      var i;
                                      for( i = 0 ; i < rawData.length ; ++i ) {
                                          var pathName = rawData[i].file;
+                                         pathName = replaceAll(pathName,'\\','/');
                                          if( pathName.toLowerCase().substring(0,leadPath.length) == leadPath ) {
                                              pathName = pathName.substring(leadPath.length);
                                          }
