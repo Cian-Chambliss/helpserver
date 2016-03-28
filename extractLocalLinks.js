@@ -6,10 +6,16 @@ module.exports = function ( data , parentAbsolutePath ) {
     var pendingHRef = null;
     var anchorContents = "";
     var localLinks = [];
+    var helpWaterMark = 0;
+    var hasDuplicateHREF;
+    
+    data = data.replace("<!--orderchildren-->","<helpwatermark></helpwatermark>")
     
     var parser = new htmlparser.Parser({
         onopentag: function (name, attribs) {
-            if( name == "a" ) {
+            if( name == "helpwatermark" ) {
+                helpWaterMark = localLinks.length;
+            } else if( name == "a" ) {
                 if (attribs.href) {
                     var protocolPos = attribs.href.indexOf(':');
                     var protocol = null;
@@ -37,6 +43,14 @@ module.exports = function ( data , parentAbsolutePath ) {
         onclosetag: function (name) {
             if( name == "a" ) {
                 if( pendingHRef ) {
+                    if( !hasDuplicateHREF ) {
+                        for(var i = 0 ; i < localLinks.length ; ++i ) {
+                            if( localLinks[i].href == pendingHRef ) {
+                                hasDuplicateHREF = true;
+                                break;
+                            }
+                        }
+                    } 
                     localLinks.push({ href : pendingHRef , text : anchorContents });                    
                     pendingHRef = null;
                 }                
@@ -45,5 +59,18 @@ module.exports = function ( data , parentAbsolutePath ) {
     });
     parser.write(data);
     parser.end();
+    if( hasDuplicateHREF ) {
+        if( 0 < helpWaterMark && helpWaterMark < localLinks.length ) {
+           localLinks.splice(0,helpWaterMark);   
+        }
+        for( var i = localLinks.length-1 ; i > 0 ; --i ) {
+            for( var j = 0 ; j < i ; ++j ) {
+                if( localLinks[j].href == localLinks[i].href ) {
+                    localLinks.splice(i,1);
+                    break;
+                }
+            }
+        }
+    } 
     return localLinks;
 }
