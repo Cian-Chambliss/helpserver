@@ -21,6 +21,14 @@ module.exports = function (config) {
     var actualLinks = null;
     var logoHREF = (config.logoHref || "http://www.google.com");
     var topmostPage = config.topmostPage || "";
+    var cleanupHREF = function(path) {
+        if( path.substring(0,1) == '/' ) { 
+            if( path.substring(0,absolutePath).toLowerCase() != absolutePath.toLowerCase() ) {
+                return absolutePath + path.substring(1);
+            }    
+        }
+        return path;
+    }
 
     if (config.proxy) {
         var proxyBasePath = null;
@@ -396,7 +404,7 @@ module.exports = function (config) {
                 for (i = 0; i < book.length; ++i) {
                     html += "<li>";
                     if (book[i].href) {
-                        html += "<a href=\"" + book[i].href + "\" >" + book[i].title + "</a>";
+                        html += "<a href=\"" + cleanupHREF(book[i].href) + "\" >" + book[i].title + "</a>";
                     } else {
                         html += "<a href=\"#\">" + book[i].title + "</a>";
                     }
@@ -562,7 +570,7 @@ module.exports = function (config) {
                             if( page.indexOf("/index.") >= 0 && linkitem.href.substring(0,1) != '/' ) {
                                 related += "<li><a href=\"../" +linkitem.href+"\">";
                             } else {
-                                related += "<li><a href=\"" +linkitem.href+"\">";
+                                related += "<li><a href=\"" +cleanupHREF(linkitem.href)+"\">";
                             }
                             related += linkitem.text;
                             related += "</a></li>";                            
@@ -588,7 +596,7 @@ module.exports = function (config) {
                         related = "<ul>";
                         for (var i = 0; i < booksBranches.length; ++i) {
                             related += "<li>";
-                            related += "<a href=\"" + booksBranches[i].href;
+                            related += "<a href=\"" + cleanupHREF(booksBranches[i].href);
                             if (booksBranches[i].breadcrumb == currentBook)
                                 related += "\" class=\"selected\" >";
                             else
