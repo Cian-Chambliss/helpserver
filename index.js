@@ -732,6 +732,9 @@ module.exports = function (config) {
                 if( lastModified != "" ) {
                     lastModified = "Page Last Checked on "+lastModified;
                 }
+                if( navigationText.related == "" && navigationText.parentUrl == '#' && navigationText.childUrl == '#' && navigationText.previousUrl == '#' && navigationText.nextUrl == '#') {
+                    fullPage = fullPage.replace("id=\"page-nav\"","id=\"page-nav\" class=\"page-nav-empty\"");
+                }
                 fullPage = fullPage.replace("<!--navparent-->", navigationText.parentUrl)
                     .replace("<!--navchild-->", navigationText.childUrl)
                     .replace("<!--navprevious-->", navigationText.previousUrl)
@@ -1040,6 +1043,11 @@ module.exports = function (config) {
                         var async = require('async');
                         var searchResults = "<dl class=\"search-results\">";
                         if (data.length > 0) {
+                            var moreResults = 0;
+                            if (data.length > limit) {
+                               data.splice(limit,1);   
+                               moreResults = offset + limit;
+                            }
                             var ListUtilities = require('./listutilities');
                             var lu = new ListUtilities(config);
                             async.eachSeries(data, function (searchResultItem, callbackLoop) {
@@ -1076,6 +1084,25 @@ module.exports = function (config) {
                                 }                               
                             },function() {
                                 searchResults += "</dl>";
+                                if( moreResults > 0 || offset > 0 ) {
+                                    searchResults += "<div class=\"search-more\">";
+                                    if( offset > 0 ) {
+                                        searchResults += "<a href=\""+absolutePath + "pages/search?pattern="+req.query.pattern+"\">Page 1</a>";
+                                        if( offset > limit ) {
+                                            var startOffset = limit;
+                                            var searchPageNumber = 2;
+                                            while( offset > startOffset ) {
+                                                searchResults += "<a href=\""+absolutePath + "pages/search?pattern="+req.query.pattern+"&offset="+startOffset+"\">Page "+searchPageNumber+"</a>";
+                                                searchPageNumber += 1;
+                                                startOffset += limit;
+                                            }
+                                        }
+                                    }
+                                    if( moreResults > 0 ) {
+                                        searchResults += "<a href=\""+absolutePath + "pages/search?pattern="+req.query.pattern+"&offset="+moreResults+"\">More...</a>";
+                                    }
+                                    searchResults += "</div>";
+                                }
                                 callback(null, standardSearchTemplate.replace("<!--body-->", searchResults).replace("<!--search--->", absolutePath + "pages/search").replace("<!--searchpattern--->", req.query.pattern).replace("<!--library--->", GenerateLibrary(config.library)), "html");
                             });
                         } else {
@@ -1084,7 +1111,7 @@ module.exports = function (config) {
                             callback(null, standardSearchTemplate.replace("<!--body-->", searchResults).replace("<!--search--->", absolutePath + "pages/search").replace("<!--searchpattern--->", req.query.pattern).replace("<!--library--->", GenerateLibrary(config.library)), "html");
                         }
                     }
-                }, offset, limit, true);
+                }, offset, limit+1, true);
             } else if (page == "/unknown_reference" && req.query.page) {
                 var content = standardSearchTemplate;
                 var searchForPattern = unescape(req.query.page);

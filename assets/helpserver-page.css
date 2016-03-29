@@ -237,6 +237,10 @@ padding-bottom: 2px;
 transform: rotate(90deg);
 }
 
+.page-nav-empty {
+    display:none;
+}
+
 .search-results dt a {
    font-size:13.5pt;
 }
@@ -247,6 +251,16 @@ transform: rotate(90deg);
 .search-address {
    font-size: small;
    color: green;   
+}
+
+.search-more {
+   background: #ddd;
+   padding-top:10px;
+   padding-bottom:10px;
+}
+
+.search-more a {    
+   margin-left: 10px;
 }
 
 .search-description {
