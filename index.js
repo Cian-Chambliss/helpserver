@@ -447,6 +447,7 @@ module.exports = function (config) {
             }
             return match;
         };
+        var decorateTitle = config.events.decorateTitle || function(title) { return title; };
         var generateNavigation = function (tree,relativePath,page,deepestAltToc,relatedPageOrder,getRelations) {
             var breadcrumbs = "";
             var related = "";
@@ -539,7 +540,7 @@ module.exports = function (config) {
                             breadcrumbs += "<li>";
                             if (branches[i].path) {
                                 breadcrumbs += "<a href=\"" + pathPages + branches[i].path.substring(1) + "\">";
-                                breadcrumbs += branches[i].title;
+                                breadcrumbs += decorateTitle( branches[i].title );
                                 breadcrumbs += "</a>";
                             } else {
                                 breadcrumbs += branches[i].title;
@@ -586,7 +587,7 @@ module.exports = function (config) {
                                     related += "\" class=\"selected\" >";
                                 else
                                     related += "\">";
-                                related += kidsLevel[i].title;
+                                related += decorateTitle(kidsLevel[i].title);
                                 related += "</a>";
                                 related += "</li>";
                             }
