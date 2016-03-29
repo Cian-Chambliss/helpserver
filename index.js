@@ -530,7 +530,7 @@ module.exports = function (config) {
                         } else if (!tree.title || tree.title == '/') {
                             breadcrumbs += "Main";
                         } else {
-                            breadcrumbs += tree.title;
+                            breadcrumbs += decorateTitle(tree.title);
                         }
                         breadcrumbs += "</a>";
                         breadcrumbs += "</li>";
@@ -550,7 +550,7 @@ module.exports = function (config) {
                     }
                     if( pageTitle && getRelations ) {
                         breadcrumbs += "<li>";
-                        breadcrumbs += pageTitle
+                        breadcrumbs += decorateTitle(pageTitle);
                         breadcrumbs += "</li>";
                     }
                     //breadcrumbs += "</ul>";
