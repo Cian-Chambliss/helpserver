@@ -31,7 +31,17 @@ module.exports = function (config, data, pageProc) {
                         }
                     }
                     content = content[1].split("</a")[0];
-                    replaceLinks.push({ search : "["+content+"]" , replace : "<a "+tagAttribs+">"+content+"</a>" });
+                    var extn = tagAttribs.lastIndexOf('.');
+                    var searchTag = "["+content+"]";
+                    if( extn > 0 ) {
+                        extn = tagAttribs.substring(extn+1).split('"')[0].toLowerCase();
+                        if( extn == 'jpg' || extn == 'png' || extn == 'bmp' || extn == 'gif' || extn == 'jpeg') {
+                            content = "<img src="+tagAttribs.substring(6)+"/>";
+                            console.log(content)
+                        }
+                        tagAttribs += " style=\"display:inline-block;\"";
+                    }
+                    replaceLinks.push({ search : searchTag , replace : "<a "+tagAttribs+">"+content+"</a>" });
                 }
             }
         }
