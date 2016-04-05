@@ -7,6 +7,14 @@ module.exports = function (config) {
             str = str.replace(find, replace);
         return str;
     };
+    var safeReplace = function( text , replacements ) {
+        for( var i = 0 ; i < replacements.length ; ++i ) {
+            if( text.indexOf(replacements[i].search) >= 0 ) {
+                text = text.split(replacements[i].search).join(replacements[i].replace);
+            }
+        }
+        return text;
+    };
     var fs = require('fs');
     var path = require('path');
     var appDir = replaceAll(path.dirname(require.main.filename), "\\", "/") + '/';
@@ -736,26 +744,27 @@ module.exports = function (config) {
                 if( navigationText.related == "" && navigationText.parentUrl == '#' && navigationText.childUrl == '#' && navigationText.previousUrl == '#' && navigationText.nextUrl == '#') {
                     fullPage = fullPage.replace("id=\"page-nav\"","id=\"page-nav\" class=\"page-nav-empty\"");
                 }
-                fullPage = fullPage.replace("<!--navparent-->", navigationText.parentUrl)
-                    .replace("<!--navchild-->", navigationText.childUrl)
-                    .replace("<!--navprevious-->", navigationText.previousUrl)
-                    .replace("<!--navnext-->", navigationText.nextUrl)
-                    .replace("<!--search--->", absolutePath + "pages/search")
-                    .replace("<!--pagetopic--->", title)
-                    .replace("<!--pagedescription--->", pageProc.pageDescription)
-                    .replace("<!--library--->", GenerateLibrary(config.library))
-                    .replace("<!--feedback-->",feedback)
-                    .replace("<!--lastmodified--->", lastModified);
+                
+                fullPage = safeReplace(fullPage,[
+                    {search:"<!--navparent-->", replace:navigationText.parentUrl},
+                    {search:"<!--navchild-->", replace:navigationText.childUrl},
+                    {search:"<!--navprevious-->", replace:navigationText.previousUrl},
+                    {search:"<!--navnext-->", replace:navigationText.nextUrl},
+                    {search:"<!--search--->", replace:absolutePath + "pages/search"},
+                    {search:"<!--pagetopic--->", replace:title},
+                    {search:"<!--pagedescription--->", replace:pageProc.pageDescription},
+                    {search:"<!--library--->", replace:GenerateLibrary(config.library)},
+                    {search:"<!--feedback-->",replace:feedback},
+                    {search:"<!--lastmodified--->", replace:lastModified}                    
+                ]);
                     
-                var replaceDollar = false;    
-                if( htmlText.indexOf("'$'") >= 0 ) {
-                    htmlText = replaceAll(htmlText,"'$'","'__helpserver_dollar_placeholder__'");
-                    replaceDollar = true;
-                }
-                fullPage = fullPage.replace("__filter__", thisFiltername).replace("<!--tocloader-->", tocLoader).replace("<!--related-->", navigationText.related).replace("<!--breadcrumbs-->", navigationText.breadcrumbs).replace("<!--body-->", htmlText);
-                if( replaceDollar ) {
-                    fullPage = replaceAll(fullPage,"__helpserver_dollar_placeholder__","$");                                        
-                }
+                fullPage = safeReplace(fullPage,[
+                    {search:"__filter__", replace:thisFiltername},
+                    {search:"<!--tocloader-->", replace:tocLoader},
+                    {search:"<!--related-->", replace:navigationText.related},
+                    {search:"<!--breadcrumbs-->", replace:navigationText.breadcrumbs},
+                    {search:"<!--body-->", replace:htmlText}
+                ]);
                 return fullPage;
             };
             var findClosestFilename = function (path, getFilenameCallback) {
@@ -825,7 +834,7 @@ module.exports = function (config) {
                     if( pagePathLength > 0 ) {
                         var fname = page.substring(pagePathLength+1);
                         parentIndexFile = page.substring(0,pagePathLength);
-                        if( fname == "index.html" || fname == "index.xml" || fname == "index.md" ) {
+                        if( fname == "index.html" || fname == "index.xml" || fname == "index.md" || fname == "index.xml_html" ) {
                             pagePathLength = parentIndexFile.lastIndexOf('/');
                             if( pagePathLength > 0 ) {
                                 parentIndexFile = page.substring(0,pagePathLength+1);

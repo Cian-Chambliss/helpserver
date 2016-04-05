@@ -41,7 +41,11 @@ module.exports = function (config, data, pageProc) {
                         }
                         tagAttribs += " style=\"display:inline-block;\"";
                     }
-                    replaceLinks.push({ search : searchTag , replace : "<a "+tagAttribs+">"+content+"</a>" });
+                    var replacement = "<a "+tagAttribs+">"+content+"</a>";
+                    if( replacement.indexOf('$') >= 0 ) {
+                        replacement = replacement.split('$').join('$$');
+                    }
+                    replaceLinks.push({ search : searchTag , replace : replacement  });
                 }
             }
         }
