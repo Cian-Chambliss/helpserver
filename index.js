@@ -571,16 +571,20 @@ module.exports = function (config) {
                     }
                     breadcrumbs += "</li>";
                 }
+                var fixupRelativeHref = function( href ) {
+                    if( page.indexOf("/index.") >= 0 && href.substring(0,1) != '/' ) {
+                         href = "../" +href+"\">";
+                     } else {
+                         href = cleanupHREF(href);
+                    }
+                    return href;
+                }
                 if( getRelations ) {
                     if( relatedPageOrder.reorder ) {
                         related = "<ul>";
                         for (var i = 0; i < relatedPageOrder.links.length ; ++i ) {
                             var linkitem = relatedPageOrder.links[i];
-                            if( page.indexOf("/index.") >= 0 && linkitem.href.substring(0,1) != '/' ) {
-                                related += "<li><a href=\"../" +linkitem.href+"\">";
-                            } else {
-                                related += "<li><a href=\"" +cleanupHREF(linkitem.href)+"\">";
-                            }
+                            related += "<li><a href=\"" +fixupRelativeHref(linkitem.href)+"\">";
                             related += linkitem.text;
                             related += "</a></li>";                            
                         }
@@ -625,11 +629,39 @@ module.exports = function (config) {
                 parentUrl = pathPages + parentOfNode.path.substring(1);
             }
             if (kidsLevel) {
-                if (indexOfKid > 0 && kidsLevel[indexOfKid - 1].path) {
-                    previousUrl = pathPages + kidsLevel[indexOfKid - 1].path.substring(1);
-                }
-                if (indexOfKid < (kidsLevel.length - 1) && kidsLevel[indexOfKid + 1].path) {
-                    nextUrl = pathPages + kidsLevel[indexOfKid + 1].path.substring(1);
+                if( relatedPageOrder && relatedPageOrder.reorder ) {
+                    var getJustName = function(path) {
+                        if( path ) {
+                            var justName = path.split("/");
+                            var justNameElems = justName.length; 
+                            justName = justName[justNameElems-1].split('.')[0].toLowerCase();
+                            if( justName == 'index' && justNameElems > 1 ) {
+                                justName = path.split("/")[justNameElems-2].toLowerCase();
+                            } 
+                            return justName;
+                        }
+                        return null;
+                    };
+                    var justName = getJustName(kidsLevel[indexOfKid].path );
+                    for (var i = 0; i < relatedPageOrder.links.length ; ++i ) {
+                        var linkitem = relatedPageOrder.links[i];
+                        if( justName == getJustName(linkitem.href) ) {
+                            if( i > 0 && relatedPageOrder.links[i].href ) {
+                               previousUrl = fixupRelativeHref( relatedPageOrder.links[i-1].href );
+                            }
+                            if( i < (relatedPageOrder.links.length-1) && relatedPageOrder.links[i+1].href ) {
+                               nextUrl = fixupRelativeHref( relatedPageOrder.links[i+1].href );
+                            }
+                            break;
+                        }
+                    }
+                } else {
+                    if (indexOfKid > 0 && kidsLevel[indexOfKid - 1].path) {
+                        previousUrl = pathPages + kidsLevel[indexOfKid - 1].path.substring(1);
+                    }
+                    if (indexOfKid < (kidsLevel.length - 1) && kidsLevel[indexOfKid + 1].path) {
+                        nextUrl = pathPages + kidsLevel[indexOfKid + 1].path.substring(1);
+                    }
                 }
             }
             if (!pageTitle) {
