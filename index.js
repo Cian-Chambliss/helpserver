@@ -776,7 +776,10 @@ module.exports = function (config) {
                 if( navigationText.related == "" && navigationText.parentUrl == '#' && navigationText.childUrl == '#' && navigationText.previousUrl == '#' && navigationText.nextUrl == '#') {
                     fullPage = fullPage.replace("id=\"page-nav\"","id=\"page-nav\" class=\"page-nav-empty\"");
                 }
-                
+                var pageSourceComment = "";
+                if( config.events.addPageSourceComment ) {
+                    pageSourceComment = config.events.addPageSourceComment(page);
+                }                
                 fullPage = safeReplace(fullPage,[
                     {search:"<!--navparent-->", replace:navigationText.parentUrl},
                     {search:"<!--navchild-->", replace:navigationText.childUrl},
@@ -787,10 +790,8 @@ module.exports = function (config) {
                     {search:"<!--pagedescription--->", replace:pageProc.pageDescription},
                     {search:"<!--library--->", replace:GenerateLibrary(config.library)},
                     {search:"<!--feedback-->",replace:feedback},
-                    {search:"<!--lastmodified--->", replace:lastModified}                    
-                ]);
-                    
-                fullPage = safeReplace(fullPage,[
+                    {search:"<!--lastmodified--->", replace:lastModified},
+                    {search:"<!--pagesourcecomment-->",replace:pageSourceComment},
                     {search:"__filter__", replace:thisFiltername},
                     {search:"<!--tocloader-->", replace:tocLoader},
                     {search:"<!--related-->", replace:navigationText.related},
