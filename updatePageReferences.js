@@ -11,6 +11,9 @@ module.exports = function (config, data, pageProc) {
     var getLinks = false;    
     var linksDefinition = "";
     var replaceLinks = [];
+    var pendingName = null;
+    var pendingText = "";
+    var localNames = [];
     var processEmbeddedLinks = function(linksDef) {
         var parts = linksDef.split("<a");
         if( parts.length > 1 ) {
@@ -63,12 +66,19 @@ module.exports = function (config, data, pageProc) {
                 inTitle = true;
             } else if( name == "p" ) {
                 inPara = getPlainText;
+                if( attribs.name ) {
+                    pendingName = attribs.name;
+                    pendingText = "";
+                }
             } else if( name == "meta" ) {
                  if (attribs.name && attribs.content ) {
                      if( attribs.name == "description") {
                          pageProc.pageDescription = attribs.content;
                      }
                  }
+            } else if( attribs.name ) {
+                pendingName = attribs.name;
+                pendingText = "";
             } else if( name == "script" ) {
                  if( attribs.id == "definePageLinks" || attribs.type=="text/xmldata" ) {                      
                       getLinks = true;
@@ -88,6 +98,9 @@ module.exports = function (config, data, pageProc) {
             } else if( getLinks ) {
                 linksDefinition += text;
             }
+            if( pendingName ) {
+                pendingText += text;
+            }
         },
         onclosetag: function (name) {
             if( name == "title" ) {
@@ -101,6 +114,12 @@ module.exports = function (config, data, pageProc) {
                         processEmbeddedLinks(linksDefinition);
                     }
                 }                
+            }
+            if( pendingName ) {
+                if( pendingText.length ) {
+                    localNames.push({ name : pendingName , content : pendingText });
+                }
+                pendingName = null;
             }
         }
     });
@@ -147,5 +166,6 @@ module.exports = function (config, data, pageProc) {
         }
         pageProc.pageDescription = paragraph;
     }
+    pageProc.localNames = localNames;
     return data;
 }

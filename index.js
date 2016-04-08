@@ -747,6 +747,7 @@ module.exports = function (config) {
                     , imagepath: ""
                     , pageTitle: null
                     , pageDescription: null
+                    , localNames: []
                 };
                 var pagesAt = fromPath.indexOf("/pages");
                 if (pagesAt > 0) {
@@ -779,6 +780,10 @@ module.exports = function (config) {
                 var pageSourceComment = "";
                 if( config.events.addPageSourceComment ) {
                     pageSourceComment = config.events.addPageSourceComment(page);
+                }
+                var localToc = "";
+                if( config.events.generateLocalToc && pageProc.localNames.length > 0 ) {
+                    localToc = config.events.generateLocalToc(pageProc.localNames);
                 }                
                 fullPage = safeReplace(fullPage,[
                     {search:"<!--navparent-->", replace:navigationText.parentUrl},
@@ -796,7 +801,8 @@ module.exports = function (config) {
                     {search:"<!--tocloader-->", replace:tocLoader},
                     {search:"<!--related-->", replace:navigationText.related},
                     {search:"<!--breadcrumbs-->", replace:navigationText.breadcrumbs},
-                    {search:"<!--body-->", replace:htmlText}
+                    {search:"<!--body-->", replace:htmlText},
+                    {search:"<!--localtoc-->", replace:localToc }
                 ]);
                 return fullPage;
             };
