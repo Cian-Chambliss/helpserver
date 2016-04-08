@@ -180,6 +180,7 @@ width: 250px;
 padding: 0px;
 float: left;
 overflow: hidden;
+margin-top:10px;
 }
 #page-nav > div {
 padding: 6px;

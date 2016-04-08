@@ -573,7 +573,7 @@ module.exports = function (config) {
                 }
                 var fixupRelativeHref = function( href ) {
                     if( page.indexOf("/index.") >= 0 && href.substring(0,1) != '/' ) {
-                         href = "../" +href+"\">";
+                         href = "../" +href;
                      } else {
                          href = cleanupHREF(href);
                     }
