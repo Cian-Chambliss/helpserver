@@ -1152,12 +1152,25 @@ module.exports = function (config) {
                                     }
                                     searchResults += "</div>";
                                 }
-                                callback(null, standardSearchTemplate.replace("<!--body-->", searchResults).replace("<!--search--->", absolutePath + "pages/search").replace("<!--searchpattern--->", req.query.pattern).replace("<!--library--->", GenerateLibrary(config.library)), "html");
+                                
+                                var fullPage = safeReplace(standardSearchTemplate,[
+                                    {search:"<!--body-->", replace:searchResults},
+                                    {search:"<!--search--->", replace:absolutePath + "pages/search"},
+                                    {search:"<!--searchpattern--->", replace: req.query.pattern},
+                                    {search:"<!--library--->", replace: GenerateLibrary(config.library)}
+                                    ]);
+                                callback(null, fullPage , "html");
                             });
                         } else {
                             searchResults += "<dt>No Results Found</dt>";
                             searchResults += "</dl>";
-                            callback(null, standardSearchTemplate.replace("<!--body-->", searchResults).replace("<!--search--->", absolutePath + "pages/search").replace("<!--searchpattern--->", req.query.pattern).replace("<!--library--->", GenerateLibrary(config.library)), "html");
+                                var fullPage = safeReplace(standardSearchTemplate,[
+                                    {search:"<!--body-->", replace:searchResults},
+                                    {search:"<!--search--->", replace:absolutePath + "pages/search"},
+                                    {search:"<!--searchpattern--->", replace: req.query.pattern},
+                                    {search:"<!--library--->", replace: GenerateLibrary(config.library)}
+                                    ]);
+                            callback(null,  fullPage , "html");
                         }
                     }
                 }, offset, limit+1, true);
