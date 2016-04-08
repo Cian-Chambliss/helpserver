@@ -755,6 +755,7 @@ module.exports = function (config) {
                     , pageTitle: null
                     , pageDescription: null
                     , localNames: []
+                    , indexLinks: indexLinks
                 };
                 var pagesAt = fromPath.indexOf("/pages");
                 if (pagesAt > 0) {
@@ -974,15 +975,25 @@ module.exports = function (config) {
                 }
             };
             var processPageAndCallback = function(data) {
-                if (!treeData[treeName]) {
-                    fs.readFile(config.generated + treeName, "utf8", function (err, jsonTreeData) {
-                        if (!err) {
-                            treeData[treeName] = JSON.parse(jsonTreeData);
-                        }
+                var afterLinksLoaded = function() {
+                    if (!treeData[treeName]) {
+                        fs.readFile(config.generated + treeName, "utf8", function (err, jsonTreeData) {
+                            if (!err) {
+                                treeData[treeName] = JSON.parse(jsonTreeData);
+                            }
+                            getPageParentAndCallback(data);
+                        });
+                    } else {
                         getPageParentAndCallback(data);
+                    }
+                };
+                if( !indexLinks ) {
+                    loadIndex( function(result) {                        
+                        indexLinks = result;
+                        afterLinksLoaded();  
                     });
                 } else {
-                    getPageParentAndCallback(data);
+                   afterLinksLoaded();
                 }
             };
             
@@ -1705,6 +1716,7 @@ module.exports = function (config) {
                         ++serverHealth.revisionCount;
                         // Force a reload of the tree cache
                         treeData = {};
+                        indexLinks = null;
                         parentIndexData = {};
                         actualLinks = null;
                         fs.writeFile(config.generated + "revision.txt", "" + serverHealth.revisionCount, function (err) {

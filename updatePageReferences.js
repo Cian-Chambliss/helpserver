@@ -22,6 +22,7 @@ module.exports = function (config, data, pageProc) {
                 var content = parts[i].split(">");
                 if( content.length > 1 ) {
                     var tagAttribs = content[0];
+                    var treeLookup = false;
                     if( pageProc.basepath ) {
                         var hrefPos = tagAttribs.indexOf("href=");
                         if( hrefPos >= 0 ) {
@@ -31,9 +32,17 @@ module.exports = function (config, data, pageProc) {
                                     tagAttribs = tagAttribs.substring(0,hrefPos+6) + pageProc.basepath + replaceAttrib.substring(1);
                                 }
                             }
+                        } else if( pageProc.indexLinks ) {
+                            treeLookup = true;
                         }
                     }
                     content = content[1].split("</a")[0];
+                    if( treeLookup ) {
+                        var findRef = pageProc.indexLinks[content.trim().toLowerCase()];
+                        if( findRef ) {
+                            tagAttribs = "href=\""+findRef+"\"";
+                        }
+                    }
                     var extn = tagAttribs.lastIndexOf('.');
                     var searchTag = "["+content+"]";
                     if( extn > 0 ) {
