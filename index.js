@@ -51,7 +51,14 @@ module.exports = function (config) {
         }
     }
     var pathPages = absolutePath + "pages/";
-
+    var indexLinks = null;
+    var loadIndex = function( callback ) { callback({}); }
+    if( config.events ) {
+        if( config.events.loadIndex ) {
+            loadIndex = config.events.loadIndex;
+        }    
+    }
+    
     // Try and read revision...    
     fs.readFile(config.generated + "revision.txt", "utf8", function (err, data) {
         if (!err) {
@@ -2315,6 +2322,24 @@ module.exports = function (config) {
             },
             "topicPage": function (hlp, path, req, res) {
                 topicResolveLow(hlp, path, req, res,false);
+            },
+            "index" : function(hlp, path, req, res) {
+                var name = null;
+                if( path.length > 1 ) {
+                   name = path.substring(1).trim().toLowerCase();
+                }
+                var loadPage = function() {
+                    var href = indexLinks[name];
+                    res.redirect(href);      
+                };
+                if( indexLinks ) {
+                    loadPage();
+                } else {
+                    loadIndex( function(result) {                        
+                        indexLinks = result;
+                        loadPage();  
+                    });
+                }
             }
         };
         
