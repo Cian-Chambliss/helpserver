@@ -16,6 +16,13 @@ module.exports = function (config, pattern, callback, startAt, maximum , getDesc
         ]
       }
     };
+    var symbols = "";
+    if( config.events.extractSymbols ) {
+        symbols = config.events.extractSymbols(pattern);
+        if( symbols.length > 1 ) {
+            queryDef.bool.should.push({match:{ symbols : { query : symbols , boost : 3 }}});   
+        }
+    }
     if (config.filter) {
       queryDef.bool.must = [{ match: config.filter }];
     }

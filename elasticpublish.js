@@ -154,10 +154,15 @@ module.exports = function (config, callback ) {
                       });                    
                   });                                  
                 } else {                
+                 var symbols = "";
+                 if( config.events.extractSymbols ) {
+                    symbols = config.events.extractSymbols( fo.title+" "+content);
+                 }
                   var bodyContent = {
                       title: fo.title,
                       path: fo.path,
                       content: content,
+                      symbols: symbols,
                       description: description,
                       tags: tags,
                       status: status,
