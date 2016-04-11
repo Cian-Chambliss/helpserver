@@ -156,7 +156,7 @@ module.exports = function (config, callback ) {
                 } else {                
                  var symbols = "";
                  if( config.events.extractSymbols ) {
-                    symbols = config.events.extractSymbols( fo.title+" "+content);
+                    symbols = config.events.extractSymbols(content,fo.title,fo.path);
                  }
                   var bodyContent = {
                       title: fo.title,
