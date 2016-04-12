@@ -856,12 +856,24 @@ module.exports = function (config) {
                                                 var listRemainder =  lists[i].content;
                                                 var newList = [];
                                                 for( j = 0 ; j < orderData.length ; ++j ) {
+                                                    var bestMatch = -1;
                                                     for( k = 0 ; k < listRemainder.length ; ++k ) {
-                                                        if( listRemainder[k].toLowerCase().indexOf(orderData[j]) >= 0 ) {
-                                                            newList.push(listRemainder[k]);
-                                                            listRemainder.splice(k,1);
+                                                        if( listRemainder[k].toLowerCase().indexOf('/'+orderData[j]+'.') >= 0 ) {
+                                                            bestMatch = k;
                                                             break;
                                                         }
+                                                    }
+                                                    if( bestMatch < 0 ) {
+                                                        for( k = 0 ; k < listRemainder.length ; ++k ) {
+                                                            if( listRemainder[k].toLowerCase().indexOf(orderData[j]) >= 0 ) {
+                                                                bestMatch = k;
+                                                                break;
+                                                            }
+                                                        }
+                                                    }
+                                                    if( bestMatch >= 0 ) {
+                                                        newList.push(listRemainder[bestMatch]);
+                                                        listRemainder.splice(bestMatch,1);
                                                     }
                                                 }
                                                 if( newList.length > 0 ) {
