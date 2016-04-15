@@ -23,6 +23,18 @@ module.exports = function (config, data, pageProc) {
                 if( content.length > 1 ) {
                     var tagAttribs = content[0];
                     var treeLookup = false;
+                    var targetPos = tagAttribs.indexOf("target=");
+                    var targetAttrib = "";
+                    if( targetPos >= 0 ) {
+                        targetAttrib = tagAttribs.substring(targetPos+7).trim();
+                        if( targetAttrib.substring(0,1) == '"' ) {
+                            targetAttrib = ' target="'+ targetAttrib.split('"')[1]+'"';
+                        } else if( targetAttrib.substring(0,1) == "'" ) {
+                            targetAttrib = ' target="'+targetAttrib.split("'")[1]+'"';
+                        } else {
+                            targetAttrib = "";
+                        }
+                    }
                     if( pageProc.basepath ) {
                         var hrefPos = tagAttribs.indexOf("href=");
                         if( hrefPos >= 0 ) {
@@ -53,7 +65,7 @@ module.exports = function (config, data, pageProc) {
                         }
                         tagAttribs += " style=\"display:inline-block;\"";
                     }
-                    var replacement = "<a "+tagAttribs+">"+content+"</a>";
+                    var replacement = "<a "+tagAttribs+targetAttrib+">"+content+"</a>";
                     if( replacement.indexOf('$') >= 0 ) {
                         replacement = replacement.split('$').join('$$');
                     }
@@ -176,5 +188,10 @@ module.exports = function (config, data, pageProc) {
         pageProc.pageDescription = paragraph;
     }
     pageProc.localNames = localNames;
+    if( config.events ) {
+        if( config.events.postProcessContent ) {
+            data = config.events.postProcessContent(data);
+        }
+    }    
     return data;
 }
