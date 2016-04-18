@@ -396,7 +396,12 @@ module.exports = function (config) {
             }
         });
     }
-
+    HelpServerUtil.prototype.lookupLink = function(symName) {
+        if( indexLinks ) {
+           return indexLinks[symName.toLowerCase()];
+        }
+        return null;
+    }
     var treeData = {};
     var parentIndexData = {};
     HelpServerUtil.prototype.getPage = function (page, fromPath, req, callback) {
