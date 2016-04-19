@@ -349,8 +349,22 @@ function initialize() {
     var searchEle = document.getElementById("search");
     searchEle.innerHTML = searchContent;
     tableOfContents.loaded();
+}
 
-};
+function localToClickHandler(e) {
+    if (e.target) {
+        if (e.target.nodeName == "LI" && e.target.getAttribute("branch") == "true") {
+            var eleB = e.target.lastElementChild;
+            if (eleB.style.display == "none") {
+                eleB.style.display = "";
+                e.target.className = "opened";
+            } else {
+                eleB.style.display = "none";
+                e.target.className = "closed";
+            }
+        }
+    }
+}
 
 function initializeSearch() {
     var addressTags = document.getElementsByClassName("search-address");
