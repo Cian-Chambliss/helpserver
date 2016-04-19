@@ -797,6 +797,15 @@ module.exports = function (config) {
                 var localToc = "";
                 if( config.events.generateLocalToc && pageProc.localNames.length > 0 ) {
                     localToc = config.events.generateLocalToc(pageProc.localNames);
+                    if( localToc.indexOf('id="inline-toc"') > 0 ) {
+                        var insertPos = htmlText.indexOf("</h1>");
+                        if( insertPos > 0 ) {
+                           // add the Toc inline, after the first top level header..
+                           insertPos += 5;
+                           htmlText = htmlText.substring(0,insertPos) + "\n" + localToc + htmlText.substring(insertPos);
+                           localToc = "";
+                        }  
+                    }
                 }                
                 fullPage = safeReplace(fullPage,[
                     {search:"<!--navparent-->", replace:navigationText.parentUrl},
