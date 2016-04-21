@@ -1256,7 +1256,17 @@ module.exports = function (config) {
                 callback(null, content, "html");
             } else {
                 // ...Else assume its a resource (i.e. JPEG/PNG etc...)
-                this.get(page, callback);
+                if( extension ) {
+                    this.get(page, callback);
+                } else {
+                    fs.stat(config.source + relativePath,function(err,stats) {
+                        if( !err  && stats && stats.isDirectory()) {
+                            hlp.getPage(page+"/index.xml",fromPath, req,callback);
+                        } else {
+                            hlp.get(page, callback);
+                        }
+                    });
+                }
             }
         };
         HelpServerUtil.prototype.getTocLoader = function (page, fromPath, callback) {
