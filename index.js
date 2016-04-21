@@ -2350,13 +2350,18 @@ module.exports = function (config) {
                 topicResolveLow(hlp, path, req, res,false);
             },
             "index" : function(hlp, path, req, res) {
+                path = decodeURI(path);
                 var name = null;
                 if( path.length > 1 ) {
                    name = path.substring(1).trim().toLowerCase();
                 }
                 var loadPage = function() {
                     var href = indexLinks[name];
-                    res.redirect(href);      
+                    if( href ) {
+                        res.redirect(href);
+                    } else {
+                        res.redirect(absolutePath+"pages/search?pattern="+path.substring(1));
+                    }      
                 };
                 if( indexLinks ) {
                     loadPage();
