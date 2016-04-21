@@ -792,7 +792,31 @@ module.exports = function (config) {
                 }
                 var pageSourceComment = "";
                 if( config.events.addPageSourceComment ) {
-                    pageSourceComment = config.events.addPageSourceComment(page);
+                    var symName = null;
+                    // extract the first H1, establish if there is a symbolic link
+                    var topicStart = htmlText.indexOf("<h1");
+                    if (topicStart > 0) {
+                        var topicEnd = htmlText.indexOf("</h1>");
+                        topicStart += 3;
+                        if (topicEnd > topicStart) {
+                            symName = htmlText.substring(topicStart, topicEnd).trim();
+                            topicStart = symName.indexOf('>');
+                            if( topicStart >= 0 ) {
+                                symName = symName.substring(topicStart+1);
+                                var lookupTopic = indexLinks[symName.toLowerCase()];
+                                if( lookupTopic ) {
+                                    if( lookupTopic.indexOf(page.replace('.xml_html','.xml')) < 0 ) {
+                                        symName = null;
+                                    }
+                                } else {
+                                    symName = null;
+                                }
+                            } else {
+                                symName = null;
+                            }
+                        }
+                    }                    
+                    pageSourceComment = config.events.addPageSourceComment(page,symName);
                 }
                 var localToc = "";
                 if( config.events.generateLocalToc && pageProc.localNames.length > 0 ) {
