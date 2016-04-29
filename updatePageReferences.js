@@ -61,9 +61,10 @@ module.exports = function (config, data, pageProc) {
                         extn = tagAttribs.substring(extn+1).split('"')[0].toLowerCase();
                         if( extn == 'jpg' || extn == 'png' || extn == 'bmp' || extn == 'gif' || extn == 'jpeg') {
                             content = "<img src="+tagAttribs.substring(6)+"/>";
-                            console.log(content)
+                            console.log(content);
+                        } else {
+                            tagAttribs += " class=\"embedded-link;\"";
                         }
-                        tagAttribs += " style=\"display:inline-block;\"";
                     }
                     var replacement = "<a "+tagAttribs+targetAttrib+">"+content+"</a>";
                     if( replacement.indexOf('$') >= 0 ) {
