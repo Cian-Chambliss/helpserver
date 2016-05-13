@@ -377,3 +377,7 @@ function initializeSearch() {
         }
     }
 }
+
+function gotoPrintPage() {
+   document.location.pathname = document.location.pathname.replace("/pages/","/print/");
+}
