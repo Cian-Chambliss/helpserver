@@ -379,5 +379,5 @@ function initializeSearch() {
 }
 
 function gotoPrintPage() {
-   document.location.pathname = document.location.pathname.replace("/pages/","/print/");
+    window.open( location.pathname.replace("/pages/","/print/") , "_blank" );
 }
