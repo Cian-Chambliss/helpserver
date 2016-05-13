@@ -404,7 +404,7 @@ module.exports = function (config) {
     }
     var treeData = {};
     var parentIndexData = {};
-    HelpServerUtil.prototype.getPage = function (page, fromPath, req, callback) {
+    HelpServerUtil.prototype.getPage = function (page, fromPath, req, callback,printed) {
         var hlp = this;
         page = decodeURI(page);
         var relativePath = page.substring(1);
@@ -782,6 +782,15 @@ module.exports = function (config) {
                 tocLoader = "";
                 var navigationText = generateNavigation(tree,relativePath,page,deepestAltToc,relatedPageOrder,true);
                 var fullPage = standardPageTemplate;
+                if( printed ) {
+                    fullPage = ["<html>",
+            "<head>",
+            "<link href=\"/assets/theme.css\" rel=\"stylesheet\"/>",
+            "<link href=\"/assets/print.css\" rel=\"stylesheet\"/>",
+            "<body >",
+            "<!--body-->",
+            "</body></html>"].join("\n");
+                }
                 var title = navigationText.pageTitle;
                 var feedback = "?subject=Problem with page:"+title+" ["+page+"]"+"&body=Describe problem with the "+page+" documentation page:";
                 if( lastModified != "" ) {
@@ -2111,6 +2120,21 @@ module.exports = function (config) {
                         res.send(data);
                     }
                 });
+            },
+            "print": function (hlp, path, req, res) {
+                hlp.getPage(path, req.path, req, function (err, data, type) {
+                    if (err) {
+                        hlp.onSendExpress(res);
+                        res.send(err);
+                    } else {
+                        data = replaceAll(data,"<ul style=\"display:none\">","<ul>");
+                        if (type) {
+                            res.type(type);
+                        }
+                        hlp.onSendExpress(res);
+                        res.send(data);
+                    }
+                },true);
             },
             "appcache": function (hlp, path, req, res) {
                 var manifest = replaceAll(pagesManifest, "__filter__", path.substring(1).replace(".appcache", ""));
