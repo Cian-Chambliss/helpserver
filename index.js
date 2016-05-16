@@ -1097,6 +1097,9 @@ module.exports = function (config) {
                 // First Pre-process XML using XSLT...
                 var ListUtilities = require('./listutilities');
                 var lu = new ListUtilities(config);
+                if( req.query.flatten === "true") {
+                    page = page.replace("/index.","/index.flatten.");
+                }                
                 page = page.replace(".xml", ".xml_html");
                 lu.loadOrCreateTranslatedPage(this.config, page, (this.config.filter_name ? this.config.filter_name : defaultFilter), function (err, data, type) {
                     if (err) {

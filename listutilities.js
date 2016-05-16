@@ -700,24 +700,48 @@ module.exports = function (config) {
         };
         return buildTree(tree, true);
     };
-    ListUtilities.prototype.loadOrCreateIndexPage = function (config, path, flt, callback) {
+    ListUtilities.prototype.expandChildPage = function( settings , callback ) {
+         if( settings.path.indexOf('/index.') >= 0 ) {
+             this.loadOrCreateIndexPage(settings.config,settings.path,'_all',function(err,data) {
+                 if( !err ) {
+                     callback(data);   
+                 } else {
+                     callback(null);
+                 }
+             },true);
+         } else {
+             var fs = require("fs");
+             fs.readFile(settings.filename,"utf8",function(err,data) {
+                 if( !err ) {
+                     callback(data);
+                 } else {
+                     callback(null);
+                 }
+             })
+         }
+    };
+    ListUtilities.prototype.loadOrCreateIndexPage = function (config, path, flt, callback,expand) {
         // Create an index page on demand (if not found...)
         var lu = this;
         var originalPath = path;
         var genereratedExtension = ".html";
         var generatedTopic = config.generated + "topics/" + this.replaceAll(path, "/", "_") + (config.filter_name ? config.filter_name : '_all');
         var fs = require("fs");
-        var indexTemplatePos = path.indexOf("/index.xml");
+        var normalizedPath = path;
+        if( expand ) {
+            normalizedPath = normalizedPath.replace("/index.flatten.","/index.");
+        }
+        var indexTemplatePos = normalizedPath.indexOf("/index.xml");
         var xmlTemplate = null;
         var lists = [];
         var orderData = [];
         
         if (indexTemplatePos > 0) {
-            path = path.substring(0, indexTemplatePos);
+            path = normalizedPath.substring(0, indexTemplatePos);
             generatedTopic += ".xml";
             genereratedExtension = ".xml";
         } else {
-            indexTemplatePos = path.indexOf("/index.md");
+            indexTemplatePos = normalizedPath.indexOf("/index.md");
             if (indexTemplatePos > 0) {
                 path = path.substring(0, indexTemplatePos);
                 generatedTopic += ".md";
@@ -765,7 +789,7 @@ module.exports = function (config) {
                                                 if (lPath.length <= testPath.length) {
                                                     if (testPath.substring(0, lPath.length) == lPath) {
                                                         if ( (children[i].path.indexOf("/index.xml") == lPath.length 
-                                                          || children[i].path.indexOf("/index.html") == lPath.length 
+                                                           || children[i].path.indexOf("/index.html") == lPath.length 
                                                             ) 
                                                            && children[i].children
                                                             ) {
@@ -824,8 +848,18 @@ module.exports = function (config) {
                                     var extensionIndex = pathName.lastIndexOf('.');
                                     var isFolder = true;
                                     if (extensionIndex > 0 && pathName.substr(extensionIndex + 1).indexOf('/') < 0) 
-                                        isFolder = false;                                        
-                                    if (config.events.pageIndexer) {
+                                        isFolder = false;
+                                    if( expand ) {
+                                        lu.expandChildPage({config :config , filename : (config.source + pathName)
+                                          , path : pathName , isFolder : isFolder
+                                          , name : pageEntry.title 
+                                          , format : genereratedExtension 
+                                          , all : pageChildren
+                                           }, function(snippet) {
+                                            pageEntry.listParent.content.push( snippet );
+                                            callbackLoop();
+                                        });                                  
+                                    } else if (config.events.pageIndexer) {
                                         config.events.pageIndexer({ 
                                             filename : (config.source + pathName)
                                           , path : pathName , isFolder : isFolder
@@ -884,7 +918,9 @@ module.exports = function (config) {
                                                     reorderChildren = true;
                                                 }
                                             }
-                                            if( config.events.wrapIndex ) {                                            
+                                            if( expand ) {
+                                                htmlText = lu.replaceAll(htmlText, '<!--list:'+lists[i].listDef+'-->', "<pages>"+lists[i].content.join("\n")+"</pages>" ); 
+                                            } else if( config.events.wrapIndex ) {                                            
                                                 htmlText = lu.replaceAll(htmlText, '<!--list:'+lists[i].listDef+'-->', config.events.wrapIndex({ format  : genereratedExtension , content : lists[i].content.join("\n") }) );
                                             } else {
                                                 htmlText = lu.replaceAll(htmlText, '<!--list:'+lists[i].listDef+'-->', lists[i].content.join("\n") );
@@ -937,9 +973,9 @@ module.exports = function (config) {
                 };                
                 if (indexTemplatePos > 0) {
                     // If there was an index file, use it as a template....
-                    fs.readFile(config.source + originalPath, "utf8", function (err, xmlData) {
+                    fs.readFile(config.source + normalizedPath, "utf8", function (err, xmlData) {
                         if (err) {                            
-                            console.log("Could not read template file " + originalPath);
+                            console.log("Could not read template file " + normalizedPath);
                             if( config.events.getDefaultIndexTemplate ) {
                                 xmlTemplate = config.events.getDefaultIndexTemplate({ format: genereratedExtension , path : originalPath , filename : config.source + originalPath });
                             } else {
@@ -1035,8 +1071,19 @@ module.exports = function (config) {
                               callback(err,data,"html");
                           });
                        }
-                    });
-                } else {
+                    },false);
+                 } else if( path.indexOf("/index.flatten.xml") > 0 ) {
+                    lu.loadOrCreateIndexPage(config,path,flt,function(err,data) {
+                       if( err ) {
+                           callback(err,null,null);
+                       } else {
+                          var generatedIndexFile = lu.replaceAll(generatedTopic,".xml_html",".xml")+".xml";
+                          config.events.translateXML( generatedIndexFile, generatedTopic ,function(err,data) {
+                              callback(err,data,"html");
+                          });
+                       }
+                    },true);                
+               } else {
                     config.events.translateXML(config.source + path,generatedTopic,function(err,data) {
                         callback(err,data,"html");
                     });
