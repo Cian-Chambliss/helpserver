@@ -702,7 +702,7 @@ module.exports = function (config) {
     };
     ListUtilities.prototype.expandChildPage = function( settings , callback ) {
          if( settings.path.indexOf('/index.') >= 0 ) {
-             this.loadOrCreateIndexPage(settings.config,settings.path,'_all',function(err,data) {
+             this.loadOrCreateIndexPage(settings.config,settings.path.replace("/index.","/index.flatten."),'_all',function(err,data) {
                  if( !err ) {
                      if( settings.config.events.embedXmlPage )
                          data = settings.config.events.embedXmlPage(data,settings);
