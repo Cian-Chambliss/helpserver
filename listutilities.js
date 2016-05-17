@@ -704,7 +704,9 @@ module.exports = function (config) {
          if( settings.path.indexOf('/index.') >= 0 ) {
              this.loadOrCreateIndexPage(settings.config,settings.path,'_all',function(err,data) {
                  if( !err ) {
-                     callback(data);   
+                     if( settings.config.events.embedXmlPage )
+                         data = settings.config.events.embedXmlPage(data,settings);
+                     callback(data);
                  } else {
                      callback(null);
                  }
@@ -713,6 +715,8 @@ module.exports = function (config) {
              var fs = require("fs");
              fs.readFile(settings.filename,"utf8",function(err,data) {
                  if( !err ) {
+                     if( settings.config.events.embedXmlPage )
+                         data = settings.config.events.embedXmlPage(data,settings);
                      callback(data);
                  } else {
                      callback(null);
