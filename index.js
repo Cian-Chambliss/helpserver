@@ -839,7 +839,11 @@ module.exports = function (config) {
                            localToc = "";
                         }  
                     }
-                }                
+                }
+                var flattenValue = 'false';
+                if( req.query.flatten === "true") {
+                    flattenValue = "true";
+                }
                 fullPage = safeReplace(fullPage,[
                     {search:"<!--navparent-->", replace:navigationText.parentUrl},
                     {search:"<!--navchild-->", replace:navigationText.childUrl},
@@ -857,7 +861,8 @@ module.exports = function (config) {
                     {search:"<!--related-->", replace:navigationText.related},
                     {search:"<!--breadcrumbs-->", replace:navigationText.breadcrumbs},
                     {search:"<!--body-->", replace:htmlText},
-                    {search:"<!--localtoc-->", replace:localToc }
+                    {search:"<!--localtoc-->", replace:localToc },
+                    {search:"<!--flatten-->", replace: flattenValue }
                 ]);
                 return fullPage;
             };

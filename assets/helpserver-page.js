@@ -378,6 +378,10 @@ function initializeSearch() {
     }
 }
 
-function gotoPrintPage() {
-    window.open( location.pathname.replace("/pages/","/print/") , "_blank" );
+function gotoPrintPage(flatten) {
+    if( flatten ) {
+        window.open( location.pathname.replace("/pages/","/print/")+"?flatten=true" , "_blank" );
+    } else {
+        window.open( location.pathname.replace("/pages/","/print/") , "_blank" );
+    }
 }
