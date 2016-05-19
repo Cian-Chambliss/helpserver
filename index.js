@@ -843,6 +843,14 @@ module.exports = function (config) {
                 var flattenValue = 'false';
                 if( req.query.flatten === "true") {
                     flattenValue = "true";
+                } else if( extension != "xml" || navigationText.childUrl == '#' ) {
+                    flattenValue = "null"; // not XML or no children       
+                } else if( config.events.canFlatten ) {
+                    if( !config.events.canFlatten(page) ) {
+                        flattenValue = "null";
+                    }
+                } else {
+                    flattenValue = "null";
                 }
                 fullPage = safeReplace(fullPage,[
                     {search:"<!--navparent-->", replace:navigationText.parentUrl},

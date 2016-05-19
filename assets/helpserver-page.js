@@ -385,3 +385,11 @@ function gotoPrintPage(flatten) {
         window.open( location.pathname.replace("/pages/","/print/") , "_blank" );
     }
 }
+
+function gotoFlattenPage(isFlat) {
+    if( isFlat ) {
+        window.open( location.pathname );
+    } else {
+        window.open( location.pathname + "?flatten=true" );        
+    }
+}
