@@ -24,7 +24,7 @@ module.exports = function (config) {
         return name;
     };
     var removeNumericPrefix = function (title) {
-        var length = 1;
+        var length = 0;
         while (length < title.length) {
             var chr = title.substr(length, 1);
             if ('0' <= chr && chr <= '9') {
