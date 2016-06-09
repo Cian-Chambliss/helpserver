@@ -2432,7 +2432,7 @@ module.exports = function (config) {
                 var loadPage = function() {
                     var href = indexLinks[name];
                     if( href ) {
-                        res.redirect(href);
+                        res.redirect(cleanupHREF(href));
                     } else {
                         res.redirect(absolutePath+"pages/search?pattern="+path.substring(1));
                     }      
