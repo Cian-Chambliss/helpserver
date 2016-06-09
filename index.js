@@ -1162,16 +1162,23 @@ module.exports = function (config) {
             } else if (page == "/search" && req.query.pattern) {
                 var offset = 0;
                 var limit = 10;
-                var lookIn = null;               
-                if (req.query.limit)
+                var lookIn = null;
+                var searchOptionFields = "";                               
+                if (req.query.limit) {
                     limit = parseInt(req.query.limit);
-                if (req.query.offset)
+                    searchOptionFields += "<input type=\"hidden\" value=\""+req.query.limit+"\" name=\"limit\" />";
+                }
+                if (req.query.offset) {
                     offset = parseInt(req.query.offset);
+                }
                 if (req.query.search) {
                     lookIn = req.query.search;
+                    searchOptionFields += "<input type=\"hidden\" value=\""+req.query.search+"\" name=\"search\" />";
                 }
-                hlp.search(req.query.pattern, function (err, data) {
-                                       
+                if (req.query.display) {
+                    searchOptionFields += "<input type=\"hidden\" value=\""+req.query.display+"\" name=\"display\" />";
+                }                
+                hlp.search(req.query.pattern, function (err, data) {                                       
                     if (err) {
                         callback(null, "Error: " + err, "html");
                     } else {
@@ -1217,6 +1224,7 @@ module.exports = function (config) {
                                 {search:"<!--body-->", replace:searchResults},
                                 {search:"<!--search--->", replace:absolutePath + "pages/search"},
                                 {search:"<!--searchpattern--->", replace: req.query.pattern},
+                                {search:"<!--searchoptionfields-->", replace: searchOptionFields},
                                 {search:"<!--library--->", replace: GenerateLibrary(config.library)}
                                 ]);
                             callback(null, fullPage , "html");                        
@@ -1263,6 +1271,7 @@ module.exports = function (config) {
                                         {search:"<!--body-->", replace:searchResults},
                                         {search:"<!--search--->", replace:absolutePath + "pages/search"},
                                         {search:"<!--searchpattern--->", replace: req.query.pattern},
+                                        {search:"<!--searchoptionfields-->", replace: searchOptionFields},
                                         {search:"<!--library--->", replace: GenerateLibrary(config.library)}
                                         ]);
                                     callback(null, fullPage , "html");
@@ -1275,12 +1284,13 @@ module.exports = function (config) {
                                     {search:"<!--body-->", replace:searchResults},
                                     {search:"<!--search--->", replace:absolutePath + "pages/search"},
                                     {search:"<!--searchpattern--->", replace: req.query.pattern},
+                                    {search:"<!--searchoptionfields-->", replace: searchOptionFields},
                                     {search:"<!--library--->", replace: GenerateLibrary(config.library)}
                                     ]);
                             callback(null,  fullPage , "html");
                         }                    
                     }
-                }, offset, limit+1, lookIn != "title", lookIn );
+                }, offset, limit+1, req.query.display !=  "titles-only", lookIn );
             } else if (page == "/unknown_reference" && req.query.page) {
                 var content = standardSearchTemplate;
                 var searchForPattern = unescape(req.query.page);
