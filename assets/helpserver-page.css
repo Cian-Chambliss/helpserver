@@ -249,6 +249,15 @@ transform: rotate(90deg);
 	padding-bottom:10px;
 }
 
+.search-results-minimal {
+    -webkit-column-count: 3;
+    -moz-column-count: 3;
+    column-count: 3;    
+    -webkit-column-rule: 1px solid lightblue;
+    -moz-column-rule: 1px solid lightblue;
+    column-rule: 1px solid lightblue;    
+}
+
 .search-address {
    font-size: small;
    color: green;   
@@ -350,4 +359,11 @@ overflow-x:auto;
 	.page-nav-show-list ul {
 		display: block !important;
 	}
+    .search-results-minimal {
+        -webkit-column-count: 1;
+        -moz-column-count: 1;
+        column-count: 1;
+     }
+
+
 }

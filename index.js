@@ -1162,86 +1162,112 @@ module.exports = function (config) {
             } else if (page == "/search" && req.query.pattern) {
                 var offset = 0;
                 var limit = 10;
+                var lookIn = null;               
                 if (req.query.limit)
                     limit = parseInt(req.query.limit);
                 if (req.query.offset)
                     offset = parseInt(req.query.offset);
+                if (req.query.search) {
+                    lookIn = req.query.search;
+                }
                 hlp.search(req.query.pattern, function (err, data) {
+                                       
                     if (err) {
                         callback(null, "Error: " + err, "html");
                     } else {
-                        var async = require('async');
-                        var searchResults = "<dl class=\"search-results\">";
                         if (data.length > 0) {
                             var moreResults = 0;
                             if (data.length > limit) {
                                data.splice(limit,1);   
                                moreResults = offset + limit;
+                            }                        
+                        var searchMoreDiv = "";
+                        if( moreResults > 0 || offset > 0 ) {
+                            searchMoreDiv += "<div class=\"search-more\">";
+                            if( offset > 0 ) {
+                                searchMoreDiv += "<a href=\""+absolutePath + "pages/search?pattern="+req.query.pattern+"\">Page 1</a>";
+                                if( offset > limit ) {
+                                    var startOffset = limit;
+                                    var searchPageNumber = 2;
+                                    while( offset > startOffset ) {
+                                        searchMoreDiv += "<a href=\""+absolutePath + "pages/search?pattern="+req.query.pattern+"&offset="+startOffset+"\">Page "+searchPageNumber+"</a>";
+                                        searchPageNumber += 1;
+                                        startOffset += limit;
+                                    }
+                                }
                             }
+                            if( moreResults > 0 ) {
+                                searchMoreDiv += "<a href=\""+absolutePath + "pages/search?pattern="+req.query.pattern+"&offset="+moreResults+"\">More...</a>";
+                            }
+                            searchMoreDiv += "</div>";
+                        }                
+                        
+                        if (req.query.display == "titles-only" ) {
+                            var searchResults = "<div class=\"search-results-minimal\">";
                             var ListUtilities = require('./listutilities');
                             var lu = new ListUtilities(config);
-                            async.eachSeries(data, function (searchResultItem, callbackLoop) {
-                                var pathResults = getTreeForPath( searchResultItem.path.toLowerCase() );
-                                var treeName = pathResults.treeName;
-                                var deepestAltToc = pathResults.deepestAltToc;
-                                var addSearchItem = function(treePtr) {
-                                    searchResults += "<dt>";
-                                    searchResults += "<a href=\"" + pathPages + searchResultItem.path.substring(1) + "\">";
-                                    searchResults += lu.removeDigitPrefix(searchResultItem.title);
-                                    searchResults += "</a>";
-                                    searchResults += "</dt>";
-                                    searchResults += "<dd>";
-                                    searchResults += "<div class=\"search-address\">" + pathPages + searchResultItem.path.substring(1) + "</div>";
-                                    if( searchResultItem.description ) {
-                                        searchResults += "<div class=\"search-description\">" +searchResultItem.description + "</div>";
-                                    }
-                                    var navigationText = generateNavigation(treePtr,searchResultItem.path.substring(1),searchResultItem.path,deepestAltToc,null,false);
-                                    if( navigationText.breadcrumbs ) {
-                                        searchResults += "<div class=\"search-breadcrumbs\"><ul>" +  navigationText.breadcrumbs+ "</ul></div>";
-                                    }
-                                    searchResults += "</dd>";
-                                    callbackLoop();
-                                };
-                                if (treeName && !treeData[treeName]) {
-                                    fs.readFile(config.generated + treeName, "utf8", function (err, jsonTreeData) {
-                                        if (!err) {
-                                            treeData[treeName] = JSON.parse(jsonTreeData);
-                                        }
-                                        addSearchItem(treeData[treeName]);
-                                    });
-                                } else {
-                                    addSearchItem(treeData[treeName]);
-                                }                               
-                            },function() {
-                                searchResults += "</dl>";
-                                if( moreResults > 0 || offset > 0 ) {
-                                    searchResults += "<div class=\"search-more\">";
-                                    if( offset > 0 ) {
-                                        searchResults += "<a href=\""+absolutePath + "pages/search?pattern="+req.query.pattern+"\">Page 1</a>";
-                                        if( offset > limit ) {
-                                            var startOffset = limit;
-                                            var searchPageNumber = 2;
-                                            while( offset > startOffset ) {
-                                                searchResults += "<a href=\""+absolutePath + "pages/search?pattern="+req.query.pattern+"&offset="+startOffset+"\">Page "+searchPageNumber+"</a>";
-                                                searchPageNumber += 1;
-                                                startOffset += limit;
-                                            }
-                                        }
-                                    }
-                                    if( moreResults > 0 ) {
-                                        searchResults += "<a href=\""+absolutePath + "pages/search?pattern="+req.query.pattern+"&offset="+moreResults+"\">More...</a>";
-                                    }
-                                    searchResults += "</div>";
-                                }
-                                
-                                var fullPage = safeReplace(standardSearchTemplate,[
-                                    {search:"<!--body-->", replace:searchResults},
-                                    {search:"<!--search--->", replace:absolutePath + "pages/search"},
-                                    {search:"<!--searchpattern--->", replace: req.query.pattern},
-                                    {search:"<!--library--->", replace: GenerateLibrary(config.library)}
-                                    ]);
-                                callback(null, fullPage , "html");
+                            data.forEach(function(searchResultItem) {
+                                searchResults += "<div class=\"search-title\"><a href=\"" + pathPages + searchResultItem.path.substring(1) + "\">";
+                                searchResults += lu.removeDigitPrefix(searchResultItem.title);
+                                searchResults += "</a></div>";
                             });
+                            searchResults += "</div>" + searchMoreDiv;
+                        
+                            var fullPage = safeReplace(standardSearchTemplate,[
+                                {search:"<!--body-->", replace:searchResults},
+                                {search:"<!--search--->", replace:absolutePath + "pages/search"},
+                                {search:"<!--searchpattern--->", replace: req.query.pattern},
+                                {search:"<!--library--->", replace: GenerateLibrary(config.library)}
+                                ]);
+                            callback(null, fullPage , "html");                        
+                        } else {                        
+                            var async = require('async');
+                            var searchResults = "<dl class=\"search-results\">";
+                                var ListUtilities = require('./listutilities');
+                                var lu = new ListUtilities(config);
+                                async.eachSeries(data, function (searchResultItem, callbackLoop) {
+                                    var pathResults = getTreeForPath( searchResultItem.path.toLowerCase() );
+                                    var treeName = pathResults.treeName;
+                                    var deepestAltToc = pathResults.deepestAltToc;
+                                    var addSearchItem = function(treePtr) {
+                                        searchResults += "<dt>";
+                                        searchResults += "<a href=\"" + pathPages + searchResultItem.path.substring(1) + "\">";
+                                        searchResults += lu.removeDigitPrefix(searchResultItem.title);
+                                        searchResults += "</a>";
+                                        searchResults += "</dt>";
+                                        searchResults += "<dd>";
+                                        searchResults += "<div class=\"search-address\">" + pathPages + searchResultItem.path.substring(1) + "</div>";
+                                        if( searchResultItem.description ) {
+                                            searchResults += "<div class=\"search-description\">" +searchResultItem.description + "</div>";
+                                        }
+                                        var navigationText = generateNavigation(treePtr,searchResultItem.path.substring(1),searchResultItem.path,deepestAltToc,null,false);
+                                        if( navigationText.breadcrumbs ) {
+                                            searchResults += "<div class=\"search-breadcrumbs\"><ul>" +  navigationText.breadcrumbs+ "</ul></div>";
+                                        }
+                                        searchResults += "</dd>";
+                                        callbackLoop();
+                                    };
+                                    if (treeName && !treeData[treeName]) {
+                                        fs.readFile(config.generated + treeName, "utf8", function (err, jsonTreeData) {
+                                            if (!err) {
+                                                treeData[treeName] = JSON.parse(jsonTreeData);
+                                            }
+                                            addSearchItem(treeData[treeName]);
+                                        });
+                                    } else {
+                                        addSearchItem(treeData[treeName]);
+                                    }                               
+                                },function() {
+                                    searchResults += "</dl>" + searchMoreDiv;                               
+                                    var fullPage = safeReplace(standardSearchTemplate,[
+                                        {search:"<!--body-->", replace:searchResults},
+                                        {search:"<!--search--->", replace:absolutePath + "pages/search"},
+                                        {search:"<!--searchpattern--->", replace: req.query.pattern},
+                                        {search:"<!--library--->", replace: GenerateLibrary(config.library)}
+                                        ]);
+                                    callback(null, fullPage , "html");
+                                });
+                            }
                         } else {
                             searchResults += "<dt>No Results Found</dt>";
                             searchResults += "</dl>";
@@ -1252,9 +1278,9 @@ module.exports = function (config) {
                                     {search:"<!--library--->", replace: GenerateLibrary(config.library)}
                                     ]);
                             callback(null,  fullPage , "html");
-                        }
+                        }                    
                     }
-                }, offset, limit+1, true);
+                }, offset, limit+1, lookIn != "title", lookIn );
             } else if (page == "/unknown_reference" && req.query.page) {
                 var content = standardSearchTemplate;
                 var searchForPattern = unescape(req.query.page);
@@ -1805,7 +1831,7 @@ module.exports = function (config) {
         };
 
         // perform a pattern seach, returns 'path' portion of help
-        HelpServerUtil.prototype.search = function (pattern, callback, startAt, limit, getDescription ) {
+        HelpServerUtil.prototype.search = function (pattern, callback, startAt, limit, getDescription , lookIn ) {            
             if (!callback || typeof (callback) !== 'function') {
                 throw new Error('Second parameter must be a callback function');
             }
@@ -1816,9 +1842,9 @@ module.exports = function (config) {
             } else {
                 var elasticquery = require("./elasticquery");
                 if (limit && limit > 0 && startAt >= 0)
-                    elasticquery(this.config, pattern, callback, startAt, limit,getDescription);
+                    elasticquery(this.config, pattern, callback, startAt, limit,getDescription,lookIn);
                 else
-                    elasticquery(this.config, pattern, callback,null,null,getDescription);
+                    elasticquery(this.config, pattern, callback,null,null,getDescription,lookIn);
             }
         };
    

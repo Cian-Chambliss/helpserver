@@ -1,21 +1,38 @@
-module.exports = function (config, pattern, callback, startAt, maximum , getDescription ) {
+module.exports = function (config, pattern, callback, startAt, maximum , getDescription , lookIn ) {
   var helpSystemIndex = config.search.index;
   var elasticsearch = require('elasticsearch');
   var client = new elasticsearch.Client({
     host: config.search.host
   });
-  var queryDef = null;
+  var queryDef = null;  
+  if( lookIn && lookIn != '' ) {
+     if( lookIn != "title" )
+        lookIn = "all";
+  } else {
+      lookIn = "all";  
+  }  
   if (pattern && pattern != '') {
-    queryDef = {
-      bool: {
-        should: [
-          { match: { title: { query: pattern, operator: "and", boost: 4 } } },
-          { match: { content: { query: pattern, operator: "and", boost: 3 } } },
-          { match: { title: { query: pattern, boost: 2 } } },
-          { match: { content: pattern } }
-        ]
-      }
-    };
+    if( lookIn == "title" ) {
+        queryDef = {
+          bool: {
+            should: [
+              { match: { title: { query: pattern, operator: "and", boost: 4 } } },
+              { match: { title: { query: pattern, boost: 2 } } },
+            ]
+          }
+        };
+    } else {
+        queryDef = {
+          bool: {
+            should: [
+              { match: { title: { query: pattern, operator: "and", boost: 4 } } },
+              { match: { content: { query: pattern, operator: "and", boost: 3 } } },
+              { match: { title: { query: pattern, boost: 2 } } },
+              { match: { content: pattern } }
+            ]
+          }
+        };
+    }
     var symbols = "";
     if( config.events.extractSymbols ) {
         symbols = config.events.extractSymbols(pattern);
@@ -27,6 +44,7 @@ module.exports = function (config, pattern, callback, startAt, maximum , getDesc
       queryDef.bool.must = [{ match: config.filter }];
     }
   } else if (config.filter) {
+    lookIn = "";
     if( config.filter.missing && config.filter.missing.field )
        queryDef = { filtered : { filter: config.filter } };   
     else if( config.filter.exists && config.filter.exists.field )
@@ -34,6 +52,7 @@ module.exports = function (config, pattern, callback, startAt, maximum , getDesc
     else
        queryDef = { match: config.filter };
   } else {
+    lookIn = "";
     queryDef = { "match_all": {} };
   }
   if (!startAt) {
@@ -45,6 +64,8 @@ module.exports = function (config, pattern, callback, startAt, maximum , getDesc
   var columnSelection = null;
   if( getDescription ) {
       columnSelection = ["title", "path", "description" , "metadata" , "toc" ]
+  } else if( lookIn == "title" ) {
+     columnSelection = ["title", "path"];
   } else {
       columnSelection = ["title", "path", "metadata" , "toc" ]
   }
@@ -63,9 +84,40 @@ module.exports = function (config, pattern, callback, startAt, maximum , getDesc
       } else {
         var results = [], srcArray = response.hits.hits;
         var i;
+        var patterns = null;
+        var matchTitle = null;
+        if( lookIn == "title" && maximum >= 1000 ) {
+           patterns = pattern.toLowerCase().split('|');
+           for( var i = 0 ; i < patterns.length ; ++i ) {
+              patterns[i] = patterns[i].split(" ");
+           }
+           matchTitle = function(orPatterns,title) {               
+              title = title.toLowerCase();
+              for( var i = 0 ; i < orPatterns.length ; ++i ) {
+                var andPatterns = orPatterns[i];
+                if( andPatterns.length > 0 ) {
+                  var score = 0;
+                  for( var j = 0 ; j < andPatterns.length ; ++j ) {
+                    if( title.indexOf(andPatterns[j]) >= 0 ) {
+                        ++score;
+                    }
+                  }
+                  if( score == andPatterns.length ) {
+                    return true;
+                  }
+                }
+              }
+              return false;
+          }
+        }
         for (i = 0; i < srcArray.length; ++i) {
           var item = srcArray[i]._source;
           var description = item.description || "";
+          if( matchTitle ) {
+              if( !matchTitle( patterns , item.title ) ) {
+                continue;
+              }
+          }
           if (item.metadata && item.metadata.group) {
             if (item.metadata && item.metadata.pagename ) {
               if( getDescription ) {
