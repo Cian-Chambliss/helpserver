@@ -800,7 +800,9 @@ module.exports = function (config) {
                     fullPage = fullPage.replace("id=\"page-nav\"","id=\"page-nav\" class=\"page-nav-empty\"");
                 }
                 var pageSourceComment = "";
-                if( config.events.addPageSourceComment ) {
+                var sharableLink = "";
+
+                if( config.events.addPageSourceComment || config.events.getSharableLink ) {
                     var symName = null;
                     // extract the first H1, establish if there is a symbolic link
                     var topicStart = htmlText.indexOf("<h1");
@@ -824,8 +826,13 @@ module.exports = function (config) {
                                 symName = null;
                             }
                         }
-                    }                    
-                    pageSourceComment = config.events.addPageSourceComment(page,symName);
+                    }              
+                    if( config.events.addPageSourceComment ) {      
+                        pageSourceComment = config.events.addPageSourceComment(page,symName);
+                    }
+                    if( config.events.getSharableLink ) {
+                        sharableLink = config.events.getSharableLink(page,symName);
+                    }
                 }
                 var localToc = "";
                 if( config.events.generateLocalToc && pageProc.localNames.length > 0 ) {
@@ -870,7 +877,8 @@ module.exports = function (config) {
                     {search:"<!--breadcrumbs-->", replace:navigationText.breadcrumbs},
                     {search:"<!--body-->", replace:htmlText},
                     {search:"<!--localtoc-->", replace:localToc },
-                    {search:"<!--flatten-->", replace: flattenValue }
+                    {search:"<!--flatten-->", replace: flattenValue },
+                    {search:"<!--sharablelink-->", replace: sharableLink },
                 ]);
                 return fullPage;
             };
@@ -1166,6 +1174,10 @@ module.exports = function (config) {
                 var searchOptionFields = "";                               
                 if (req.query.limit) {
                     limit = parseInt(req.query.limit);
+                    if( limit < 0 ) {
+                        // A reasonable MAX
+                        limit = 1000000;
+                    }
                     searchOptionFields += "<input type=\"hidden\" value=\""+req.query.limit+"\" name=\"limit\" />";
                 }
                 if (req.query.offset) {
