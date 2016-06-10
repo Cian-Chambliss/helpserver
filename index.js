@@ -52,7 +52,19 @@ module.exports = function (config) {
     }
     var pathPages = absolutePath + "pages/";
     var indexLinks = null;
+    var backLinks = null;
     var loadIndex = function( callback ) { callback({}); }
+    var calculateBackLinks = function(indexLinks) {
+         // Map backlinks to the site
+         backLinks = {};
+         for( var link in indexLinks )  {
+             var path = indexLinks[link];
+             if( path.substr(0,7) == "/pages/" ) {
+                 path = path.substr(6);
+                 backLinks[path.toLowerCase()] = link;
+             }
+         } 
+    };
     if( config.events ) {
         if( config.events.loadIndex ) {
             loadIndex = config.events.loadIndex;
@@ -804,29 +816,9 @@ module.exports = function (config) {
 
                 if( config.events.addPageSourceComment || config.events.getSharableLink ) {
                     var symName = null;
-                    // extract the first H1, establish if there is a symbolic link
-                    var topicStart = htmlText.indexOf("<h1");
-                    if (topicStart > 0) {
-                        var topicEnd = htmlText.indexOf("</h1>");
-                        topicStart += 3;
-                        if (topicEnd > topicStart) {
-                            symName = htmlText.substring(topicStart, topicEnd).trim();
-                            topicStart = symName.indexOf('>');
-                            if( topicStart >= 0 ) {
-                                symName = symName.substring(topicStart+1);
-                                var lookupTopic = indexLinks[symName.toLowerCase()];
-                                if( lookupTopic ) {
-                                    if( lookupTopic.indexOf(page.replace('.xml_html','.xml')) < 0 ) {
-                                        symName = null;
-                                    }
-                                } else {
-                                    symName = null;
-                                }
-                            } else {
-                                symName = null;
-                            }
-                        }
-                    }              
+                    if( backLinks ) {
+                        symName = backLinks[page.toLowerCase().replace(".xml_html",".xml")];
+                    }
                     if( config.events.addPageSourceComment ) {      
                         pageSourceComment = config.events.addPageSourceComment(page,symName);
                     }
@@ -1058,6 +1050,7 @@ module.exports = function (config) {
                 if( !indexLinks ) {
                     loadIndex( function(result) {                        
                         indexLinks = result;
+                        calculateBackLinks(indexLinks);
                         afterLinksLoaded();  
                     });
                 } else {
@@ -2490,6 +2483,7 @@ module.exports = function (config) {
                 } else {
                     loadIndex( function(result) {                        
                         indexLinks = result;
+                        calculateBackLinks(indexLinks);
                         loadPage();  
                     });
                 }
