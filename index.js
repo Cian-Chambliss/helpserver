@@ -2470,8 +2470,16 @@ module.exports = function (config) {
                 if( path.length > 1 ) {
                    name = path.substring(1).trim().toLowerCase();
                 }
+                if( req.query.search ) {
+                    if( req.query.search.length > 0 ) {
+                        name = req.query.search.trim().toLowerCase();
+                    }
+                }
                 var loadPage = function() {
                     var href = indexLinks[name];
+                    if(!href) {
+                        href = decodeURI()
+                    }
                     if( href ) {
                         res.redirect(cleanupHREF(href));
                     } else {
