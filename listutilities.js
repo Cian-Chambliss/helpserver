@@ -899,6 +899,18 @@ module.exports = function (config) {
                                                         if( listRemainder[k].toLowerCase().indexOf('/'+orderData[j]+'.') >= 0 ) {
                                                             bestMatch = k;
                                                             break;
+                                                        } else {
+                                                            // If the user provided an extension, lets not add a trialing '.'
+                                                            var orderExtn = orderData[j].lastIndexOf('.');
+                                                            if( orderExtn > 0 ) {
+                                                                orderExtn = orderData[j].substring(orderExtn);
+                                                                if( orderExtn == ".html" || orderExtn == ".xml" || orderExtn == ".md" ) {
+                                                                    if( listRemainder[k].toLowerCase().indexOf('/'+orderData[j]) >= 0 ) {
+                                                                        bestMatch = k;
+                                                                        break;
+                                                                    }
+                                                                }
+                                                            }
                                                         }
                                                     }
                                                     if( bestMatch < 0 ) {
