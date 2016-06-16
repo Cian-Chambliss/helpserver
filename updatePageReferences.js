@@ -41,7 +41,9 @@ module.exports = function (config, data, pageProc) {
                             var replaceAttrib = tagAttribs.substring(hrefPos+5).trim();
                             if( replaceAttrib.substring(0,1) == '"' || replaceAttrib.substring(0,1) == "'" ) {
                                 if( replaceAttrib.substring(1,2) == '/' ) {
-                                    tagAttribs = tagAttribs.substring(0,hrefPos+6) + pageProc.basepath + replaceAttrib.substring(1);
+                                    if( replaceAttrib.indexOf("/index?search=") < 0 ) {
+                                        tagAttribs = tagAttribs.substring(0,hrefPos+6) + pageProc.basepath + replaceAttrib.substring(1);
+                                    }
                                 }
                             }
                         } else if( pageProc.indexLinks ) {
@@ -79,7 +81,7 @@ module.exports = function (config, data, pageProc) {
     var parser = new htmlparser.Parser({
         onopentag: function (name, attribs) {
             if (attribs.href) {
-                if (attribs.href.substring(0, 1) == '/') {
+                if (attribs.href.substring(0, 1) == '/' && attribs.href.indexOf('/index?search=') < 0 ) {
                     replacePaths.push('"' + attribs.href + '"');
                     replacePaths.push("'" + attribs.href + "'");
                 }
