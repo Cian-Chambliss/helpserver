@@ -1196,7 +1196,7 @@ module.exports = function (config) {
                                 {search:"<!--searchpattern--->", replace: req.query.pattern},
                                 {search:"<!--searchoptionfields-->", replace: searchOptionFields},
                                 {search:"<!--library--->", replace: GenerateLibrary(config.library)},
-                                {search:"<!--seacherror-->",replace:searchErrorClass}
+                                {search:"<!--searcherror-->",replace:searchErrorClass}
                                 ]);
                             callback(null, fullPage , "html");                        
                         } else {                        
@@ -1244,7 +1244,7 @@ module.exports = function (config) {
                                         {search:"<!--searchpattern--->", replace: req.query.pattern},
                                         {search:"<!--searchoptionfields-->", replace: searchOptionFields},
                                         {search:"<!--library--->", replace: GenerateLibrary(config.library)},
-                                        {search:"<!--seacherror-->",replace:searchErrorClass}       
+                                        {search:"<!--searcherror-->",replace:searchErrorClass}       
                                         ]);
                                     callback(null, fullPage , "html");
                                 });
@@ -1258,7 +1258,7 @@ module.exports = function (config) {
                                     {search:"<!--searchpattern--->", replace: req.query.pattern},
                                     {search:"<!--searchoptionfields-->", replace: searchOptionFields},
                                     {search:"<!--library--->", replace: GenerateLibrary(config.library)},
-                                    {search:"<!--seacherror-->",replace:searchErrorClass}   
+                                    {search:"<!--searcherror-->",replace:searchErrorClass}   
                                     ]);
                             callback(null,  fullPage , "html");
                         }                    
