@@ -1058,53 +1058,14 @@ module.exports = function (config) {
                 }
             };
             
-            var findClosestLink = function (err, path, resolvedLink) {
+            var findClosestLink = function (err, path, resolvedLink) {                
                 // First lowercase the path (for case insensite compares)
-                var lcpath = path.toLowerCase();
-                var brokenLinkFile = config.generated + "broken/" + replaceAll(lcpath, "/", "_");
-                fs.readFile(brokenLinkFile, "utf8", function (errbroke, databroke) {
-                    if (errbroke) {
-                        // Need to perform a lookup
-                        findClosestFilename("/" + relativePath, function (actualFilename) {
-                            if (actualFilename) {
-                                var actualExtensionPos = actualFilename.lastIndexOf('.');
-                                var actualExtension = "";
-                                if (actualExtensionPos > 0)
-                                    actualExtension = actualFilename.substring(actualExtensionPos + 1).toLowerCase();
-                                if (actualExtension == "xml") {
-                                    var ListUtilities = require('./listutilities');
-                                    var lu = new ListUtilities(config);
-                                    actualFilename = actualFilename.replace(".xml", ".xml_html");
-                                    lu.loadOrCreateTranslatedPage(hlp.config, actualFilename, (hlp.config.filter_name ? hlp.config.filter_name : defaultFilter), function (errActual, dataActual, type) {
-                                        if (errActual) {
-                                            resolvedLink(err, null);
-                                        } else {
-                                            dataActual = dataActual + "<!--Broken Link To:" + page + "-->";
-                                            fs.writeFile(brokenLinkFile, dataActual, function (err) {
-                                                resolvedLink(null, dataActual);
-                                            });
-                                        }
-                                    });
-                                } else {
-                                    fs.readFile(config.source + actualFilename, "utf8", function (errActual, dataActual) {
-                                        if (errActual) {
-                                            resolvedLink(err, null);
-                                        } else {
-                                            dataActual = dataActual + "<!--Broken Link To:" + page + "-->";
-                                            fs.writeFile(brokenLinkFile, dataActual, function (err) {
-                                                resolvedLink(null, dataActual);
-                                            });
-                                        }
-                                    });
-                                }
-                            } else {
-                                resolvedLink(err, null);
-                            }
-                        });
-                    } else {
-                        resolvedLink(null, databroke);
-                    }
-                });
+                var beforeName = path.lastIndexOf('/');
+                if( beforeName >= 0 ) {
+                    path = path.substring(beforeName+1);
+                }
+                var url = "/documentation/pages/search?error=404&pattern="+path;
+                callback(null,'<html> <head> <meta http-equiv="refresh" content="0; url='+url+'"/> </head> <body> <meta http-equiv="refresh" content="0; url='+url+'"/>Redirecting to search... </body> </html>');             
             };
 
             if (extension == "xml") {
@@ -1118,7 +1079,7 @@ module.exports = function (config) {
                 lu.loadOrCreateTranslatedPage(this.config, page, (this.config.filter_name ? this.config.filter_name : defaultFilter), function (err, data, type) {
                     if (err) {
                         findClosestLink(err, relativePath, function (err2, badLinkData) {
-                            if (err2) {
+                            if (err2) {      
                                 callback(err2, null);
                             } else {
                                 processPageAndCallback(badLinkData);
@@ -1164,7 +1125,11 @@ module.exports = function (config) {
                 var offset = 0;
                 var limit = 10;
                 var lookIn = null;
-                var searchOptionFields = "";                               
+                var searchOptionFields = "";
+                var searchErrorClass = "user-search";
+                if (req.query.error) {
+                    searchErrorClass = "error-search-"+req.query.error;
+                }
                 if (req.query.limit) {
                     limit = parseInt(req.query.limit);
                     if( limit < 0 ) {
@@ -1230,7 +1195,8 @@ module.exports = function (config) {
                                 {search:"<!--search--->", replace:absolutePath + "pages/search"},
                                 {search:"<!--searchpattern--->", replace: req.query.pattern},
                                 {search:"<!--searchoptionfields-->", replace: searchOptionFields},
-                                {search:"<!--library--->", replace: GenerateLibrary(config.library)}
+                                {search:"<!--library--->", replace: GenerateLibrary(config.library)},
+                                {search:"<!--seacherror-->",replace:searchErrorClass}
                                 ]);
                             callback(null, fullPage , "html");                        
                         } else {                        
@@ -1277,7 +1243,8 @@ module.exports = function (config) {
                                         {search:"<!--search--->", replace:absolutePath + "pages/search"},
                                         {search:"<!--searchpattern--->", replace: req.query.pattern},
                                         {search:"<!--searchoptionfields-->", replace: searchOptionFields},
-                                        {search:"<!--library--->", replace: GenerateLibrary(config.library)}
+                                        {search:"<!--library--->", replace: GenerateLibrary(config.library)},
+                                        {search:"<!--seacherror-->",replace:searchErrorClass}       
                                         ]);
                                     callback(null, fullPage , "html");
                                 });
@@ -1290,7 +1257,8 @@ module.exports = function (config) {
                                     {search:"<!--search--->", replace:absolutePath + "pages/search"},
                                     {search:"<!--searchpattern--->", replace: req.query.pattern},
                                     {search:"<!--searchoptionfields-->", replace: searchOptionFields},
-                                    {search:"<!--library--->", replace: GenerateLibrary(config.library)}
+                                    {search:"<!--library--->", replace: GenerateLibrary(config.library)},
+                                    {search:"<!--seacherror-->",replace:searchErrorClass}   
                                     ]);
                             callback(null,  fullPage , "html");
                         }                    
