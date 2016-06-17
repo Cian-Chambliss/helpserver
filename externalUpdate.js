@@ -5,8 +5,30 @@ module.exports = function (config, callback ) {
     var newExternal = [];
     var difference = [];
     var publishChanges = function(file,nextLoop) {
-        console.log("TBD Publish changes to "+file);
-        nextLoop();
+        fs.readFile( config.external + file , "utf8" , function(err2,data2) {
+            var loopHandled  = false;
+            if( !err2 ) {
+                try {
+                    var records = JSON.parse(data2);
+                    if( config.search) {
+                        if (config.search.provider === 'elasticsearch') {
+                            var elasticpublishExternal = require("./elasticpublishExternal");
+                            loopHandled = true;
+                            console.log("About to call elasticpublishExternal");
+                            elasticpublishExternal( config,file,records,function(err,stats) {
+                                nextLoop();
+                            });
+                        }
+                    }
+                } catch(err3)  {
+                    loopHandled = false;
+                }
+            }
+            if( !loopHandled ) {
+                console.log("NO SEARCH");
+                nextLoop();
+            }
+        });
     };
     var completeCompare = function() {
         var async = require('async');
