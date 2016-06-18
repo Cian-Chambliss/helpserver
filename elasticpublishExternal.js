@@ -20,17 +20,20 @@ module.exports = function (config, file , records , callback ) {
         }, function (error, response) {
             var bodyContent = {
                 title: record.title,
+                path: record.href,
                 file: file,
-                href: record.href,
                 description: record.description
             };
+            if( !error ) {
+                console.log("Removed external "+id);
+            }
             client.create({
               index: helpSystemIndex,
               type: helpSystemType,
               id: id,
               body: bodyContent
             }, function (error) {
-                console.log("error = "+error);
+                console.log("Created external "+JSON.stringify(bodyContent));
                 callbackLoop();
             });
         });

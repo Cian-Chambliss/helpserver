@@ -1159,6 +1159,15 @@ module.exports = function (config) {
                                moreResults = offset + limit;
                             }                        
                         var searchMoreDiv = "";
+                        var hasProtocol = function(path) {
+                            var parts = path.split(":");
+                            if(parts.length > 1 ) {
+                                if( parts[0] == "http" || parts[0] == "https" ) {
+                                    return true;
+                                }
+                            }
+                            return false;
+                        };
                         if( moreResults > 0 || offset > 0 ) {
                             searchMoreDiv += "<div class=\"search-more\">";
                             if( offset > 0 ) {
@@ -1184,7 +1193,11 @@ module.exports = function (config) {
                             var ListUtilities = require('./listutilities');
                             var lu = new ListUtilities(config);
                             data.forEach(function(searchResultItem) {
-                                searchResults += "<div class=\"search-title\"><a href=\"" + pathPages + searchResultItem.path.substring(1) + "\">";
+                                if(hasProtocol(searchResultItem.path)) {
+                                   searchResults += "<div class=\"search-title\"><a href=\"" + searchResultItem.path + "\">";
+                                } else {
+                                   searchResults += "<div class=\"search-title\"><a href=\"" + pathPages + searchResultItem.path.substring(1) + "\">";
+                                }
                                 searchResults += lu.removeDigitPrefix(searchResultItem.title);
                                 searchResults += "</a></div>";
                             });
@@ -1209,13 +1222,19 @@ module.exports = function (config) {
                                     var treeName = pathResults.treeName;
                                     var deepestAltToc = pathResults.deepestAltToc;
                                     var addSearchItem = function(treePtr) {
+                                        var hrefSearch = null;
                                         searchResults += "<dt>";
-                                        searchResults += "<a href=\"" + pathPages + searchResultItem.path.substring(1) + "\">";
+                                        if(hasProtocol(searchResultItem.path) ) {
+                                           hrefSearch = searchResultItem.path;
+                                        } else {
+                                           hrefSearch = pathPages + searchResultItem.path.substring(1);
+                                        }
+                                        searchResults += "<a href=\"" + hrefSearch + "\">";
                                         searchResults += lu.removeDigitPrefix(searchResultItem.title);
                                         searchResults += "</a>";
                                         searchResults += "</dt>";
                                         searchResults += "<dd>";
-                                        searchResults += "<div class=\"search-address\">" + pathPages + searchResultItem.path.substring(1) + "</div>";
+                                        searchResults += "<div class=\"search-address\">" + hrefSearch + "</div>";
                                         if( searchResultItem.description ) {
                                             searchResults += "<div class=\"search-description\">" +searchResultItem.description + "</div>";
                                         }

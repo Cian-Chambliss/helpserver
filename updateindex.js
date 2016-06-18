@@ -18,14 +18,37 @@ module.exports = function (config, callback) {
 	}
 	if (!config.search) {
 		// just doing dependencies and metatags
-		var publishIndexDriver = function () {
+		var publishIndexDriver = function (config, callback,changed) {
 			callback(null, { updated: true, reindexed: false });
 		}
 	} else if (config.search.provider === 'elasticsearch') {
-		var publishIndexDriver = function () {
-			var elasticpublish = require("./elasticpublish");
-			elasticpublish(config, callback);
-		};
+		if( config.external ) {
+			var externalPublish = function(err,stats) {
+				var externalUpdate = require("./externalUpdate");
+				console.log("Doing external update");
+				externalUpdate(config,function(err2,stats2) {
+					console.log("Coming back from external Update");
+					callback(err, stats );
+				});
+			};
+			var publishIndexDriver = function (config, callback,changed) {
+				var elasticpublish = require("./elasticpublish");
+				if( changed ) {
+					elasticpublish(config, externalPublish);
+				} else {
+					externalPublish(null, { updated: true, reindexed: false });
+				}
+			};
+		} else {
+			var publishIndexDriver = function (config, callback) {
+				var elasticpublish = require("./elasticpublish",changed);
+				if( changed ) {
+					elasticpublish(config, callback);
+				} else {
+					callback(null, { updated: true, reindexed: false });
+				}
+			};
+		}
 	} else {
 		callback(new Error('Search provider ' + config.search.provider + ' is not supported.'), null);
 	}
@@ -111,17 +134,17 @@ module.exports = function (config, callback) {
 									}
 								}
 								fs.writeFile(outputPublish, JSON.stringify(publishList), function (err) {
-									publishIndexDriver(config, callback);
+									publishIndexDriver(config, callback,true);
 								});
 							});
 					} else {
 						fs.writeFile(outputPublish, JSON.stringify(publishList), function (err) {
-							publishIndexDriver(config, callback);
+							publishIndexDriver(config, callback,true);
 						});
 					}
 				});
 			} else {
-				callback(null, { updated: true, reindexed: false });
+				publishIndexDriver(config, callback,false);
 			}
 		});
 	});
