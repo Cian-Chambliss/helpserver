@@ -2464,13 +2464,13 @@ module.exports = function (config) {
                 }
                 var loadPage = function() {
                     var href = indexLinks[name];
-                    if(!href) {
-                        href = decodeURI()
-                    }
                     if( href ) {
                         res.redirect(cleanupHREF(href));
                     } else {
-                        res.redirect(absolutePath+"pages/search?pattern="+path.substring(1));
+                        if( !req.query.search ) {
+                            name = path.substring(1);
+                        }
+                        res.redirect(absolutePath+"pages/search?pattern="+name);
                     }      
                 };
                 if( indexLinks ) {
