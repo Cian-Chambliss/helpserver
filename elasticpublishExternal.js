@@ -11,7 +11,7 @@ module.exports = function (config, file , records , callback ) {
   });
   console.log("Publish externals for file "+file);
   async.eachSeries(records, function (record, callbackLoop) {
-      var id = file + ":" + record.href;
+      var id = record.id || (file + ":" + record.href);
       if( record.href ) {
         client.delete({
           index: helpSystemIndex,
