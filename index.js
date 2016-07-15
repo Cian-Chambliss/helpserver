@@ -1121,7 +1121,7 @@ module.exports = function (config) {
                         }
                     });
                 }
-            } else if (page == "/search" && req.query.pattern) {
+            } else if (page == "/search" ) {
                 var offset = 0;
                 var limit = 10;
                 var lookIn = null;
@@ -1150,138 +1150,137 @@ module.exports = function (config) {
                 }                
                 hlp.search(req.query.pattern, function (err, data) {                                       
                     if (err) {
-                        callback(null, "Error: " + err, "html");
-                    } else {
-                        if (data.length > 0) {
-                            var moreResults = 0;
-                            if (data.length > limit) {
-                               data.splice(limit,1);   
-                               moreResults = offset + limit;
-                            }                        
-                        var searchMoreDiv = "";
-                        var hasProtocol = function(path) {
-                            var parts = path.split(":");
-                            if(parts.length > 1 ) {
-                                if( parts[0] == "http" || parts[0] == "https" ) {
-                                    return true;
+                        data = [];
+                    }
+                    if (data.length > 0) {
+                        var moreResults = 0;
+                        if (data.length > limit) {
+                            data.splice(limit,1);   
+                            moreResults = offset + limit;
+                        }                        
+                    var searchMoreDiv = "";
+                    var hasProtocol = function(path) {
+                        var parts = path.split(":");
+                        if(parts.length > 1 ) {
+                            if( parts[0] == "http" || parts[0] == "https" ) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    };
+                    if( moreResults > 0 || offset > 0 ) {
+                        searchMoreDiv += "<div class=\"search-more\">";
+                        if( offset > 0 ) {
+                            searchMoreDiv += "<a href=\""+absolutePath + "pages/search?pattern="+req.query.pattern+"\">Page 1</a>";
+                            if( offset > limit ) {
+                                var startOffset = limit;
+                                var searchPageNumber = 2;
+                                while( offset > startOffset ) {
+                                    searchMoreDiv += "<a href=\""+absolutePath + "pages/search?pattern="+req.query.pattern+"&offset="+startOffset+"\">Page "+searchPageNumber+"</a>";
+                                    searchPageNumber += 1;
+                                    startOffset += limit;
                                 }
                             }
-                            return false;
-                        };
-                        if( moreResults > 0 || offset > 0 ) {
-                            searchMoreDiv += "<div class=\"search-more\">";
-                            if( offset > 0 ) {
-                                searchMoreDiv += "<a href=\""+absolutePath + "pages/search?pattern="+req.query.pattern+"\">Page 1</a>";
-                                if( offset > limit ) {
-                                    var startOffset = limit;
-                                    var searchPageNumber = 2;
-                                    while( offset > startOffset ) {
-                                        searchMoreDiv += "<a href=\""+absolutePath + "pages/search?pattern="+req.query.pattern+"&offset="+startOffset+"\">Page "+searchPageNumber+"</a>";
-                                        searchPageNumber += 1;
-                                        startOffset += limit;
-                                    }
-                                }
+                        }
+                        if( moreResults > 0 ) {
+                            searchMoreDiv += "<a href=\""+absolutePath + "pages/search?pattern="+req.query.pattern+"&offset="+moreResults+"\">More...</a>";
+                        }
+                        searchMoreDiv += "</div>";
+                    }                
+                    
+                    if (req.query.display == "titles-only" ) {
+                        var searchResults = "<div class=\"search-results-minimal\">";
+                        var ListUtilities = require('./listutilities');
+                        var lu = new ListUtilities(config);
+                        data.forEach(function(searchResultItem) {
+                            if(hasProtocol(searchResultItem.path)) {
+                                searchResults += "<div class=\"search-title\"><a href=\"" + searchResultItem.path + "\">";
+                            } else {
+                                searchResults += "<div class=\"search-title\"><a href=\"" + pathPages + searchResultItem.path.substring(1) + "\">";
                             }
-                            if( moreResults > 0 ) {
-                                searchMoreDiv += "<a href=\""+absolutePath + "pages/search?pattern="+req.query.pattern+"&offset="+moreResults+"\">More...</a>";
-                            }
-                            searchMoreDiv += "</div>";
-                        }                
-                        
-                        if (req.query.display == "titles-only" ) {
-                            var searchResults = "<div class=\"search-results-minimal\">";
+                            searchResults += lu.removeDigitPrefix(searchResultItem.title);
+                            searchResults += "</a></div>";
+                        });
+                        searchResults += "</div>" + searchMoreDiv;
+                    
+                        var fullPage = safeReplace(standardSearchTemplate,[
+                            {search:"<!--body-->", replace:searchResults},
+                            {search:"<!--search--->", replace:absolutePath + "pages/search"},
+                            {search:"<!--searchpattern--->", replace: req.query.pattern},
+                            {search:"<!--searchoptionfields-->", replace: searchOptionFields},
+                            {search:"<!--library--->", replace: GenerateLibrary(config.library)},
+                            {search:"<!--searcherror-->",replace:searchErrorClass}
+                            ]);
+                        callback(null, fullPage , "html");                        
+                    } else {                        
+                        var async = require('async');
+                        var searchResults = "<dl class=\"search-results\">";
                             var ListUtilities = require('./listutilities');
                             var lu = new ListUtilities(config);
-                            data.forEach(function(searchResultItem) {
-                                if(hasProtocol(searchResultItem.path)) {
-                                   searchResults += "<div class=\"search-title\"><a href=\"" + searchResultItem.path + "\">";
-                                } else {
-                                   searchResults += "<div class=\"search-title\"><a href=\"" + pathPages + searchResultItem.path.substring(1) + "\">";
-                                }
-                                searchResults += lu.removeDigitPrefix(searchResultItem.title);
-                                searchResults += "</a></div>";
-                            });
-                            searchResults += "</div>" + searchMoreDiv;
-                        
-                            var fullPage = safeReplace(standardSearchTemplate,[
-                                {search:"<!--body-->", replace:searchResults},
-                                {search:"<!--search--->", replace:absolutePath + "pages/search"},
-                                {search:"<!--searchpattern--->", replace: req.query.pattern},
-                                {search:"<!--searchoptionfields-->", replace: searchOptionFields},
-                                {search:"<!--library--->", replace: GenerateLibrary(config.library)},
-                                {search:"<!--searcherror-->",replace:searchErrorClass}
-                                ]);
-                            callback(null, fullPage , "html");                        
-                        } else {                        
-                            var async = require('async');
-                            var searchResults = "<dl class=\"search-results\">";
-                                var ListUtilities = require('./listutilities');
-                                var lu = new ListUtilities(config);
-                                async.eachSeries(data, function (searchResultItem, callbackLoop) {
-                                    var pathResults = getTreeForPath( searchResultItem.path.toLowerCase() );
-                                    var treeName = pathResults.treeName;
-                                    var deepestAltToc = pathResults.deepestAltToc;
-                                    var addSearchItem = function(treePtr) {
-                                        var hrefSearch = null;
-                                        searchResults += "<dt>";
-                                        if(hasProtocol(searchResultItem.path) ) {
-                                           hrefSearch = searchResultItem.path;
-                                        } else {
-                                           hrefSearch = pathPages + searchResultItem.path.substring(1);
-                                        }
-                                        searchResults += "<a href=\"" + hrefSearch + "\">";
-                                        searchResults += lu.removeDigitPrefix(searchResultItem.title);
-                                        searchResults += "</a>";
-                                        searchResults += "</dt>";
-                                        searchResults += "<dd>";
-                                        searchResults += "<div class=\"search-address\">" + hrefSearch + "</div>";
-                                        if( searchResultItem.description ) {
-                                            searchResults += "<div class=\"search-description\">" +searchResultItem.description + "</div>";
-                                        }
-                                        var navigationText = generateNavigation(treePtr,searchResultItem.path.substring(1),searchResultItem.path,deepestAltToc,null,false);
-                                        if( navigationText.breadcrumbs ) {
-                                            searchResults += "<div class=\"search-breadcrumbs\"><ul>" +  navigationText.breadcrumbs+ "</ul></div>";
-                                        }
-                                        searchResults += "</dd>";
-                                        callbackLoop();
-                                    };
-                                    if (treeName && !treeData[treeName]) {
-                                        fs.readFile(config.generated + treeName, "utf8", function (err, jsonTreeData) {
-                                            if (!err) {
-                                                treeData[treeName] = JSON.parse(jsonTreeData);
-                                            }
-                                            addSearchItem(treeData[treeName]);
-                                        });
+                            async.eachSeries(data, function (searchResultItem, callbackLoop) {
+                                var pathResults = getTreeForPath( searchResultItem.path.toLowerCase() );
+                                var treeName = pathResults.treeName;
+                                var deepestAltToc = pathResults.deepestAltToc;
+                                var addSearchItem = function(treePtr) {
+                                    var hrefSearch = null;
+                                    searchResults += "<dt>";
+                                    if(hasProtocol(searchResultItem.path) ) {
+                                        hrefSearch = searchResultItem.path;
                                     } else {
+                                        hrefSearch = pathPages + searchResultItem.path.substring(1);
+                                    }
+                                    searchResults += "<a href=\"" + hrefSearch + "\">";
+                                    searchResults += lu.removeDigitPrefix(searchResultItem.title);
+                                    searchResults += "</a>";
+                                    searchResults += "</dt>";
+                                    searchResults += "<dd>";
+                                    searchResults += "<div class=\"search-address\">" + hrefSearch + "</div>";
+                                    if( searchResultItem.description ) {
+                                        searchResults += "<div class=\"search-description\">" +searchResultItem.description + "</div>";
+                                    }
+                                    var navigationText = generateNavigation(treePtr,searchResultItem.path.substring(1),searchResultItem.path,deepestAltToc,null,false);
+                                    if( navigationText.breadcrumbs ) {
+                                        searchResults += "<div class=\"search-breadcrumbs\"><ul>" +  navigationText.breadcrumbs+ "</ul></div>";
+                                    }
+                                    searchResults += "</dd>";
+                                    callbackLoop();
+                                };
+                                if (treeName && !treeData[treeName]) {
+                                    fs.readFile(config.generated + treeName, "utf8", function (err, jsonTreeData) {
+                                        if (!err) {
+                                            treeData[treeName] = JSON.parse(jsonTreeData);
+                                        }
                                         addSearchItem(treeData[treeName]);
-                                    }                               
-                                },function() {
-                                    searchResults += "</dl>" + searchMoreDiv;                               
-                                    var fullPage = safeReplace(standardSearchTemplate,[
-                                        {search:"<!--body-->", replace:searchResults},
-                                        {search:"<!--search--->", replace:absolutePath + "pages/search"},
-                                        {search:"<!--searchpattern--->", replace: req.query.pattern},
-                                        {search:"<!--searchoptionfields-->", replace: searchOptionFields},
-                                        {search:"<!--library--->", replace: GenerateLibrary(config.library)},
-                                        {search:"<!--searcherror-->",replace:searchErrorClass}       
-                                        ]);
-                                    callback(null, fullPage , "html");
-                                });
-                            }
-                        } else {
-                            searchResults += "<dt>No Results Found</dt>";
-                            searchResults += "</dl>";
+                                    });
+                                } else {
+                                    addSearchItem(treeData[treeName]);
+                                }                               
+                            },function() {
+                                searchResults += "</dl>" + searchMoreDiv;                               
                                 var fullPage = safeReplace(standardSearchTemplate,[
                                     {search:"<!--body-->", replace:searchResults},
                                     {search:"<!--search--->", replace:absolutePath + "pages/search"},
                                     {search:"<!--searchpattern--->", replace: req.query.pattern},
                                     {search:"<!--searchoptionfields-->", replace: searchOptionFields},
                                     {search:"<!--library--->", replace: GenerateLibrary(config.library)},
-                                    {search:"<!--searcherror-->",replace:searchErrorClass}   
+                                    {search:"<!--searcherror-->",replace:searchErrorClass}       
                                     ]);
-                            callback(null,  fullPage , "html");
-                        }                    
-                    }
+                                callback(null, fullPage , "html");
+                            });
+                        }
+                    } else {
+                        searchResults += "<dt>No Results Found</dt>";
+                        searchResults += "</dl>";
+                            var fullPage = safeReplace(standardSearchTemplate,[
+                                {search:"<!--body-->", replace:searchResults},
+                                {search:"<!--search--->", replace:absolutePath + "pages/search"},
+                                {search:"<!--searchpattern--->", replace: req.query.pattern},
+                                {search:"<!--searchoptionfields-->", replace: searchOptionFields},
+                                {search:"<!--library--->", replace: GenerateLibrary(config.library)},
+                                {search:"<!--searcherror-->",replace:searchErrorClass}   
+                                ]);
+                        callback(null,  fullPage , "html");
+                    }                    
                 }, offset, limit+1, req.query.display !=  "titles-only", lookIn );
             } else if (page == "/unknown_reference" && req.query.page) {
                 var content = standardSearchTemplate;
