@@ -1062,7 +1062,14 @@ module.exports = function (config) {
                 // First lowercase the path (for case insensite compares)
                 var beforeName = path.lastIndexOf('/');
                 if( beforeName >= 0 ) {
-                    path = path.substring(beforeName+1);
+                    var name = path.substring(beforeName+1);
+                    if( name === 'index.xml' || name === 'index.html' || name === 'index.xml_html') {
+                        var parts = path.split('/');
+                        if( parts.length > 2 ) {
+                            path = parts[parts.length-2];
+                        }
+                    }
+                    path = name;
                 }
                 var url = "/documentation/pages/search?error=404&pattern="+path;
                 callback(null,'<html> <head> <meta http-equiv="refresh" content="0; url='+url+'"/> </head> <body> <meta http-equiv="refresh" content="0; url='+url+'"/>Redirecting to search... </body> </html>');             

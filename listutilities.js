@@ -1086,10 +1086,14 @@ module.exports = function (config) {
                           var generatedIndexFile = lu.replaceAll(generatedTopic,".xml_html",".xml")+".xml";
                           config.events.translateXML( generatedIndexFile, generatedTopic ,function(err,data) {
                               if( !err ) {
+                                  if ( data && !data.indexOf) {
+                                      data = data.toString('utf8');
+                                  }
                                   if( data && data.length > 0 ) {
                                       data += "<!--basePath:"+path+"-->";
                                       fs.writeFile(generatedTopic,data);
                                   } else {
+                                      fs.unlink(generatedTopic);
                                       err = "Page is Empty";
                                   }
                               }
@@ -1105,10 +1109,14 @@ module.exports = function (config) {
                           var generatedIndexFile = lu.replaceAll(generatedTopic,".xml_html",".xml")+".xml";
                           config.events.translateXML( generatedIndexFile, generatedTopic ,function(err,data) {
                               if( !err ) {
+                                  if ( data && !data.indexOf) {
+                                      data = data.toString('utf8');
+                                  }
                                   if( data && data.length > 0 ) {
                                      data += "<!--basePath:"+path+"-->";
                                      fs.writeFile(generatedTopic,data);
                                   } else {
+                                     fs.unlink(generatedTopic);
                                      err = "Page is Empty"; 
                                   }
                               }
@@ -1119,10 +1127,14 @@ module.exports = function (config) {
                } else {
                     config.events.translateXML(config.source + path,generatedTopic,function(err,data) {
                         if( !err ) {
+                            if ( data && !data.indexOf) {
+                                data = data.toString('utf8');
+                            }
                             if( data && data.length > 0 ) {
                                data += "<!--basePath:"+path+"-->";
                                fs.writeFile(generatedTopic,data);
                             } else {
+                               fs.unlink(generatedTopic);
                                err = "Page is Empty"; 
                             }
                         }
