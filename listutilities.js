@@ -29,10 +29,10 @@ module.exports = function (config) {
             var chr = title.substr(length, 1);
             if ('0' <= chr && chr <= '9') {
                 ++length;
-            } else if (chr == '_') {
+            } else if (chr === '_') {
                 ++length;
                 var newtitle = title.substring(length);
-                if (newtitle && newtitle != '')
+                if (newtitle && newtitle !== '')
                     title = newtitle;
                 break;
             } else {
@@ -63,7 +63,7 @@ module.exports = function (config) {
         }
         if (tree.length > 0) {
             for (i = 0; i < tree.length; ++i) {
-                if (tree[i].title.substr(0, 1) == '_') {
+                if (tree[i].title.substr(0, 1) === '_') {
                     tree[i].title = removeNumericPrefix(tree[i].title);
                 }
             }
@@ -118,7 +118,7 @@ module.exports = function (config) {
     ListUtilities.prototype.findNode = function (tree, name) {
         var i;
         for (i = 0; i < tree.length; ++i)
-            if (tree[i].title.trim().toLowerCase() == name)
+            if (tree[i].title.trim().toLowerCase() === name)
                 return i;
         return -1;
     }
@@ -157,7 +157,7 @@ module.exports = function (config) {
                 if (levels[i] !== '') {
                     var index = this.findNode(tree, levels[i].trim().toLowerCase());
                     if (index >= 0) {
-                        if ((i + 1) == levels.length) {
+                        if ((i + 1) === levels.length) {
                             node = tree[index];
                             break;
                         }
@@ -176,7 +176,7 @@ module.exports = function (config) {
         for (i = 0; i < tree.length; ++i) {
             var itemName = tree[i].title.toLowerCase();
             for (j = tree.length - 1; j > i; --j) {
-                if (tree[j].title.toLowerCase() == itemName) {
+                if (tree[j].title.toLowerCase() === itemName) {
                     if (!tree[i].path && tree[j].path) {
                         tree[i].path = tree[j].path;
                     }
@@ -203,7 +203,7 @@ module.exports = function (config) {
                 if (levels[i] !== '') {
                     var index = this.findNode(tree, levels[i].trim().toLowerCase());
                     if (index >= 0) {
-                        if ((i + 1) == levels.length) {
+                        if ((i + 1) === levels.length) {
                             // Make sure title gets set (use case of new name)
                             tree[index].title = levels[i];
                             // Set the path for the node
@@ -222,7 +222,7 @@ module.exports = function (config) {
                                 tree[index].children = [];
                             tree = tree[index].children;
                         }
-                    } else if ((i + 1) == levels.length) {
+                    } else if ((i + 1) === levels.length) {
                         node.title = levels[i];
                         tree.push(node);
                         break;
@@ -247,9 +247,9 @@ module.exports = function (config) {
                 levels.splice(0, 1);
             }
             if (levels.length > 0) {
-                if (levels[levels.length - 1] == '') {
+                if (levels[levels.length - 1] === '') {
                     levels.splice(levels.length - 1, 1);
-                    if (levels.join() == '')
+                    if (levels.join() === '')
                         name = '';
                 }
             }
@@ -257,16 +257,16 @@ module.exports = function (config) {
                 newlevels.splice(0, 1);
             }
             if (newlevels.length > 0) {
-                if (newlevels[newlevels.length - 1] == '') {
+                if (newlevels[newlevels.length - 1] === '') {
                     newlevels.splice(newlevels.length - 1, 1);
-                    if (newlevels.join() == '')
+                    if (newlevels.join() === '')
                         newname = '';
                 }
             }
             var needToRemoveAndAdd = true;
             // Same number of levels?
             if (levels.length > 0) {
-                if (levels.length == newlevels.length) {
+                if (levels.length === newlevels.length) {
                     var index = this.findNode(tree, levels[0].trim().toLowerCase());
                     if (index >= 0) {
                         if (levels.length > 1) {
@@ -278,7 +278,7 @@ module.exports = function (config) {
                                 needToRemoveAndAdd = false;
                             }
                         } else {
-                            if (newname.substring(0, 1) == '/' && newname.length > 1) {
+                            if (newname.substring(0, 1) === '/' && newname.length > 1) {
                                 tree[index].title = newname.substring(1);
                             } else {
                                 tree[index].title = newname;
@@ -328,10 +328,10 @@ module.exports = function (config) {
                 if (tree[i].children) {
                     if (!tree[i].path) {
                         // propogate deep titles on singletons to the top node
-                        if (tree[i].children.length == 1) {
+                        if (tree[i].children.length === 1) {
                             var singleTon = tree[i].children[0];
                             if (!singleTon.path && singleTon.children) {
-                                while (singleTon.children.length == 1 && !singleTon.children[0].path) {
+                                while (singleTon.children.length === 1 && !singleTon.children[0].path) {
                                     singleTon = singleTon.children[0];
                                 }
                                 tree[i].title = singleTon.title;
@@ -450,14 +450,14 @@ module.exports = function (config) {
             }
             if (itemgroup) {
                 itemgroup = itemgroup.trim();
-                if (itemgroup.substring(0, 1) == '/') {
+                if (itemgroup.substring(0, 1) === '/') {
                     var filename = levels[levels.length - 1];
                     levels = itemgroup.split('/');
                     levels.push(filename);
                     lastLevel = levels.length;
                     itemgroup = null;
                 } else {
-                    while (itemgroup.substring(0, 3) == "../") {
+                    while (itemgroup.substring(0, 3) === "../") {
                         itemgroup = itemgroup.substring(3);
                         --lastLevel;
                     }
@@ -467,11 +467,11 @@ module.exports = function (config) {
             }
             for (j = 0; j < lastLevel - 1; ++j) {
                 currentLevel = this.cleanupName(levels[j]);
-                if (currentLevel == '')
+                if (currentLevel === '')
                     continue;
                 currentBranch = null;
                 for (k = 0; k < branch.length; ++k) {
-                    if (branch[k].title == currentLevel) {
+                    if (branch[k].title === currentLevel) {
                         currentBranch = branch[k];
                         break;
                     }
@@ -503,7 +503,7 @@ module.exports = function (config) {
                     currentBranch = null;
                     currentLevel = itemGroups[ig];
                     for (k = 0; k < branch.length; ++k) {
-                        if (branch[k].title == currentLevel) {
+                        if (branch[k].title === currentLevel) {
                             currentBranch = branch[k];
                             break;
                         }
@@ -521,7 +521,7 @@ module.exports = function (config) {
                 currentBranch = null;
                 currentLevel = this.cleanupName(levels[levels.length - 1]);
                 for (k = 0; k < branch.length; ++k) {
-                    if (branch[k].title == currentLevel) {
+                    if (branch[k].title === currentLevel) {
                         currentBranch = branch[k];
                         break;
                     }
@@ -551,7 +551,7 @@ module.exports = function (config) {
                 currentBranch = null;
                 currentLevel = this.cleanupName(levels[levels.length - 1]);
                 for (k = 0; k < branch.length; ++k) {
-                    if (branch[k].title == currentLevel) {
+                    if (branch[k].title === currentLevel) {
                         currentBranch = branch[k];
                         break;
                     }
@@ -643,7 +643,7 @@ module.exports = function (config) {
                 if (!tree[i].path && !tree[i].toc && !tree[i].children) {
                     tree.splice(i, 1);
                 } else if (!tree[i].path && !tree[i].toc) {
-                    if (tree[i].children.length == 0)
+                    if (tree[i].children.length === 0)
                         tree.splice(i, 1);
                 } else if (!tree[i].children) {
                     console.log("Warning - empty branch detected " + tree[i].title);
@@ -766,7 +766,7 @@ module.exports = function (config) {
                     var altTocs = config.tocData.altTocs;
                     var i;
                     for (i = 0; i < altTocs.length; ++i) {
-                        if ((path+"/").substring(0, altTocs[i].length).toLowerCase() == altTocs[i].toLowerCase()) {
+                        if ((path+"/").substring(0, altTocs[i].length).toLowerCase() === altTocs[i].toLowerCase()) {
                             var altTocClean = lu.replaceAll(altTocs[i], '/', '_');
                             filterStuctureName = config.generated + altTocClean + flt + config.structurefile;
                             break;
@@ -791,9 +791,9 @@ module.exports = function (config) {
                                             if (lastPos > 0) {
                                                 testPath = testPath.substring(0, lastPos);
                                                 if (lPath.length <= testPath.length) {
-                                                    if (testPath.substring(0, lPath.length) == lPath) {
-                                                        if ( (children[i].path.indexOf("/index.xml") == lPath.length 
-                                                           || children[i].path.indexOf("/index.html") == lPath.length 
+                                                    if (testPath.substring(0, lPath.length) === lPath) {
+                                                        if ( (children[i].path.indexOf("/index.xml") === lPath.length 
+                                                           || children[i].path.indexOf("/index.html") === lPath.length 
                                                             ) 
                                                            && children[i].children
                                                             ) {
@@ -904,7 +904,7 @@ module.exports = function (config) {
                                                             var orderExtn = orderData[j].lastIndexOf('.');
                                                             if( orderExtn > 0 ) {
                                                                 orderExtn = orderData[j].substring(orderExtn);
-                                                                if( orderExtn == ".html" || orderExtn == ".xml" || orderExtn == ".md" ) {
+                                                                if( orderExtn === ".html" || orderExtn === ".xml" || orderExtn === ".md" ) {
                                                                     if( listRemainder[k].toLowerCase().indexOf('/'+orderData[j]) >= 0 ) {
                                                                         bestMatch = k;
                                                                         break;
@@ -942,7 +942,7 @@ module.exports = function (config) {
                                                 htmlText = lu.replaceAll(htmlText, '<!--list:'+lists[i].listDef+'-->', lists[i].content.join("\n") );
                                             }
                                             if( reorderChildren ) {
-                                                if( genereratedExtension == ".xml" ) {                                                    
+                                                if( genereratedExtension === ".xml" ) {                                                    
                                                     htmlText = htmlText.replace("<page","<page reorder-children=\"true\"");
                                                 } else {
                                                     htmlText = htmlText.replace(">","><!--orderchildren-->");
@@ -950,14 +950,14 @@ module.exports = function (config) {
                                             }                                            
                                         }
                                     }
-                                    if( htmlText.indexOf('</page>') != htmlText.lastIndexOf('</page>') ) {
+                                    if( htmlText.indexOf('</page>') !== htmlText.lastIndexOf('</page>') ) {
                                         console.log("!!!++++Nested content detected!!!" );
                                     } 
                                     
                                     fs.writeFile(generatedTopic, htmlText, function (err) {
-                                        if( genereratedExtension == ".xml" ) {
+                                        if( genereratedExtension === ".xml" ) {
                                             callback(null, htmlText, "xml");
-                                        } else if( genereratedExtension == ".md" ) {
+                                        } else if( genereratedExtension === ".md" ) {
                                             callback(null, htmlText, "md");
                                         } else {
                                             callback(null, htmlText, "html");
@@ -971,9 +971,9 @@ module.exports = function (config) {
                                         console.log('Warning: embedded lists were not expanded for ' + path);
                                     }
                                     fs.writeFile(generatedTopic, xmlTemplate, function (err) {
-                                        if( genereratedExtension == ".xml" ) {
+                                        if( genereratedExtension === ".xml" ) {
                                             callback(null, xmlTemplate, "xml");
-                                        } else if( genereratedExtension == ".md" ) {
+                                        } else if( genereratedExtension === ".md" ) {
                                             callback(null, xmlTemplate, "md");
                                         } else {
                                             callback(null, xmlTemplate, "html");
@@ -1018,7 +1018,7 @@ module.exports = function (config) {
                                         var j;
                                         var listItem = null;
                                         for (j = 0; j < lists.length; ++j) {
-                                            if (lists[j].listDef == relPath) {
+                                            if (lists[j].listDef === relPath) {
                                                 listItem = lists[j];
                                                 break;
                                             }
@@ -1026,11 +1026,11 @@ module.exports = function (config) {
                                         if (!listItem) {
                                             var fullPath = path;
                                             if (relPath.length > 0) {
-                                                if (relPath.substring(0, 1) == '.') {
+                                                if (relPath.substring(0, 1) === '.') {
                                                     if (relPath.length > 1) {
                                                         fullPath += relPath.substring(1);
                                                     }
-                                                } else if (relPath.substring(0, 1) == '/') {
+                                                } else if (relPath.substring(0, 1) === '/') {
                                                     fullPath += relPath;
                                                 } else {
                                                     fullPath += "/" + relPath;
@@ -1058,9 +1058,9 @@ module.exports = function (config) {
                 }
             } else {
                 console.log("++++Loaded from CACHE: "+path);
-                if( genereratedExtension == ".xml" ) {
+                if( genereratedExtension === ".xml" ) {
                     callback(null, data, "xml");
-                } else if( genereratedExtension == ".md" ) {
+                } else if( genereratedExtension === ".md" ) {
                     callback(null, data, "md");
                 } else {
                     callback(null, data, "html");
@@ -1072,6 +1072,7 @@ module.exports = function (config) {
         // Perform server side xslt transformation
         var lu = this;
         var generatedTopic = config.generated + "topics/" + this.replaceAll(path, "/", "_") + (config.filter_name ? config.filter_name : '_all');
+        generatedTopic = generatedTopic.toLowerCase(); // ignore case in the cache logic...
         var fs = require("fs");
         path = lu.replaceAll(path,".xml_html",".xml");
         
@@ -1084,6 +1085,14 @@ module.exports = function (config) {
                        } else {
                           var generatedIndexFile = lu.replaceAll(generatedTopic,".xml_html",".xml")+".xml";
                           config.events.translateXML( generatedIndexFile, generatedTopic ,function(err,data) {
+                              if( !err ) {
+                                  if( data && data.length > 0 ) {
+                                      data += "<!--basePath:"+path+"-->";
+                                      fs.writeFile(generatedTopic,data);
+                                  } else {
+                                      err = "Page is Empty";
+                                  }
+                              }
                               callback(err,data,"html");
                           });
                        }
@@ -1095,12 +1104,28 @@ module.exports = function (config) {
                        } else {
                           var generatedIndexFile = lu.replaceAll(generatedTopic,".xml_html",".xml")+".xml";
                           config.events.translateXML( generatedIndexFile, generatedTopic ,function(err,data) {
+                              if( !err ) {
+                                  if( data && data.length > 0 ) {
+                                     data += "<!--basePath:"+path+"-->";
+                                     fs.writeFile(generatedTopic,data);
+                                  } else {
+                                     err = "Page is Empty"; 
+                                  }
+                              }
                               callback(err,data,"html");
                           });
                        }
                     },true);                
                } else {
                     config.events.translateXML(config.source + path,generatedTopic,function(err,data) {
+                        if( !err ) {
+                            if( data && data.length > 0 ) {
+                               data += "<!--basePath:"+path+"-->";
+                               fs.writeFile(generatedTopic,data);
+                            } else {
+                               err = "Page is Empty"; 
+                            }
+                        }
                         callback(err,data,"html");
                     });
                 }

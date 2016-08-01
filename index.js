@@ -30,8 +30,8 @@ module.exports = function (config) {
     var logoHREF = (config.logoHref || "http://www.google.com");
     var topmostPage = config.topmostPage || "";
     var cleanupHREF = function(path) {
-        if( path.substring(0,1) == '/' ) { 
-            if( path.substring(0,absolutePath).toLowerCase() != absolutePath.toLowerCase() ) {
+        if( path.substring(0,1) === '/' ) { 
+            if( path.substring(0,absolutePath).toLowerCase() !== absolutePath.toLowerCase() ) {
                 return absolutePath + path.substring(1);
             }    
         }
@@ -59,7 +59,7 @@ module.exports = function (config) {
          backLinks = {};
          for( var link in indexLinks )  {
              var path = indexLinks[link];
-             if( path.substr(0,7) == "/pages/" ) {
+             if( path.substr(0,7) === "/pages/" ) {
                  path = path.substr(6);
                  backLinks[path.toLowerCase()] = link;
              }
@@ -138,10 +138,10 @@ module.exports = function (config) {
             if (!config.search) {
                 throw new Error('Filter requires search parameters to be defined ... }');
             }
-            if (config.filter_name == '') {
+            if (config.filter_name === '') {
                 throw new Error('Filter requires a filter_name to be defined ... }');
             }
-        } else if (config.filter_name != '') {
+        } else if (config.filter_name !== '') {
             throw new Error('Filter_name requires a filter to be defined ... }');
         }
 
@@ -338,7 +338,7 @@ module.exports = function (config) {
     if (absolutePath.length > 1) {
         var i;
         for (i = 0; i < pagesManifestArray.length; ++i) {
-            if (pagesManifestArray[i].substring(0, 1) == "/") {
+            if (pagesManifestArray[i].substring(0, 1) === "/") {
                 pagesManifestArray[i] = absolutePath + pagesManifestArray[i].substring(1);
             }
         }
@@ -461,7 +461,7 @@ module.exports = function (config) {
                                 var pathLen = book[i].href.lastIndexOf('/');
                                 if (pathLen >= 0) {
                                     var pathCompare = book[i].href.substring(0, pathLen + 1);
-                                    if (pathCompare == '/' || pathCompare == '/pages/') {
+                                    if (pathCompare === '/' || pathCompare === '/pages/') {
                                         match = book[i].breadcrumb;
                                     }
                                 }
@@ -500,7 +500,7 @@ module.exports = function (config) {
                 var recurseNavTree = function (kids) {
                     if (kids.length) {
                         for (var i = 0; i < kids.length; ++i) {
-                            if (kids[i].path && kids[i].path.toLowerCase() == searchTopic) {
+                            if (kids[i].path && kids[i].path.toLowerCase() === searchTopic) {
                                 pageTitle = kids[i].title;
                                 kidsLevel = kids;
                                 indexOfKid = i;
@@ -535,7 +535,7 @@ module.exports = function (config) {
                 if (!kidsLevel && !currentBook && !config.library ) {
                     kidsLevel = tree.children;
                 }
-                if( page == topmostPage && !currentBook && config.library ) {
+                if( page === topmostPage && !currentBook && config.library ) {
                     breadcrumbs += "<li>";
                     breadcrumbs += "Main";
                     breadcrumbs += "</li>";
@@ -559,7 +559,7 @@ module.exports = function (config) {
                         breadcrumbs += "<a href=\"" + pathPages + tree.path.substring(1) + "\">";
                         if (currentBook) {
                             breadcrumbs += currentBook;
-                        } else if (!tree.title || tree.title == '/') {
+                        } else if (!tree.title || tree.title === '/') {
                             breadcrumbs += "Main";
                         } else {
                             breadcrumbs += decorateTitle(tree.title);
@@ -596,7 +596,7 @@ module.exports = function (config) {
                     breadcrumbs += "</li>";
                 }
                 var fixupRelativeHref = function( href ) {
-                    if( page.indexOf("/index.") >= 0 && href.substring(0,1) != '/' ) {
+                    if( page.indexOf("/index.") >= 0 && href.substring(0,1) !== '/' ) {
                          href = "../" +href;
                      } else {
                          href = cleanupHREF(href);
@@ -619,7 +619,7 @@ module.exports = function (config) {
                             if (kidsLevel[i].path) {
                                 related += "<li>";
                                 related += "<a href=\"" + pathPages + kidsLevel[i].path.substring(1);
-                                if (i == indexOfKid)
+                                if (i === indexOfKid)
                                     related += "\" class=\"selected\" >";
                                 else
                                     related += "\">";
@@ -634,7 +634,7 @@ module.exports = function (config) {
                         for (var i = 0; i < booksBranches.length; ++i) {
                             related += "<li>";
                             related += "<a href=\"" + cleanupHREF(booksBranches[i].href);
-                            if (booksBranches[i].breadcrumb == currentBook)
+                            if (booksBranches[i].breadcrumb === currentBook)
                                 related += "\" class=\"selected\" >";
                             else
                                 related += "\">";
@@ -659,7 +659,7 @@ module.exports = function (config) {
                             var justName = path.split("/");
                             var justNameElems = justName.length; 
                             justName = justName[justNameElems-1].split('.')[0].toLowerCase();
-                            if( justName == 'index' && justNameElems > 1 ) {
+                            if( justName === 'index' && justNameElems > 1 ) {
                                 justName = path.split("/")[justNameElems-2].toLowerCase();
                             } 
                             return justName;
@@ -669,7 +669,7 @@ module.exports = function (config) {
                     var justName = getJustName(kidsLevel[indexOfKid].path );
                     for (var i = 0; i < relatedPageOrder.links.length ; ++i ) {
                         var linkitem = relatedPageOrder.links[i];
-                        if( justName == getJustName(linkitem.href) ) {
+                        if( justName === getJustName(linkitem.href) ) {
                             if( i > 0 && relatedPageOrder.links[i].href ) {
                                previousUrl = fixupRelativeHref( relatedPageOrder.links[i-1].href );
                             }
@@ -710,7 +710,7 @@ module.exports = function (config) {
                 var i;
                 for (i = 0; i < altTocs.length; ++i) {
                     var prefix = altTocs[i];
-                    if (searchPath.substring(0, prefix.length) == prefix.toLowerCase()) {
+                    if (searchPath.substring(0, prefix.length) === prefix.toLowerCase()) {
                         if (!deepestAltToc)
                             deepestAltToc = prefix;
                         else if (deepestAltToc.length < prefix.length)
@@ -729,7 +729,7 @@ module.exports = function (config) {
         if (extensionPos > 0)
             extension = page.substring(extensionPos + 1).toLowerCase();
 
-        if (extension == "html" || extension == "xml" || extension == "md") {
+        if (extension === "html" || extension === "xml" || extension === "md") {
             var pathResults = getTreeForPath( "/" + relativePath.toLowerCase() );
             var deepestAltToc;
             tocName = pathResults.tocName
@@ -748,7 +748,7 @@ module.exports = function (config) {
                     lastModifiedPos = lastModified.indexOf("content=");
                     if( lastModifiedPos > 0 ) {
                         lastModified = lastModified.substring(lastModifiedPos+8).trim();
-                        if( lastModified.substring(0,1) == "\"" ) {
+                        if( lastModified.substring(0,1) === "\"" ) {
                             lastModified = lastModified.split("\"")[1];
                             lastModified = lastModified.split("@")[0];
                         } else {
@@ -779,7 +779,7 @@ module.exports = function (config) {
                     pageProc.basepath = fromPath.substring(0, pagesAt + 6);
                 }
                 if (absolutePath.length > 0) {
-                    if (pageProc.basepath.substring(0, absolutePath.length) != absolutePath) {
+                    if (pageProc.basepath.substring(0, absolutePath.length) !== absolutePath) {
                         pageProc.basepath = absolutePath + pageProc.basepath.substring(1);
                     }
                 }
@@ -805,10 +805,10 @@ module.exports = function (config) {
                 }
                 var title = navigationText.pageTitle;
                 var feedback = "?subject=Problem with page:"+title+" ["+page+"]"+"&body=Describe problem with the "+page+" documentation page:";
-                if( lastModified != "" ) {
+                if( lastModified !== "" ) {
                     lastModified = "Page Last Checked on "+lastModified;
                 }
-                if( navigationText.related == "" && navigationText.parentUrl == '#' && navigationText.childUrl == '#' && navigationText.previousUrl == '#' && navigationText.nextUrl == '#') {
+                if( navigationText.related === "" && navigationText.parentUrl === '#' && navigationText.childUrl === '#' && navigationText.previousUrl === '#' && navigationText.nextUrl === '#') {
                     fullPage = fullPage.replace("id=\"page-nav\"","id=\"page-nav\" class=\"page-nav-empty\"");
                 }
                 var pageSourceComment = "";
@@ -842,7 +842,7 @@ module.exports = function (config) {
                 var flattenValue = 'false';
                 if( req.query.flatten === "true") {
                     flattenValue = "true";
-                } else if( extension != "xml" || navigationText.childUrl == '#' ) {
+                } else if( extension !== "xml" || navigationText.childUrl === '#' ) {
                     flattenValue = "null"; // not XML or no children       
                 } else if( config.events.canFlatten ) {
                     if( !config.events.canFlatten(page) ) {
@@ -893,7 +893,7 @@ module.exports = function (config) {
                     }
                     for (i = 0; i < actualLinks.length; ++i) {
                         var filename = actualLinks[i].toLowerCase();
-                        if (filename == path)
+                        if (filename === path)
                             return filename;
                         var fileNameOffset = filename.lastIndexOf('/');
                         if (fileNameOffset >= 0) {
@@ -902,8 +902,8 @@ module.exports = function (config) {
                             if (filenamePartOffset > 0) {
                                 filenameName = filenameName.substring(0, filenamePartOffset);
                             }
-                            if (filenameName == namePart) {
-                                if (pathPart == filename.substring(0, fileNameOffset + 1)) {
+                            if (filenameName === namePart) {
+                                if (pathPart === filename.substring(0, fileNameOffset + 1)) {
                                     sameToExtn = actualLinks[i];
                                 } else {
                                     sameName = actualLinks[i];
@@ -941,7 +941,7 @@ module.exports = function (config) {
                     if( pagePathLength > 0 ) {
                         var fname = page.substring(pagePathLength+1);
                         parentIndexFile = page.substring(0,pagePathLength);
-                        if( fname == "index.html" || fname == "index.xml" || fname == "index.md" || fname == "index.xml_html" ) {
+                        if( fname === "index.html" || fname === "index.xml" || fname === "index.md" || fname === "index.xml_html" ) {
                             pagePathLength = parentIndexFile.lastIndexOf('/');
                             if( pagePathLength > 0 ) {
                                 parentIndexFile = page.substring(0,pagePathLength+1);
@@ -958,8 +958,8 @@ module.exports = function (config) {
                                     if( endOfPath >= 0 ) {
                                         ++endOfPath;
                                         var fname = treeBranch.path.substring(endOfPath);
-                                        if( fname == "index.html" || fname == "index.xml" || fname == "index.md" ) {
-                                            if( treeBranch.path.substring(0,endOfPath) == parentIndexFile ) {
+                                        if( fname === "index.html" || fname === "index.xml" || fname === "index.md" ) {
+                                            if( treeBranch.path.substring(0,endOfPath) === parentIndexFile ) {
                                                 parentIndexFile = treeBranch.path;
                                                 return true;
                                             }                                            
@@ -1068,7 +1068,7 @@ module.exports = function (config) {
                 callback(null,'<html> <head> <meta http-equiv="refresh" content="0; url='+url+'"/> </head> <body> <meta http-equiv="refresh" content="0; url='+url+'"/>Redirecting to search... </body> </html>');             
             };
 
-            if (extension == "xml") {
+            if (extension === "xml") {
                 // First Pre-process XML using XSLT...
                 var ListUtilities = require('./listutilities');
                 var lu = new ListUtilities(config);
@@ -1121,7 +1121,7 @@ module.exports = function (config) {
                         }
                     });
                 }
-            } else if (page == "/search" ) {
+            } else if (page === "/search" ) {
                 var offset = 0;
                 var limit = 10;
                 var lookIn = null;
@@ -1162,7 +1162,7 @@ module.exports = function (config) {
                     var hasProtocol = function(path) {
                         var parts = path.split(":");
                         if(parts.length > 1 ) {
-                            if( parts[0] == "http" || parts[0] == "https" ) {
+                            if( parts[0] === "http" || parts[0] === "https" ) {
                                 return true;
                             }
                         }
@@ -1188,7 +1188,7 @@ module.exports = function (config) {
                         searchMoreDiv += "</div>";
                     }                
                     
-                    if (req.query.display == "titles-only" ) {
+                    if (req.query.display === "titles-only" ) {
                         var searchResults = "<div class=\"search-results-minimal\">";
                         var ListUtilities = require('./listutilities');
                         var lu = new ListUtilities(config);
@@ -1281,8 +1281,8 @@ module.exports = function (config) {
                                 ]);
                         callback(null,  fullPage , "html");
                     }                    
-                }, offset, limit+1, req.query.display !=  "titles-only", lookIn );
-            } else if (page == "/unknown_reference" && req.query.page) {
+                }, offset, limit+1, req.query.display !==  "titles-only", lookIn );
+            } else if (page === "/unknown_reference" && req.query.page) {
                 var content = standardSearchTemplate;
                 var searchForPattern = unescape(req.query.page);
                 if (searchForPattern.lastIndexOf("/") >= 0) {
@@ -1294,7 +1294,7 @@ module.exports = function (config) {
                 content = content.replace("<!--searchpattern--->", searchForPattern).replace("<!--search--->", absolutePath + "pages/search");
                 content = content.replace("<!--body-->", "Unknown Reference '" + req.query.page + "'");
                 callback(null, content, "html");
-            } else if (page == "/ambiguous_reference" && req.query.page) {
+            } else if (page === "/ambiguous_reference" && req.query.page) {
                 var content = standardSearchTemplate;
                 var searchForPattern = unescape(req.query.page);
                 if (searchForPattern.lastIndexOf("/") >= 0) {
@@ -1353,11 +1353,11 @@ module.exports = function (config) {
                 var ListUtilities = require('./listutilities');
                 var lu = new ListUtilities(config);
                 lu.loadOrCreateIndexPage(this.config, decodeURI(page), (this.config.filter_name ? this.config.filter_name : defaultFilter), callback);
-            } else if (extension == "xml_html" && config.events.translateXML) {
+            } else if (extension === "xml_html" && config.events.translateXML) {
                 var ListUtilities = require('./listutilities');
                 var lu = new ListUtilities(config);
                 lu.loadOrCreateTranslatedPage(this.config, decodeURI(page), (this.config.filter_name ? this.config.filter_name : defaultFilter), callback);
-            } else if (extension == "html" || extension == "htm" || extension == "xml") {
+            } else if (extension === "html" || extension === "htm" || extension === "xml") {
                 if (page.indexOf("/index.") > 0) {
                     if (page.indexOf("/index.xml") > 0
                         || page.indexOf("/index.md") > 0
@@ -1411,7 +1411,7 @@ module.exports = function (config) {
                         }
                     });
                 }
-            } else if (extension == "md") {
+            } else if (extension === "md") {
                 fs.readFile(config.source + relativePath, "utf8", function (err, data) {
                     if (err) {
                         callback(err, null);
@@ -1420,7 +1420,7 @@ module.exports = function (config) {
                         callback(null, marked(data), "html");
                     }
                 });
-            } else if (extension == "css" || extension == "svg") {
+            } else if (extension === "css" || extension === "svg") {
                 var helpServerFile = relativePath.lastIndexOf("helpserver-");
                 if (helpServerFile > -1) {
                     loadAssetUTF8(relativePath.substr(helpServerFile), function (err, data) {
@@ -1450,7 +1450,7 @@ module.exports = function (config) {
                         }
                     });
                 }
-            } else if (extension == "js") {
+            } else if (extension === "js") {
                 var helpServerFile = relativePath.lastIndexOf("helpserver-");
                 if (helpServerFile > -1) {
                     fs.readFile(modulePath + 'assets/' + relativePath.substr(helpServerFile), "utf8", function (err, data) {
@@ -1560,7 +1560,7 @@ module.exports = function (config) {
         HelpServerUtil.prototype.getAltToc = function (page, acceptEncoding, callback) {
             var extensionPos = page.lastIndexOf('.');
             if (extensionPos > 0) {
-                if (page.substring(extensionPos).toLowerCase() == '.json') {
+                if (page.substring(extensionPos).toLowerCase() === '.json') {
                     page = page.substring(0, extensionPos) + "/";
                 }
             }
@@ -1719,7 +1719,7 @@ module.exports = function (config) {
                                      for( i = 0 ; i < rawData.length ; ++i ) {
                                          var pathName = rawData[i].file;
                                          pathName = replaceAll(pathName,'\\','/');
-                                         if( pathName.toLowerCase().substring(0,leadPath.length) == leadPath ) {
+                                         if( pathName.toLowerCase().substring(0,leadPath.length) === leadPath ) {
                                              pathName = pathName.substring(leadPath.length);
                                          }
                                          data.push({title : rawData[i].title , path : pathName });
@@ -1900,7 +1900,7 @@ module.exports = function (config) {
                                     newData = data + "\n" + newMetaData;
                                 }
                             }
-                            if (newData != data) {
+                            if (newData !== data) {
                                 debugger;
                                 fs.writeFile(fn, newData, function () {
                                     if (err) {
@@ -1927,10 +1927,10 @@ module.exports = function (config) {
                     var sresult = metadata.toString();
                     if (metadata && metadata.pages && metadata.pages.length) {
                         var i;
-                        if ((typeof (metadata.pages[0])) == "string") {
+                        if ((typeof (metadata.pages[0])) === "string") {
                             // Get metadata for multiple pages....
                             for (i = 0; i < metadata.pages.length; ++i) {
-                                if (typeof (metadata.pages[i]) == "string") {
+                                if (typeof (metadata.pages[i]) === "string") {
                                     sanitizedCommands.push(metadata.pages[i]);
                                 }
                             }
@@ -1946,8 +1946,8 @@ module.exports = function (config) {
                             // Set metadata for multiple pages....
                             for (i = 0; i < metadata.pages.length; ++i) {
                                 var mdata = metadata.pages[i];
-                                if (typeof (mdata) == "object") {
-                                    if (mdata.path && mdata.metadata && typeof mdata.metadata == "object") {
+                                if (typeof (mdata) === "object") {
+                                    if (mdata.path && mdata.metadata && typeof mdata.metadata === "object") {
                                         sanitizedCommands.push(mdata);
                                     }
                                 }
@@ -2063,7 +2063,7 @@ module.exports = function (config) {
                         var i;
                         if (data.length > 1) {
                             for (i = 0; i < data.length; ++i) {
-                                if (data[i].title.toLowerCase() == req.query.topic.toLowerCase()) {
+                                if (data[i].title.toLowerCase() === req.query.topic.toLowerCase()) {
                                     foundItem = data[i];
                                 }
                             }
@@ -2350,8 +2350,8 @@ module.exports = function (config) {
             },
 
             "refresh": function (hlp, path, req, res) {
-                if (hlp.isAdmin() || req.connection.remoteAddress == "::ffff:127.0.0.1") {
-                    if (req.method == 'POST') {
+                if (hlp.isAdmin() || req.connection.remoteAddress === "::ffff:127.0.0.1") {
+                    if (req.method === 'POST') {
                         serverHealth.refreshCount++;
                         if (!global.refresh_locked) {
                             serverHealth.busyInRefresh = true;
@@ -2380,7 +2380,7 @@ module.exports = function (config) {
                 }
             },
             "metadata": function (hlp, path, req, res) {
-                if (req.method == 'POST') {
+                if (req.method === 'POST') {
                     if (hlp.isAdmin()) {
                         if (req.body) {
                             hlp.setmetadata(path, req.body, function (data) {
@@ -2491,7 +2491,7 @@ module.exports = function (config) {
         
             // Strip off the absolute path if present (allows direct testing of site)
             if (absolutePath.length > 1) {
-                if (pathValue.indexOf(absolutePath) == 0) {
+                if (pathValue.indexOf(absolutePath) === 0) {
                     pathValue = pathValue.substring(absolutePath.length - 1);
                 } else {
                     console.log('Warning Unprotected path' + pathValue);
@@ -2501,22 +2501,22 @@ module.exports = function (config) {
             if (config.replacePath) {
                 var i;
                 for (i = 0; i < config.replacePath.length; ++i) {
-                    if (pathValue.substring(0, config.replacePath[i].from.length) == config.replacePath[i].from) {
+                    if (pathValue.substring(0, config.replacePath[i].from.length) === config.replacePath[i].from) {
                         pathValue = config.replacePath[i].to + pathValue.substring(config.replacePath[i].from.length);
                         break;
                     }
                 }
             }
             var items = pathValue.split('/');
-            if (!pathValue || pathValue == '' || pathValue == '/') {
-                if (config.defaultPage && config.defaultPage != '' && config.defaultPage != '/') {
+            if (!pathValue || pathValue === '' || pathValue === '/') {
+                if (config.defaultPage && config.defaultPage !== '' && config.defaultPage !== '/') {
                     pathValue = config.defaultPage;
                     items = pathValue.split('/');
                 }
             }
             var handler = expressHandler[items[1]];
             if (handler) {
-                if (config.defaultPage && config.defaultPage != '' && config.defaultPage != '/') {
+                if (config.defaultPage && config.defaultPage !== '' && config.defaultPage !== '/') {
                     var defaultItems = config.defaultPage.split('/');
                     if (config.defaultPage.length > 1) {
                         var lookupConfig = configurationObjects[defaultItems[1]];
