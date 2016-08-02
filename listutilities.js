@@ -7,8 +7,73 @@ module.exports = function (config) {
     function ListUtilities() {
     };
 
+    ListUtilities.prototype.fixPathCase = function (path, basePath, callbackWithPath) {
+        var fs = require('fs');
+        var valid = "";
+        var parts = path.split('/');
+        var index = 0;
+        var origBasePathLength = basePath.length;
+        if (parts[0].length === 0) {
+            index = 1;
+            if (origBasePathLength > 0) {
+                --origBasePathLength;
+            }
+        }
+        var resolveDir = function () {
+            fs.readdir(basePath, function (err, list) {
+                if (basePath[basePath.length - 1] === '/') {
+                    basePath = basePath.substring(0, basePath.length - 1);
+                }
+                if (err) {
+                    while (index < path.length) {
+                        basePath += '/' + parts[index];
+                        ++index;
+                    }
+                    callbackWithPath(false, basePath.substring(origBasePathLength));
+                } else {
+                    var i = 0;
+                    var exact = -1;
+                    var caseMatch = -1;
+                    if (typeof (parts[index]) === "string")
+                        for (i = 0; i < list.length; ++i) {
+                            if (list[i] === parts[index]) {
+                                exact = i;
+                                break;
+                            } else if (list[i].toLowerCase() === parts[index].toLowerCase()) {
+                                caseMatch = i;
+                            }
+                        }
+                    if (exact === -1) {
+                        exact = caseMatch;
+                    }
+                    if (exact !== -1) {
+                        basePath += '/' + list[exact];
+                        ++index;
+                        if (index === parts.length) {
+                            callbackWithPath(true, basePath.substring(origBasePathLength));
+                        } else {
+                            resolveDir();
+                        }
+                    } else {
+                        while (index < parts.length) {
+                            basePath += '/' + parts[index];
+                            ++index;
+                        }
+                        callbackWithPath(false, basePath.substring(origBasePathLength));
+                    }
+                }
+            });
+        }
+        if (index < path.length) {
+            resolveDir();
+        } else {
+            callbackWithPath(false, basePath.substring(origBasePathLength));
+        }
+    };
+
+
     ListUtilities.prototype.replaceAll = function (str, find, replace) {
-        if( str.indexOf(find) >= 0 ) {
+        if (str.indexOf(find) >= 0) {
             str = str.split(find).join(replace);
         }
         return str;
@@ -122,7 +187,7 @@ module.exports = function (config) {
                 return i;
         return -1;
     }
-	
+
     // Remove a node from the tree...
     ListUtilities.prototype.removeNode = function (tree, name) {
         if (name) {
@@ -146,7 +211,7 @@ module.exports = function (config) {
         }
         return tree;
     };
-	
+
     // Get a pointer to a node
     ListUtilities.prototype.getNode = function (tree, name) {
         var node = null;
@@ -236,7 +301,7 @@ module.exports = function (config) {
         }
         return topTree;
     };
-	
+
     // Move (or rename) a node ...
     ListUtilities.prototype.moveNode = function (tree, name, newname) {
         if (name) {
@@ -413,7 +478,7 @@ module.exports = function (config) {
         decorateNewTree(newTree);
         //tocStack[tocDepth].push({ title: stringJs(text).decodeHTMLEntities().s, hash: tocHash , childBranch : childBranch });
         return newTree;
-    };	
+    };
 	/*
 	var checkDuplicates = function(tree,message) {
 		var i , j;
@@ -429,7 +494,7 @@ module.exports = function (config) {
 		} 
 		return result;		
 	};*/
-	
+
     // Convert a flat list of paths & titles into a 'tree'
     ListUtilities.prototype.treeFromList = function (flatList, altToc) {
         var tree = [];
@@ -590,7 +655,7 @@ module.exports = function (config) {
             for (i = 1; i < findBranch.length - 1; ++i) {
                 var index = this.findNode(tree, findBranch[i].trim().toLowerCase());
                 if (index >= 0) {
-                    treeParent = tree[index]; 
+                    treeParent = tree[index];
                     tree = tree[index].children;
                     if (!tree)
                         break;
@@ -598,32 +663,32 @@ module.exports = function (config) {
                     tree = null;
                     break;
                 }
-            }            
+            }
             if (!tree)
                 tree = [];
-            else if( treeParent ) {
-                if( treeParent.path ) {
+            else if (treeParent) {
+                if (treeParent.path) {
                     var indexXMLPathPos = treeParent.path.indexOf("/index.xml");
-                    if( indexXMLPathPos > 0 ) {
-                        var parentXMLPath = treeParent.path.substring(0,indexXMLPathPos+1);
+                    if (indexXMLPathPos > 0) {
+                        var parentXMLPath = treeParent.path.substring(0, indexXMLPathPos + 1);
                         // make sure that all subbranchs have an 'index.xml' - we autoGenerate this..
-                        var populateEmptyBranches = function(items,parentXMLPath) {
-                            if( items ) {
+                        var populateEmptyBranches = function (items, parentXMLPath) {
+                            if (items) {
                                 var i = 0;
-                                for( i = 0 ; i < items.length ; ++i ) {
-                                    if( items[i].children ) {
-                                        if( !items[i].path ) {
+                                for (i = 0; i < items.length; ++i) {
+                                    if (items[i].children) {
+                                        if (!items[i].path) {
                                             items[i].path = parentXMLPath + items[i].title + "/index.xml";
                                         }
-                                        populateEmptyBranches(items[i].children, parentXMLPath + items[i].title + "/" );
+                                        populateEmptyBranches(items[i].children, parentXMLPath + items[i].title + "/");
                                     }
                                 }
                             }
                         };
-                        populateEmptyBranches(tree,parentXMLPath )
+                        populateEmptyBranches(tree, parentXMLPath)
                     }
                 }
-            }    
+            }
             currentTopPage = null;
         } else if (config.editTOC) {
             if (config.editTOC.remove) {
@@ -667,8 +732,8 @@ module.exports = function (config) {
             }
             return { title: "/", path: topPagePath, children: tree };
         }
-        if( treeParent && treeParent.path )   
-            return { title: "/", path : treeParent.path , children: tree };     
+        if (treeParent && treeParent.path)
+            return { title: "/", path: treeParent.path, children: tree };
         return { title: "/", children: tree };
     };
 
@@ -700,49 +765,49 @@ module.exports = function (config) {
         };
         return buildTree(tree, true);
     };
-    ListUtilities.prototype.expandChildPage = function( settings , callback ) {
-         if( settings.path.indexOf('/index.') >= 0 ) {
-             this.loadOrCreateIndexPage(settings.config,settings.path.replace("/index.","/index.flatten."),'_all',function(err,data) {
-                 if( !err ) {
-                     if( settings.config.events.embedXmlPage )
-                         data = settings.config.events.embedXmlPage(data,settings);
-                     callback(data);
-                 } else {
-                     callback(null);
-                 }
-             },true);
-         } else {
-             var fs = require("fs");
-             fs.readFile(settings.filename,"utf8",function(err,data) {
-                 if( !err ) {
-                     if( settings.config.events.embedXmlPage )
-                         data = settings.config.events.embedXmlPage(data,settings);
-                     callback(data);
-                 } else {
-                     callback(null);
-                 }
-             })
-         }
+    ListUtilities.prototype.expandChildPage = function (settings, callback) {
+        if (settings.path.indexOf('/index.') >= 0) {
+            this.loadOrCreateIndexPage(settings.config, settings.path.replace("/index.", "/index.flatten."), '_all', function (err, data) {
+                if (!err) {
+                    if (settings.config.events.embedXmlPage)
+                        data = settings.config.events.embedXmlPage(data, settings);
+                    callback(data);
+                } else {
+                    callback(null);
+                }
+            }, true);
+        } else {
+            var fs = require("fs");
+            fs.readFile(settings.filename, "utf8", function (err, data) {
+                if (!err) {
+                    if (settings.config.events.embedXmlPage)
+                        data = settings.config.events.embedXmlPage(data, settings);
+                    callback(data);
+                } else {
+                    callback(null);
+                }
+            })
+        }
     };
-    ListUtilities.prototype.loadOrCreateIndexPage = function (config, path, flt, callback,expand) {
+    ListUtilities.prototype.loadOrCreateIndexPage = function (config, path, flt, callback, expand) {
         // Create an index page on demand (if not found...)
         var lu = this;
         var originalPath = path;
         var genereratedExtension = ".html";
         var generatedTopic = config.generated + "topics/" + this.replaceAll(path, "/", "_") + (config.filter_name ? config.filter_name : '_all');
         generatedTopic = generatedTopic.split('/');
-        generatedTopic[generatedTopic.length-1] = generatedTopic[generatedTopic.length-1].toLowerCase(); // ignore case in the cache logic...
+        generatedTopic[generatedTopic.length - 1] = generatedTopic[generatedTopic.length - 1].toLowerCase(); // ignore case in the cache logic...
         generatedTopic = generatedTopic.join('/');
         var fs = require("fs");
         var normalizedPath = path;
-        if( expand ) {
-            normalizedPath = normalizedPath.replace("/index.flatten.","/index.");
+        if (expand) {
+            normalizedPath = normalizedPath.replace("/index.flatten.", "/index.");
         }
         var indexTemplatePos = normalizedPath.indexOf("/index.xml");
         var xmlTemplate = null;
         var lists = [];
         var orderData = [];
-        
+
         if (indexTemplatePos > 0) {
             path = normalizedPath.substring(0, indexTemplatePos);
             generatedTopic += ".xml";
@@ -753,7 +818,7 @@ module.exports = function (config) {
                 path = path.substring(0, indexTemplatePos);
                 generatedTopic += ".md";
                 genereratedExtension = ".md";
-            } else {            
+            } else {
                 indexTemplatePos = path.indexOf("/index.html");
                 if (indexTemplatePos > 0) {
                     generatedTopic += ".html";
@@ -769,15 +834,15 @@ module.exports = function (config) {
                     var altTocs = config.tocData.altTocs;
                     var i;
                     for (i = 0; i < altTocs.length; ++i) {
-                        if ((path+"/").substring(0, altTocs[i].length).toLowerCase() === altTocs[i].toLowerCase()) {
+                        if ((path + "/").substring(0, altTocs[i].length).toLowerCase() === altTocs[i].toLowerCase()) {
                             var altTocClean = lu.replaceAll(altTocs[i], '/', '_');
                             filterStuctureName = config.generated + altTocClean + flt + config.structurefile;
                             break;
                         }
                     }
                 }
-                var generatePage = function () {                    
-                    fs.readFile(filterStuctureName, "utf8", function (err, tocData) {                        
+                var generatePage = function () {
+                    fs.readFile(filterStuctureName, "utf8", function (err, tocData) {
                         if (err) {
                             console.log('TOC to generate page from was not found');
                             callback(new Error('Page not found!'), null);
@@ -795,11 +860,11 @@ module.exports = function (config) {
                                                 testPath = testPath.substring(0, lastPos);
                                                 if (lPath.length <= testPath.length) {
                                                     if (testPath.substring(0, lPath.length) === lPath) {
-                                                        if ( (children[i].path.indexOf("/index.xml") === lPath.length 
-                                                           || children[i].path.indexOf("/index.html") === lPath.length 
-                                                            ) 
-                                                           && children[i].children
-                                                            ) {
+                                                        if ((children[i].path.indexOf("/index.xml") === lPath.length
+                                                            || children[i].path.indexOf("/index.html") === lPath.length
+                                                        )
+                                                            && children[i].children
+                                                        ) {
                                                             return children[i].children;
                                                         } else {
                                                             return children;
@@ -818,35 +883,35 @@ module.exports = function (config) {
                                 }
                             };
                             var pageChildren = null;
-                            
+
                             // Build a complete list...
-                            if( lists.length > 0 ) {
+                            if (lists.length > 0) {
                                 var i;
-                                for( i = 0 ; i < lists.length ; ++i ) {
+                                for (i = 0; i < lists.length; ++i) {
                                     var listPtr = findPageChildren(toc.children, lists[i].fullPath.toLowerCase());
                                     lists[i].children = listPtr;
-                                    if( listPtr ) {
+                                    if (listPtr) {
                                         var j = 0;
-                                        for( j = 0 ; j < listPtr.length ; ++j ) {
+                                        for (j = 0; j < listPtr.length; ++j) {
                                             listPtr[j].listParent = lists[i];
                                         }
-                                        if( pageChildren ) {
+                                        if (pageChildren) {
                                             pageChildren = pageChildren.concat(listPtr);
                                         } else
                                             pageChildren = listPtr;
                                     } else {
-                                        console.log('Warning: no children for '+lists[i].fullPath); 
+                                        console.log('Warning: no children for ' + lists[i].fullPath);
                                     }
                                 }
                             }
-                            
+
                             if (pageChildren) {
                                 // good - We have a list of page, lets build an HTML
                                 var async = require('async');
                                 async.eachSeries(pageChildren, function (pageEntry, callbackLoop) {
                                     var pathName = pageEntry.path;
                                     if (!pathName) {
-                                        if( pageEntry.listParent ) {
+                                        if (pageEntry.listParent) {
                                             pathName = pageEntry.listParent.fullPath + "/" + pageEntry.title;
                                         } else {
                                             pathName = path + "/" + pageEntry.title;
@@ -854,61 +919,62 @@ module.exports = function (config) {
                                     }
                                     var extensionIndex = pathName.lastIndexOf('.');
                                     var isFolder = true;
-                                    if (extensionIndex > 0 && pathName.substr(extensionIndex + 1).indexOf('/') < 0) 
+                                    if (extensionIndex > 0 && pathName.substr(extensionIndex + 1).indexOf('/') < 0)
                                         isFolder = false;
-                                    if( expand ) {
-                                        lu.expandChildPage({config :config , filename : (config.source + pathName)
-                                          , path : pathName , isFolder : isFolder
-                                          , name : pageEntry.title 
-                                          , format : genereratedExtension 
-                                          , all : pageChildren
-                                           }, function(snippet) {
-                                            pageEntry.listParent.content.push( snippet );
+                                    if (expand) {
+                                        lu.expandChildPage({
+                                            config: config, filename: (config.source + pathName)
+                                            , path: pathName, isFolder: isFolder
+                                            , name: pageEntry.title
+                                            , format: genereratedExtension
+                                            , all: pageChildren
+                                        }, function (snippet) {
+                                            pageEntry.listParent.content.push(snippet);
                                             callbackLoop();
-                                        });                                  
+                                        });
                                     } else if (config.events.pageIndexer) {
-                                        config.events.pageIndexer({ 
-                                            filename : (config.source + pathName)
-                                          , path : pathName , isFolder : isFolder
-                                          , name : pageEntry.title 
-                                          , format : genereratedExtension 
-                                          , all : pageChildren
-                                          }, function (snippet) {
-                                            pageEntry.listParent.content.push( snippet );
+                                        config.events.pageIndexer({
+                                            filename: (config.source + pathName)
+                                            , path: pathName, isFolder: isFolder
+                                            , name: pageEntry.title
+                                            , format: genereratedExtension
+                                            , all: pageChildren
+                                        }, function (snippet) {
+                                            pageEntry.listParent.content.push(snippet);
                                             callbackLoop();
                                         });
                                     } else {
                                         callbackLoop();
                                     }
-                                 }, function () {
+                                }, function () {
                                     // Finished the page...
-                                    console.log("++++Create the page" );
+                                    console.log("++++Create the page");
                                     var htmlText = "";
-                                    if( xmlTemplate )
+                                    if (xmlTemplate)
                                         htmlText = xmlTemplate;
-                                    else    
+                                    else
                                         htmlText = "";
-                                    if( lists.length > 0 ) {
-                                        var i , j , k;
+                                    if (lists.length > 0) {
+                                        var i, j, k;
                                         var reorderChildren = false;
-                                        for( i = 0 ; i < lists.length ; ++i ) {
-                                            if( orderData.length > 1 ) {
+                                        for (i = 0; i < lists.length; ++i) {
+                                            if (orderData.length > 1) {
                                                 // reorder the items in the list
-                                                var listRemainder =  lists[i].content;
+                                                var listRemainder = lists[i].content;
                                                 var newList = [];
-                                                for( j = 0 ; j < orderData.length ; ++j ) {
+                                                for (j = 0; j < orderData.length; ++j) {
                                                     var bestMatch = -1;
-                                                    for( k = 0 ; k < listRemainder.length ; ++k ) {
-                                                        if( listRemainder[k].toLowerCase().indexOf('/'+orderData[j]+'.') >= 0 ) {
+                                                    for (k = 0; k < listRemainder.length; ++k) {
+                                                        if (listRemainder[k].toLowerCase().indexOf('/' + orderData[j] + '.') >= 0) {
                                                             bestMatch = k;
                                                             break;
                                                         } else {
                                                             // If the user provided an extension, lets not add a trialing '.'
                                                             var orderExtn = orderData[j].lastIndexOf('.');
-                                                            if( orderExtn > 0 ) {
+                                                            if (orderExtn > 0) {
                                                                 orderExtn = orderData[j].substring(orderExtn);
-                                                                if( orderExtn === ".html" || orderExtn === ".xml" || orderExtn === ".md" ) {
-                                                                    if( listRemainder[k].toLowerCase().indexOf('/'+orderData[j]) >= 0 ) {
+                                                                if (orderExtn === ".html" || orderExtn === ".xml" || orderExtn === ".md") {
+                                                                    if (listRemainder[k].toLowerCase().indexOf('/' + orderData[j]) >= 0) {
                                                                         bestMatch = k;
                                                                         break;
                                                                     }
@@ -916,51 +982,51 @@ module.exports = function (config) {
                                                             }
                                                         }
                                                     }
-                                                    if( bestMatch < 0 ) {
-                                                        for( k = 0 ; k < listRemainder.length ; ++k ) {
-                                                            if( listRemainder[k].toLowerCase().indexOf(orderData[j]) >= 0 ) {
+                                                    if (bestMatch < 0) {
+                                                        for (k = 0; k < listRemainder.length; ++k) {
+                                                            if (listRemainder[k].toLowerCase().indexOf(orderData[j]) >= 0) {
                                                                 bestMatch = k;
                                                                 break;
                                                             }
                                                         }
                                                     }
-                                                    if( bestMatch >= 0 ) {
+                                                    if (bestMatch >= 0) {
                                                         newList.push(listRemainder[bestMatch]);
-                                                        listRemainder.splice(bestMatch,1);
+                                                        listRemainder.splice(bestMatch, 1);
                                                     }
                                                 }
-                                                if( newList.length > 0 ) {
-                                                    if( listRemainder.length > 0 ) {
+                                                if (newList.length > 0) {
+                                                    if (listRemainder.length > 0) {
                                                         newList = newList.concat(listRemainder);
                                                     }
                                                     lists[i].content = newList;
                                                     reorderChildren = true;
                                                 }
                                             }
-                                            if( expand ) {
-                                                htmlText = lu.replaceAll(htmlText, '<!--list:'+lists[i].listDef+'-->', "<pages>"+lists[i].content.join("\n")+"</pages>" ); 
-                                            } else if( config.events.wrapIndex ) {                                            
-                                                htmlText = lu.replaceAll(htmlText, '<!--list:'+lists[i].listDef+'-->', config.events.wrapIndex({ format  : genereratedExtension , content : lists[i].content.join("\n") }) );
+                                            if (expand) {
+                                                htmlText = lu.replaceAll(htmlText, '<!--list:' + lists[i].listDef + '-->', "<pages>" + lists[i].content.join("\n") + "</pages>");
+                                            } else if (config.events.wrapIndex) {
+                                                htmlText = lu.replaceAll(htmlText, '<!--list:' + lists[i].listDef + '-->', config.events.wrapIndex({ format: genereratedExtension, content: lists[i].content.join("\n") }));
                                             } else {
-                                                htmlText = lu.replaceAll(htmlText, '<!--list:'+lists[i].listDef+'-->', lists[i].content.join("\n") );
+                                                htmlText = lu.replaceAll(htmlText, '<!--list:' + lists[i].listDef + '-->', lists[i].content.join("\n"));
                                             }
-                                            if( reorderChildren ) {
-                                                if( genereratedExtension === ".xml" ) {                                                    
-                                                    htmlText = htmlText.replace("<page","<page reorder-children=\"true\"");
+                                            if (reorderChildren) {
+                                                if (genereratedExtension === ".xml") {
+                                                    htmlText = htmlText.replace("<page", "<page reorder-children=\"true\"");
                                                 } else {
-                                                    htmlText = htmlText.replace(">","><!--orderchildren-->");
+                                                    htmlText = htmlText.replace(">", "><!--orderchildren-->");
                                                 }
-                                            }                                            
+                                            }
                                         }
                                     }
-                                    if( htmlText.indexOf('</page>') !== htmlText.lastIndexOf('</page>') ) {
-                                        console.log("!!!++++Nested content detected!!!" );
-                                    } 
-                                    
+                                    if (htmlText.indexOf('</page>') !== htmlText.lastIndexOf('</page>')) {
+                                        console.log("!!!++++Nested content detected!!!");
+                                    }
+
                                     fs.writeFile(generatedTopic, htmlText, function (err) {
-                                        if( genereratedExtension === ".xml" ) {
+                                        if (genereratedExtension === ".xml") {
                                             callback(null, htmlText, "xml");
-                                        } else if( genereratedExtension === ".md" ) {
+                                        } else if (genereratedExtension === ".md") {
                                             callback(null, htmlText, "md");
                                         } else {
                                             callback(null, htmlText, "html");
@@ -974,14 +1040,14 @@ module.exports = function (config) {
                                         console.log('Warning: embedded lists were not expanded for ' + path);
                                     }
                                     fs.writeFile(generatedTopic, xmlTemplate, function (err) {
-                                        if( genereratedExtension === ".xml" ) {
+                                        if (genereratedExtension === ".xml") {
                                             callback(null, xmlTemplate, "xml");
-                                        } else if( genereratedExtension === ".md" ) {
+                                        } else if (genereratedExtension === ".md") {
                                             callback(null, xmlTemplate, "md");
                                         } else {
                                             callback(null, xmlTemplate, "html");
                                         }
-                                    });                                    
+                                    });
                                 } else {
                                     console.log('path not found in TOC for ' + path);
                                     callback(new Error('Page not found!'), null);
@@ -989,31 +1055,31 @@ module.exports = function (config) {
                             }
                         }
                     });
-                };                
+                };
                 if (indexTemplatePos > 0) {
                     // If there was an index file, use it as a template....
                     fs.readFile(config.source + normalizedPath, "utf8", function (err, xmlData) {
-                        if (err) {                            
+                        if (err) {
                             console.log("Could not read template file " + normalizedPath);
-                            if( config.events.getDefaultIndexTemplate ) {
-                                xmlTemplate = config.events.getDefaultIndexTemplate({ format: genereratedExtension , path : originalPath , filename : config.source + originalPath });
+                            if (config.events.getDefaultIndexTemplate) {
+                                xmlTemplate = config.events.getDefaultIndexTemplate({ format: genereratedExtension, path: originalPath, filename: config.source + originalPath });
                             } else {
                                 xmlTemplate = "<!--list:.-->";
                             }
-                            lists.push({ listDef: '.', fullPath: path , content : [] });
+                            lists.push({ listDef: '.', fullPath: path, content: [] });
                         } else {
                             var embeddedLists = xmlData.split('<!--list:');
-                            if (embeddedLists.length > 1) {                                
+                            if (embeddedLists.length > 1) {
                                 var i;
                                 var orderDataPos = xmlData.indexOf("<!--order:");
-                                if( orderDataPos >= 0 ) {
-                                    orderData = xmlData.substring(orderDataPos+10);
+                                if (orderDataPos >= 0) {
+                                    orderData = xmlData.substring(orderDataPos + 10);
                                     orderData = orderData.split("-->")[0].trim().toLowerCase();
                                     orderData = orderData.split("\n");
-                                    for( i = 0 ; i < orderData.length ; ++i ) {
+                                    for (i = 0; i < orderData.length; ++i) {
                                         orderData[i] = orderData[i].trim();
-                                    }                                     
-                                }     
+                                    }
+                                }
                                 for (i = 1; i < embeddedLists.length; ++i) {
                                     var endPath = embeddedLists[i].indexOf('-->');
                                     if (endPath > 0) {
@@ -1039,11 +1105,11 @@ module.exports = function (config) {
                                                     fullPath += "/" + relPath;
                                                 }
                                             }
-                                            lists.push({ listDef: relPath, fullPath: fullPath , content : [] });
+                                            lists.push({ listDef: relPath, fullPath: fullPath, content: [] });
                                         }
                                     }
                                 }
-                                console.log( 'Look for' + JSON.stringify(lists) );
+                                console.log('Look for' + JSON.stringify(lists));
                             }
                             xmlTemplate = xmlData;
                         }
@@ -1051,19 +1117,19 @@ module.exports = function (config) {
                     });
                 } else {
                     // If this is just a folder - lets get the default template for html page and go...
-                    if( config.events.getDefaultIndexTemplate ) {
-                        xmlTemplate = config.events.getDefaultIndexTemplate({ format: genereratedExtension , path : originalPath , filename : config.source + originalPath });
+                    if (config.events.getDefaultIndexTemplate) {
+                        xmlTemplate = config.events.getDefaultIndexTemplate({ format: genereratedExtension, path: originalPath, filename: config.source + originalPath });
                     } else {
                         xmlTemplate = "<!--list:.-->";
                     }
-                    lists.push({ listDef: '.', fullPath: path , content : [] });
+                    lists.push({ listDef: '.', fullPath: path, content: [] });
                     generatePage();
                 }
             } else {
-                console.log("++++Loaded from CACHE: "+path);
-                if( genereratedExtension === ".xml" ) {
+                console.log("++++Loaded from CACHE: " + path);
+                if (genereratedExtension === ".xml") {
                     callback(null, data, "xml");
-                } else if( genereratedExtension === ".md" ) {
+                } else if (genereratedExtension === ".md") {
                     callback(null, data, "md");
                 } else {
                     callback(null, data, "html");
@@ -1076,78 +1142,106 @@ module.exports = function (config) {
         var lu = this;
         var generatedTopic = config.generated + "topics/" + this.replaceAll(path, "/", "_") + (config.filter_name ? config.filter_name : '_all');
         generatedTopic = generatedTopic.split('/');
-        generatedTopic[generatedTopic.length-1] = generatedTopic[generatedTopic.length-1].toLowerCase(); // ignore case in the cache logic...
+        generatedTopic[generatedTopic.length - 1] = generatedTopic[generatedTopic.length - 1].toLowerCase(); // ignore case in the cache logic...
         generatedTopic = generatedTopic.join('/');
         var fs = require("fs");
-        path = lu.replaceAll(path,".xml_html",".xml");
-        
+        path = lu.replaceAll(path, ".xml_html", ".xml");
+
         fs.readFile(generatedTopic, "utf8", function (err, data) {
             if (err) {
-                if( path.indexOf("/index.xml") > 0 ) {
-                    lu.loadOrCreateIndexPage(config,path,flt,function(err,data) {
-                       if( err ) {
-                           callback(err,null,null);
-                       } else {
-                          var generatedIndexFile = lu.replaceAll(generatedTopic,".xml_html",".xml")+".xml";
-                          config.events.translateXML( generatedIndexFile, generatedTopic ,function(err,data) {
-                              if( !err ) {
-                                  if ( data && !data.indexOf) {
-                                      data = data.toString('utf8');
-                                  }
-                                  if( data && data.length > 0 ) {
-                                      data += "<!--basePath:"+path+"-->";
-                                      fs.writeFile(generatedTopic,data);
-                                  } else {
-                                      fs.unlink(generatedTopic);
-                                      err = "Page is Empty";
-                                  }
-                              }
-                              callback(err,data,"html");
-                          });
-                       }
-                    },false);
-                 } else if( path.indexOf("/index.flatten.xml") > 0 ) {
-                    lu.loadOrCreateIndexPage(config,path,flt,function(err,data) {
-                       if( err ) {
-                           callback(err,null,null);
-                       } else {
-                          var generatedIndexFile = lu.replaceAll(generatedTopic,".xml_html",".xml")+".xml";
-                          config.events.translateXML( generatedIndexFile, generatedTopic ,function(err,data) {
-                              if( !err ) {
-                                  if ( data && !data.indexOf) {
-                                      data = data.toString('utf8');
-                                  }
-                                  if( data && data.length > 0 ) {
-                                     data += "<!--basePath:"+path+"-->";
-                                     fs.writeFile(generatedTopic,data);
-                                  } else {
-                                     fs.unlink(generatedTopic);
-                                     err = "Page is Empty"; 
-                                  }
-                              }
-                              callback(err,data,"html");
-                          });
-                       }
-                    },true);                
-               } else {
-                    config.events.translateXML(config.source + path,generatedTopic,function(err,data) {
-                        if( !err ) {
-                            if ( data && !data.indexOf) {
-                                data = data.toString('utf8');
-                            }
-                            if( data && data.length > 0 ) {
-                               data += "<!--basePath:"+path+"-->";
-                               fs.writeFile(generatedTopic,data);
-                            } else {
-                               fs.unlink(generatedTopic);
-                               err = "Page is Empty"; 
-                            }
+                lu.fixPathCase(path, config.source, function (found, newPath) {
+                    if (found && newPath !== path) {
+                        //console.log("redirect " + path + " to " + newPath);
+                        // if the case doesn't match -- lets redirect to the page with the proper case
+                        var url = "/documentation/pages" + newPath;
+                        callback(null, '<html> <head> <meta http-equiv="refresh" content="0; url=' + url + '"/> </head> <body> <meta http-equiv="refresh" content="0; url=' + url + '"/>Redirecting to search... </body> </html>');
+                    } else {
+                        if (path.indexOf("/index.xml") > 0) {
+                            lu.loadOrCreateIndexPage(config, path, flt, function (err, data) {
+                                if (err) {
+                                    callback(err, null, null);
+                                } else {
+                                    var generatedIndexFile = lu.replaceAll(generatedTopic, ".xml_html", ".xml") + ".xml";
+                                    config.events.translateXML(generatedIndexFile, generatedTopic, function (err, data) {
+                                        if (!err) {
+                                            if (data && !data.indexOf) {
+                                                data = data.toString('utf8');
+                                            }
+                                            if (data && data.length > 0) {
+                                                data += "<!--basePath:" + path + "-->";
+                                                fs.writeFile(generatedTopic, data);
+                                            } else {
+                                                fs.unlink(generatedTopic);
+                                                err = "Page is Empty";
+                                            }
+                                        }
+                                        callback(err, data, "html");
+                                    });
+                                }
+                            }, false);
+                        } else if (path.indexOf("/index.flatten.xml") > 0) {
+                            lu.loadOrCreateIndexPage(config, path, flt, function (err, data) {
+                                if (err) {
+                                    callback(err, null, null);
+                                } else {
+                                    var generatedIndexFile = lu.replaceAll(generatedTopic, ".xml_html", ".xml") + ".xml";
+                                    config.events.translateXML(generatedIndexFile, generatedTopic, function (err, data) {
+                                        if (!err) {
+                                            if (data && !data.indexOf) {
+                                                data = data.toString('utf8');
+                                            }
+                                            if (data && data.length > 0) {
+                                                data += "<!--basePath:" + path + "-->";
+                                                fs.writeFile(generatedTopic, data);
+                                            } else {
+                                                fs.unlink(generatedTopic);
+                                                err = "Page is Empty";
+                                            }
+                                        }
+                                        callback(err, data, "html");
+                                    });
+                                }
+                            }, true);
+                        } else {
+                            config.events.translateXML(config.source + path, generatedTopic, function (err, data) {
+                                if (!err) {
+                                    if (data && !data.indexOf) {
+                                        data = data.toString('utf8');
+                                    }
+                                    if (data && data.length > 0) {
+                                        data += "<!--basePath:" + path + "-->";
+                                        fs.writeFile(generatedTopic, data);
+                                    } else {
+                                        fs.unlink(generatedTopic);
+                                        err = "Page is Empty";
+                                    }
+                                }
+                                callback(err, data, "html");
+                            });
                         }
-                        callback(err,data,"html");
-                    });
-                }
+                    }
+                });
             } else {
-                callback(null,data,"html");
+                if (data && !data.indexOf) {
+                    data = data.toString('utf8');
+                }
+                var findOriginalBasePath = data.indexOf("<!--basePath:");
+                var actualPath = path;
+                if (findOriginalBasePath > -1) {
+                    var originalPath = data.substring(findOriginalBasePath + 13);
+                    var endOriginalBasePath = originalPath.indexOf("-->");
+                    if (endOriginalBasePath > 0) {
+                        actualPath = originalPath.substring(0, endOriginalBasePath).trim();
+                    }
+                }
+                if (actualPath !== path) {
+                    //console.log("redirect " + path + " to " + actualPath);
+                    // if the case doesn't match -- lets redirect to the page with the proper case
+                    var url = "/documentation/pages" + actualPath;
+                    callback(null, '<html> <head> <meta http-equiv="refresh" content="0; url=' + url + '"/> </head> <body> <meta http-equiv="refresh" content="0; url=' + url + '"/>Redirecting to search... </body> </html>');
+                } else {
+                    callback(null, data, "html");
+                }
             }
         });
     }
