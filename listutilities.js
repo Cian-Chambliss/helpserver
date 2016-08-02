@@ -730,6 +730,9 @@ module.exports = function (config) {
         var originalPath = path;
         var genereratedExtension = ".html";
         var generatedTopic = config.generated + "topics/" + this.replaceAll(path, "/", "_") + (config.filter_name ? config.filter_name : '_all');
+        generatedTopic = generatedTopic.split('/');
+        generatedTopic[generatedTopic.length-1] = generatedTopic[generatedTopic.length-1].toLowerCase(); // ignore case in the cache logic...
+        generatedTopic = generatedTopic.join('/');
         var fs = require("fs");
         var normalizedPath = path;
         if( expand ) {
@@ -1072,7 +1075,9 @@ module.exports = function (config) {
         // Perform server side xslt transformation
         var lu = this;
         var generatedTopic = config.generated + "topics/" + this.replaceAll(path, "/", "_") + (config.filter_name ? config.filter_name : '_all');
-        generatedTopic = generatedTopic.toLowerCase(); // ignore case in the cache logic...
+        generatedTopic = generatedTopic.split('/');
+        generatedTopic[generatedTopic.length-1] = generatedTopic[generatedTopic.length-1].toLowerCase(); // ignore case in the cache logic...
+        generatedTopic = generatedTopic.join('/');
         var fs = require("fs");
         path = lu.replaceAll(path,".xml_html",".xml");
         
