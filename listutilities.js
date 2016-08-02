@@ -1153,8 +1153,8 @@ module.exports = function (config) {
                     if (found && newPath !== path) {
                         //console.log("redirect " + path + " to " + newPath);
                         // if the case doesn't match -- lets redirect to the page with the proper case
-                        var url = "/documentation/pages" + newPath;
-                        callback(null, '<html> <head> <meta http-equiv="refresh" content="0; url=' + url + '"/> </head> <body> <meta http-equiv="refresh" content="0; url=' + url + '"/>Redirecting to search... </body> </html>');
+                        var url = "/documentation/pages" + newPath + "?at=" +  new Date().toISOString();
+                        callback(null, '<html> <head> <meta http-equiv="refresh" content="0; url=' + url + '"/> </head> <body> <meta http-equiv="refresh" content="0; url=' + url + '"/>Redirecting to correct page... </body> </html>');
                     } else {
                         if (path.indexOf("/index.xml") > 0) {
                             lu.loadOrCreateIndexPage(config, path, flt, function (err, data) {
@@ -1237,8 +1237,8 @@ module.exports = function (config) {
                 if (actualPath !== path) {
                     //console.log("redirect " + path + " to " + actualPath);
                     // if the case doesn't match -- lets redirect to the page with the proper case
-                    var url = "/documentation/pages" + actualPath;
-                    callback(null, '<html> <head> <meta http-equiv="refresh" content="0; url=' + url + '"/> </head> <body> <meta http-equiv="refresh" content="0; url=' + url + '"/>Redirecting to search... </body> </html>');
+                    var url = "/documentation/pages" + actualPath + "?at=" +  new Date().toISOString();
+                    callback(null, '<html> <head> <meta http-equiv="refresh" content="0; url=' + url + '"/> </head> <body> <meta http-equiv="refresh" content="0; url=' + url + '"/>Redirecting to correct page... </body> </html>');
                 } else {
                     callback(null, data, "html");
                 }
