@@ -882,13 +882,67 @@ module.exports = function (config) {
                                     return null;
                                 }
                             };
+                            var postFilterList = function(listPtr,filter) {
+                                var newList = [];
+                                var i , j;
+                                var extensionPos = 0;
+                                var comparePath = false;
+                                filter = filter.trim().toLowerCase();
+                                extensionPos = filter.lastIndexOf(".xml");
+                                if( extensionPos > 0 && (filter.length-4) === extensionPos ) {
+                                    comparePath = true;
+                                }
+
+                                filter = filter.split('*');                                
+                                for (i = 0; i < listPtr.length; ++i) {
+                                    var lowTitle = null;
+                                    if( comparePath ) {
+                                        if( !listPtr[i].path ) {
+                                            continue;
+                                        }
+                                        lowTitle = listPtr[i].path.toLowerCase().trim();
+                                    } else {
+                                        lowTitle = listPtr[i].title.toLowerCase().trim();
+                                    }
+                                    var matched = true;
+                                    for(j = 0 ; j < filter.length ; ++j ) {
+                                        if( filter[j].length > 0 ) {
+                                            var findLoc = lowTitle.indexOf(filter[j]); 
+                                            if( findLoc < 0 ) {
+                                                matched = false;
+                                                break;
+                                            } else if( j === 0 && findLoc > 0 ) {
+                                                // Starts with...
+                                                matched = false;
+                                                break;                                                
+                                            }
+                                            lowTitle = lowTitle.substring(findLoc + filter[j].length );
+                                            if( (j+1) === filter.length ) {
+                                                if( lowTitle.length > 0 ) {
+                                                    // Ends with...
+                                                    matched = false;
+                                                    break;
+                                                } 
+                                            } 
+                                        }
+                                    }
+                                    if( matched ) {
+                                        newList.push( listPtr[i] );
+                                    }
+                                }
+                                return newList;
+                            };
                             var pageChildren = null;
 
                             // Build a complete list...
                             if (lists.length > 0) {
                                 var i;
                                 for (i = 0; i < lists.length; ++i) {
-                                    var listPtr = findPageChildren(toc.children, lists[i].fullPath.toLowerCase());
+                                    var listPtr = findPageChildren(toc.children, lists[i].fullPath.toLowerCase() );
+                                    if( lists[i].filterItems ) {
+                                        // Lets post filter the list...
+                                        listPtr = postFilterList(listPtr,lists[i].filterItems)
+                                    }
                                     lists[i].children = listPtr;
                                     if (listPtr) {
                                         var j = 0;
@@ -1094,18 +1148,30 @@ module.exports = function (config) {
                                         }
                                         if (!listItem) {
                                             var fullPath = path;
+                                            var filterItems = null;
                                             if (relPath.length > 0) {
-                                                if (relPath.substring(0, 1) === '.') {
-                                                    if (relPath.length > 1) {
-                                                        fullPath += relPath.substring(1);
+                                                var partPath = relPath;
+                                                if( partPath.indexOf('*') >= 0 ) {
+                                                    var startsAt = partPath.lastIndexOf('/')+1;
+                                                    if( startsAt > 0 ) {
+                                                        filterItems = partPath.substring(startsAt); 
+                                                        partPath = partPath.substring(0,startsAt);                                                        
+                                                    } else {
+                                                        filterItems = partPath;
+                                                        partPath = '.';
                                                     }
-                                                } else if (relPath.substring(0, 1) === '/') {
-                                                    fullPath += relPath;
+                                                }
+                                                if (partPath.substring(0, 1) === '.') {
+                                                    if (partPath.length > 1) {
+                                                        fullPath += partPath.substring(1);
+                                                    }
+                                                } else if (partPath.substring(0, 1) === '/') {
+                                                    fullPath += partPath;
                                                 } else {
-                                                    fullPath += "/" + relPath;
+                                                    fullPath += "/" + partPath;
                                                 }
                                             }
-                                            lists.push({ listDef: relPath, fullPath: fullPath, content: [] });
+                                            lists.push({ listDef: relPath, fullPath: fullPath, filterItems : filterItems , content: [] });
                                         }
                                     }
                                 }
@@ -1122,7 +1188,7 @@ module.exports = function (config) {
                     } else {
                         xmlTemplate = "<!--list:.-->";
                     }
-                    lists.push({ listDef: '.', fullPath: path, content: [] });
+                    lists.push({ listDef: '.', fullPath: path, filterItems : null , content: [] });
                     generatePage();
                 }
             } else {
