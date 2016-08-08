@@ -1060,7 +1060,7 @@ module.exports = function (config) {
                                             if (expand) {
                                                 htmlText = lu.replaceAll(htmlText, '<!--list:' + lists[i].listDef + '-->', "<pages>" + lists[i].content.join("\n") + "</pages>");
                                             } else if (config.events.wrapIndex) {
-                                                htmlText = lu.replaceAll(htmlText, '<!--list:' + lists[i].listDef + '-->', config.events.wrapIndex({ format: genereratedExtension, content: lists[i].content.join("\n") }));
+                                                htmlText = lu.replaceAll(htmlText, '<!--list:' + lists[i].listDef + '-->', config.events.wrapIndex({ format: genereratedExtension, content: lists[i].content.join("\n") , filterItem : lists[i].filterItems }));
                                             } else {
                                                 htmlText = lu.replaceAll(htmlText, '<!--list:' + lists[i].listDef + '-->', lists[i].content.join("\n"));
                                             }
