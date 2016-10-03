@@ -605,7 +605,7 @@ module.exports = function (config) {
                 }
                 if( getRelations ) {
                     if( relatedPageOrder.reorder ) {
-                        related = "<ul>";
+                        related = "<ul>";                        
                         for (var i = 0; i < relatedPageOrder.links.length ; ++i ) {
                             var linkitem = relatedPageOrder.links[i];
                             related += "<li><a href=\"" +fixupRelativeHref(linkitem.href)+"\">";
@@ -652,7 +652,7 @@ module.exports = function (config) {
             if (parentOfNode && parentOfNode.path) {
                 parentUrl = pathPages + parentOfNode.path.substring(1);
             }
-            if (kidsLevel) {
+            if (kidsLevel) {               
                 if( relatedPageOrder && relatedPageOrder.reorder ) {
                     var getJustName = function(path) {
                         if( path ) {
@@ -988,7 +988,12 @@ module.exports = function (config) {
                     } else {
                         fs.readFile( config.source + parentIndexFile.substring(1), "utf8" , function(err,parentData) {                            
                             var translateIndexPage = false;
-                            var parentAbsolutePath = page.substring(0,page.lastIndexOf('/')+1);
+                            var parentAbsolutePath = null;
+                            if( page.lastIndexOf('/index.') > 0 ) {
+                                parentAbsolutePath = page.substring(0, page.substring(0,page.lastIndexOf('/')).lastIndexOf('/') + 1);
+                            } else {
+                                parentAbsolutePath = page.substring(0,page.lastIndexOf('/')+1);
+                            }                            
                             if( err ) {
                                 parentData = "";
                             }
