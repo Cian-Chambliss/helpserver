@@ -688,7 +688,12 @@ module.exports = function (config) {
                     }
                 }
             }
+
+            var pageTitleFromName = false;
+
             if (!pageTitle) {
+                pageTitleFromName = true;
+
                 pageTitle = relativePath;
                 var pathPartOffset = pageTitle.lastIndexOf('/');
                 if (pathPartOffset >= 0) {
@@ -698,8 +703,19 @@ module.exports = function (config) {
                 if (extensionPartOffset > 0) {
                     pageTitle = pageTitle.substring(0, extensionPartOffset);
                 }
+                
+                if (pageTitle === "index") {
+//                    console.log("index page");
+                    pageTitle = relativePath.substr(0,pathPartOffset);
+
+                    pathPartOffset = pageTitle.lastIndexOf('/');
+                    if (pathPartOffset >= 0) {
+                        pageTitle = pageTitle.substring(pathPartOffset + 1);
+                    }
+ //                   console.log(pageTitle);
+                }
             }
-            return { breadcrumbs: breadcrumbs, related: related, parentUrl: parentUrl, childUrl: childUrl, previousUrl: previousUrl, nextUrl: nextUrl, pageTitle: pageTitle };
+            return { breadcrumbs: breadcrumbs, related: related, parentUrl: parentUrl, childUrl: childUrl, previousUrl: previousUrl, nextUrl: nextUrl, pageTitle: pageTitle, pageTitleFromName: pageTitleFromName };
         };
         var getTreeForPath = function(searchPath) {
             var treeName = thisFiltername + hlp.config.structurefile;
@@ -793,6 +809,14 @@ module.exports = function (config) {
                 var tocLoader = "<script src=\"" + absolutePath + "toc_loader/" + tocName + "\" defer></script>";
                 tocLoader = "";
                 var navigationText = generateNavigation(tree,relativePath,page,deepestAltToc,relatedPageOrder,true);
+                if (navigationText.pageTitleFromName) {
+                    var startOfTitle = htmlText.indexOf("<h1>");
+                    var endOfTitle = htmlText.indexOf("</h1>");
+                    if (startOfTitle >= 0 && endOfTitle > startOfTitle) {
+                        startOfTitle += 4;
+                        navigationText.pageTitle = htmlText.substring(startOfTitle,endOfTitle).trim();
+                    }
+                }
                 var fullPage = standardPageTemplate;
                 if( printed ) {
                     fullPage = ["<html>",
