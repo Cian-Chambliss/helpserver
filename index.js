@@ -827,8 +827,11 @@ module.exports = function (config) {
             "<!--body-->",
             "</body></html>"].join("\n");
                 }
-                var title = navigationText.pageTitle;
+                var title = navigationText.pageTitle;                
                 var feedback = "?subject=Problem with page:"+title+" ["+page+"]"+"&body=Describe problem with the "+page+" documentation page:";
+                if( config.events.calculateFeedback ) {
+                    feedback = config.events.calculateFeedback(title,page);
+                }
                 if( lastModified !== "" ) {
                     lastModified = "Page Last Checked on "+lastModified;
                 }
