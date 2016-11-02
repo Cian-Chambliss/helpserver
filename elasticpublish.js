@@ -155,11 +155,15 @@ module.exports = function (config, callback ) {
                   });                                  
                 } else {                
                  var symbols = "";
+                 var pageTitle = fo.title;
+                 if( config.events.indexTitle ) {
+                    pageTitle = config.events.indexTitle(pageTitle);
+                 }
                  if( config.events.extractSymbols ) {
                     symbols = config.events.extractSymbols(content,fo.title,fo.path);
                  }
                   var bodyContent = {
-                      title: fo.title,
+                      title: pageTitle,
                       path: fo.path,
                       content: content,
                       symbols: symbols,

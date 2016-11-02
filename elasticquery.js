@@ -5,18 +5,22 @@ module.exports = function (config, pattern, callback, startAt, maximum , getDesc
     host: config.search.host
   });
   var queryDef = null;  
-  if( lookIn && lookIn != '' ) {
-     if( lookIn != "title" )
+  if( lookIn && lookIn !== '' ) {
+     if( lookIn !== "title" )
         lookIn = "all";
   } else {
       lookIn = "all";  
-  }  
-  if (pattern && pattern != '') {
-    if( lookIn == "title" ) {
+  }
+  var titlePattern = pattern;
+  if( config.events.indexTitle ) {
+      titlePattern = config.events.indexTitle(pattern);
+  }
+  if (pattern && pattern !== '') {
+    if( lookIn === "title" ) {
         queryDef = {
           bool: {
             should: [
-              { match: { title: { query: pattern, operator: "and", boost: 4 } } },
+              { match: { title: { query: titlePattern, operator: "and", boost: 4 } } },
               { match: { title: { query: pattern, boost: 2 } } },
             ]
           }
@@ -25,9 +29,9 @@ module.exports = function (config, pattern, callback, startAt, maximum , getDesc
         queryDef = {
           bool: {
             should: [
-              { match: { title: { query: pattern, operator: "and", boost: 4 } } },
+              { match: { title: { query: titlePattern, operator: "and", boost: 4 } } },
               { match: { content: { query: pattern, operator: "and", boost: 3 } } },
-              { match: { title: { query: pattern, boost: 2 } } },
+              { match: { title: { query: titlePattern, boost: 2 } } },
               { match: { content: pattern } }
             ]
           }
@@ -37,7 +41,7 @@ module.exports = function (config, pattern, callback, startAt, maximum , getDesc
     if( config.events.extractSymbols ) {
         symbols = config.events.extractSymbols(pattern);
         if( symbols.length > 1 ) {
-            queryDef.bool.should.push({match:{ symbols : { query : symbols , boost : 3 }}});   
+            queryDef.bool.should.push({match:{ symbols : { query : symbols , boost : 3 }}});
         }
     }
     if (config.filter) {
