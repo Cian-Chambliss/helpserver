@@ -58,9 +58,9 @@ module.exports = function (config) {
          // Map backlinks to the site
          backLinks = {};
          for( var link in indexLinks )  {
-             var path = indexLinks[link];
-             if( path.substr(0,7) === "/pages/" ) {
-                 path = path.substr(6);
+             var path = indexLinks[link].split("/pages/");
+             if( path.length === 2 ) {
+                 path = "/"+path[1];
                  backLinks[path.toLowerCase()] = link;
              }
          } 
