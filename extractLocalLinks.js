@@ -13,9 +13,9 @@ module.exports = function ( data , parentAbsolutePath ) {
     
     var parser = new htmlparser.Parser({
         onopentag: function (name, attribs) {
-            if( name == "helpwatermark" ) {
+            if( name === "helpwatermark" ) {
                 helpWaterMark = localLinks.length;
-            } else if( name == "a" ) {
+            } else if( name === "a" ) {
                 if (attribs.href) {
                     var protocolPos = attribs.href.indexOf(':');
                     var protocol = null;
@@ -25,7 +25,7 @@ module.exports = function ( data , parentAbsolutePath ) {
                             protocol = null;
                         }
                     }
-                    if (attribs.href.substring(0, 1) != '/' && !protocol ) {
+                    if (attribs.href.substring(0, 1) !== '/' && !protocol ) {
                         pendingHRef = attribs.href;
                         anchorContents = "";
                     } else if( parentAbsolutePath && parentAbsolutePath.length && parentAbsolutePath == attribs.href.substring(0,parentAbsolutePath.length)  ) {
@@ -41,17 +41,25 @@ module.exports = function ( data , parentAbsolutePath ) {
             }
         },
         onclosetag: function (name) {
-            if( name == "a" ) {
+            if( name === "a" ) {
                 if( pendingHRef ) {
                     if( !hasDuplicateHREF ) {
                         for(var i = 0 ; i < localLinks.length ; ++i ) {
-                            if( localLinks[i].href == pendingHRef ) {
+                            if( localLinks[i].href === pendingHRef ) {
                                 hasDuplicateHREF = true;
                                 break;
                             }
                         }
                     } 
-                    localLinks.push({ href : pendingHRef , text : anchorContents });                    
+                    var extnPos = pendingHRef.lastIndexOf('.');
+                    var extn = "";
+                    if( extnPos > 0 ) {
+                        extn = pendingHRef.substring(extnPos+1).trim().toLowerCase();
+                    } 
+                    if( extn === "gif" || extn === "png" || extn === "jpg" || extn === "jpeg" )
+                        ;
+                    else
+                        localLinks.push({ href : pendingHRef , text : anchorContents });                    
                     pendingHRef = null;
                 }                
             }
@@ -65,7 +73,7 @@ module.exports = function ( data , parentAbsolutePath ) {
         }
         for( var i = localLinks.length-1 ; i > 0 ; --i ) {
             for( var j = 0 ; j < i ; ++j ) {
-                if( localLinks[j].href == localLinks[i].href ) {
+                if( localLinks[j].href === localLinks[i].href ) {
                     localLinks.splice(i,1);
                     break;
                 }
