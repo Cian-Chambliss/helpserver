@@ -31,7 +31,7 @@ module.exports = function (config) {
     var topmostPage = config.topmostPage || "";
     var cleanupHREF = function(path) {
         if( path.substring(0,1) === '/' ) { 
-            if( path.substring(0,absolutePath).toLowerCase() !== absolutePath.toLowerCase() ) {
+            if( path.substring(0,absolutePath.length).toLowerCase() !== absolutePath.toLowerCase() ) {
                 return absolutePath + path.substring(1);
             }    
         }
@@ -603,8 +603,8 @@ module.exports = function (config) {
                     }
                     return href;
                 }
-                if( getRelations ) {
-                    if( relatedPageOrder.reorder ) {
+                if( getRelations ) {                    
+                    if( relatedPageOrder.reorder ) {                        
                         related = "<ul>";                        
                         for (var i = 0; i < relatedPageOrder.links.length ; ++i ) {
                             var linkitem = relatedPageOrder.links[i];
@@ -613,7 +613,7 @@ module.exports = function (config) {
                             related += "</a></li>";                            
                         }
                         related += "</ul>";
-                    } else if (kidsLevel) {
+                    } else if (kidsLevel) {                        
                         related = "<ul>";
                         for (var i = 0; i < kidsLevel.length; ++i) {
                             if (kidsLevel[i].path) {
@@ -2502,12 +2502,12 @@ module.exports = function (config) {
                 }
                 var loadPage = function() {
                     var href = indexLinks[name];
-                    if( href ) {
+                    if( href ) {                        
                         res.redirect(cleanupHREF(href));
                     } else {
                         if( !req.query.search ) {
                             name = path.substring(1);
-                        }
+                        }                        
                         res.redirect(absolutePath+"pages/search?pattern="+name);
                     }      
                 };
