@@ -1128,6 +1128,21 @@ module.exports = function (config) {
                          processPageAndCallback(data);
                     }
                 });
+            } else if (extension === "md") {
+                fs.readFile(config.source + relativePath, "utf8", function (err, data) {
+                    if (err) {
+                        findClosestLink(err, relativePath, function (err2, badLinkData) {
+                            if (err2) {
+                                callback(err2, null);
+                            } else {
+                                processPageAndCallback(badLinkData);
+                            }
+                        });
+                    } else {
+                        var marked = require('marked');
+                        processPageAndCallback(marked(data));
+                    }
+                });
             } else if (page.indexOf("/index.html") > 0) {
                     // Support <!--list--> generically 
                     var ListUtilities = require('./listutilities');
