@@ -90,18 +90,20 @@ module.exports = function (config) {
     };
     var removeNumericPrefix = function (title) {
         var length = 0;
-        while (length < title.length) {
-            var chr = title.substr(length, 1);
-            if ('0' <= chr && chr <= '9') {
-                ++length;
-            } else if (chr === '_') {
-                ++length;
-                var newtitle = title.substring(length);
-                if (newtitle && newtitle !== '')
-                    title = newtitle;
-                break;
-            } else {
-                break;
+        if( title.substr(length, 1) !== '_' ) {
+            while (length < title.length) {
+                var chr = title.substr(length, 1);
+                if ('0' <= chr && chr <= '9') {
+                    ++length;
+                } else if (chr === '_') {
+                    ++length;
+                    var newtitle = title.substring(length);
+                    if (newtitle && newtitle !== '')
+                        title = newtitle;
+                    break;
+                } else {
+                    break;
+                }
             }
         }
         return title;
