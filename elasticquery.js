@@ -4,7 +4,27 @@ module.exports = function (config, pattern, callback, startAt, maximum , getDesc
   var client = new elasticsearch.Client({
     host: config.search.host
   });
-  var queryDef = null;  
+  var queryDef = null;
+  var modifyQuery = { pattern : pattern , startAt : startAt , maximum : maximum , getDescription : getDescription , lookIn : lookIn  } ;
+  
+  if( config.events.parseQuery ) {
+      // Override the query parse behaviour - extract elements for the beforeQuery
+      config.events.parseQuery(modifyQuery);
+      pattern = modifyQuery.pattern;
+      if( modifyQuery.startAt ) {
+          startAt = modifyQuery.startAt;
+      }
+      if( modifyQuery.maximum ) {
+          maximum = modifyQuery.maximum;
+      }
+      if( modifyQuery.getDescription ) {
+          getDescription = modifyQuery.getDescription;
+      }
+      if( modifyQuery.lookIn ) {
+          lookIn = modifyQuery.lookIn;
+      }
+  }
+  
   if( lookIn && lookIn !== '' ) {
      if( lookIn !== "title" )
         lookIn = "all";
@@ -73,14 +93,18 @@ module.exports = function (config, pattern, callback, startAt, maximum , getDesc
   } else {
       columnSelection = ["title", "path", "metadata" , "toc" ]
   }
+  var queryBody = {
+     from: startAt,
+     size: maximum,
+     query: queryDef,
+     _source: columnSelection
+  };
+  if( config.events.beforeQuery ) {
+      config.events.beforeQuery(queryBody,modifyQuery);
+  }
   client.search({
     index: helpSystemIndex,
-    body: {
-      from: startAt,
-      size: maximum,
-      query: queryDef,
-      _source: columnSelection
-    }
+    body: queryBody
   }, function (error, response) {
       if (error) {
         console.log('Query:'+error);

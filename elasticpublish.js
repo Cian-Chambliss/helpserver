@@ -129,6 +129,9 @@ module.exports = function (config, callback ) {
                                 status: status,
                                 metadata: metadataInst                  
                             };
+                            if( config.events.beforePageIndex ) {
+                                config.events.beforePageIndex(fo,bodyContent);
+                            }
                             client.create({
                               index: helpSystemIndex,
                               type: helpSystemType,
@@ -174,6 +177,9 @@ module.exports = function (config, callback ) {
                   };
                   if( fo.toc )
                     bodyContent.toc = fo.toc;
+                  if( config.events.beforePageIndex ) {
+                     config.events.beforePageIndex(fo,bodyContent);
+                  }
                   client.create({
                     index: helpSystemIndex,
                     type: helpSystemType,
