@@ -941,7 +941,7 @@ module.exports = function (config) {
                                 var i;
                                 for (i = 0; i < lists.length; ++i) {
                                     var listPtr = findPageChildren(toc.children, lists[i].fullPath.toLowerCase() );
-                                    if( lists[i].filterItems ) {
+                                    if( lists[i].filterItems && listPtr ) {
                                         // Lets post filter the list...
                                         listPtr = postFilterList(listPtr,lists[i].filterItems)
                                     }
