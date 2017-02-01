@@ -1537,7 +1537,17 @@ module.exports = function (config) {
                 } else {
                     fs.readFile(config.source + relativePath, "utf8", function (err, data) {
                         if (err) {
-                            callback(err, null);
+                            var endPath = relativePath.indexOf('/');
+                            if (endPath >= 0)
+                                relativePath = relativePath.substring(endPath + 1);
+                            loadAssetUTF8(relativePath, function (err, data) {
+                                if (err) {
+                                    console.log(modulePath + 'assets/' + relativePath.substr(helpServerFile));
+                                    callback(err, null);
+                                } else {
+                                    callback(null, data, extension);
+                                }
+                            });
                         } else {
                             callback(null, data, "js");
                         }
