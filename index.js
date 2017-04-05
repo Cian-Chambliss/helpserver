@@ -2474,6 +2474,10 @@ module.exports = function (config) {
                 res.type('json');
                 hlp.onSendExpress(res);
                 serverHealth.whoCalled = req.connection.remoteAddress;
+                if( req.query.full ) {
+                    serverHealth.memory = process.memoryUsage();
+                    serverHealth.openHandles = process._getActiveHandles().length;
+                }
                 res.send(JSON.stringify(serverHealth));
             },
             "xslt": function (hlp, path, req, res) {
