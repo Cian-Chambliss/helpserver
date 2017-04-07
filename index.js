@@ -1112,7 +1112,13 @@ module.exports = function (config) {
                 var ListUtilities = require('./listutilities');
                 var lu = new ListUtilities(config);
                 if( req.query.flatten === "true") {
-                    page = page.replace("/index.","/index.flatten.");
+                    if( config.events.canFlatten ) {
+                        if( config.events.canFlatten(page) ) {
+                            page = page.replace("/index.","/index.flatten.");
+                        }
+                    } else {
+                        page = page.replace("/index.","/index.flatten.");
+                    }
                 }                
                 page = page.replace(".xml", ".xml_html");
                 lu.loadOrCreateTranslatedPage(this.config, page, (this.config.filter_name ? this.config.filter_name : defaultFilter), function (err, data, type) {
@@ -1188,7 +1194,9 @@ module.exports = function (config) {
                     limit = parseInt(req.query.limit);
                     if( limit < 0 ) {
                         // A reasonable MAX
-                        limit = 1000000;
+                        limit = 1000;
+                    } else if( limit > 1000 ) {
+                        limit = 1000;
                     }
                     searchOptionFields += "<input type=\"hidden\" value=\""+req.query.limit+"\" name=\"limit\" />";
                 }
@@ -1323,7 +1331,12 @@ module.exports = function (config) {
                             });
                         }
                     } else {
-                        searchResults += "<dt>No Results Found</dt>";
+                        // <div id="no-search-results">&nbsp;</div>
+                        searchResults = "<div id=\"no-search-results\">No Results Found</div>";
+                        if( config.events.noSearchResults ) {
+                            searchResults = config.events.noSearchResults(req.query.pattern);
+                        }
+                        // Add a hook
                         searchResults += "</dl>";
                             var fullPage = safeReplace(standardSearchTemplate,[
                                 {search:"<!--body-->", replace:searchResults},
