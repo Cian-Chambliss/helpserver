@@ -24,7 +24,7 @@ module.exports = function (config) {
     var filters = {};
     var assets = {};
     var defaultFilter = config.defaultFilter || '_all';
-    var serverHealth = { refreshCount: 0, busyInRefresh: false, gitResult: "None", gitPullCount: 0, whoCalled: "", revisionCount: 1 };
+    var serverHealth = { started : new Date() , upTime : "" , refreshCount: 0, busyInRefresh: false, gitResult: "None", gitPullCount: 0, whoCalled: "", revisionCount: 1 , requestsHandled : 0 };   
     var absolutePath = "/";
     var actualLinks = null;
     var logoHREF = (config.logoHref || "http://www.google.com");
@@ -417,6 +417,7 @@ module.exports = function (config) {
     var treeData = {};
     var parentIndexData = {};
     HelpServerUtil.prototype.getPage = function (page, fromPath, req, callback,printed) {
+        serverHealth.requestsHandled++;
         var hlp = this;
         page = decodeURI(page);
         var relativePath = page.substring(1);
@@ -2486,6 +2487,19 @@ module.exports = function (config) {
             "diag": function (hlp, path, req, res) {
                 res.type('json');
                 hlp.onSendExpress(res);
+                var uptime = (new Date() - serverHealth.started);
+                uptime /= 1000;
+                if( uptime >= 60 ) {
+                    uptime /= 60;
+                    if( uptime >= 60 ) {
+                        uptime /= 60;
+                        serverHealth.upTime = Math.round(uptime*10)/10+" hours";
+                    } else {
+                        serverHealth.upTime = Math.round(uptime*10)/10+" minutes";
+                    }
+                } else {
+                    serverHealth.upTime = Math.round(uptime)+" seconds";
+                }
                 serverHealth.whoCalled = req.connection.remoteAddress;
                 if( req.query.full ) {
                     serverHealth.memory = process.memoryUsage();
