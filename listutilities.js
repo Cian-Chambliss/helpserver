@@ -1004,7 +1004,7 @@ module.exports = function (config) {
                                     }
                                 }, function () {
                                     // Finished the page...
-                                    console.log("++++Create the page");
+                                    //console.log("++++Create the page");
                                     var htmlText = "";
                                     if (xmlTemplate)
                                         htmlText = xmlTemplate;
@@ -1177,7 +1177,7 @@ module.exports = function (config) {
                                         }
                                     }
                                 }
-                                console.log('Look for' + JSON.stringify(lists));
+                                //console.log('Look for' + JSON.stringify(lists));
                             }
                             xmlTemplate = xmlData;
                         }
@@ -1194,7 +1194,7 @@ module.exports = function (config) {
                     generatePage();
                 }
             } else {
-                console.log("++++Loaded from CACHE: " + path);
+                //console.log("++++Loaded from CACHE: " + path);
                 if (genereratedExtension === ".xml") {
                     callback(null, data, "xml");
                 } else if (genereratedExtension === ".md") {

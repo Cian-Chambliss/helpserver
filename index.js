@@ -85,11 +85,11 @@ module.exports = function (config) {
             // First try the asset folder under modules...
             fs.readFile(config.assetpath + 'assets/' + name, "utf8", function (err, data) {
                 if (err) {
-                    console.log(config.assetpath + 'assets/' + name + " not found - using default.");
+                    //console.log(config.assetpath + 'assets/' + name + " not found - using default.");
                     // Next try the module asset folder
                     fs.readFile(modulePath + 'assets/' + name, "utf8", function (err, data) {
                         if (err) {
-                            console.log('cant read asset ' + modulePath + 'assets/' + name)
+                            //console.log('cant read asset ' + modulePath + 'assets/' + name)
                             callback(err, null);
                         } else {
                             assets[name] = data;
@@ -1493,7 +1493,7 @@ module.exports = function (config) {
                 if (helpServerFile > -1) {
                     loadAssetUTF8(relativePath.substr(helpServerFile), function (err, data) {
                         if (err) {
-                            console.log(modulePath + 'assets/' + relativePath.substr(helpServerFile));
+                            console.log("Missing CSS/SVG 'helpserver-' prefixed file " +modulePath + 'assets/' + relativePath.substr(helpServerFile));
                             callback(err, null);
                         } else {
                             callback(null, data, extension);
@@ -1507,7 +1507,7 @@ module.exports = function (config) {
                                 relativePath = relativePath.substring(endPath + 1);
                             loadAssetUTF8(relativePath, function (err, data) {
                                 if (err) {
-                                    console.log(modulePath + 'assets/' + relativePath.substr(helpServerFile));
+                                    console.log("Missing CSS/SVG file " +config.source + relativePath);
                                     callback(err, null);
                                 } else {
                                     callback(null, data, extension);
@@ -1528,7 +1528,7 @@ module.exports = function (config) {
                                 relativePath = relativePath.substring(endPath + 1);
                             loadAssetUTF8(relativePath, function (err, data) {
                                 if (err) {
-                                    console.log(modulePath + 'assets/' + relativePath.substr(helpServerFile));
+                                    console.log("Missing JS 'helpserver-' prefixed file " +modulePath + 'assets/' + relativePath.substr(helpServerFile));
                                     callback(err, null);
                                 } else {
                                     if (absolutePath.length > 1) {
@@ -1556,7 +1556,7 @@ module.exports = function (config) {
                                 relativePath = relativePath.substring(endPath + 1);
                             loadAssetUTF8(relativePath, function (err, data) {
                                 if (err) {
-                                    console.log(modulePath + 'assets/' + relativePath.substr(helpServerFile));
+                                    console.log("Missing JS file " +config.source + relativePath);
                                     callback(err, null);
                                 } else {
                                     callback(null, data, extension);
@@ -2588,8 +2588,8 @@ module.exports = function (config) {
             if (absolutePath.length > 1) {
                 if (pathValue.indexOf(absolutePath) === 0) {
                     pathValue = pathValue.substring(absolutePath.length - 1);
-                } else {
-                    console.log('Warning Unprotected path' + pathValue);
+                //} else {
+                //    console.log('Warning Unprotected path' + pathValue);
                 }
             }
 

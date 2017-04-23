@@ -4,33 +4,14 @@ module.exports = function (config, pattern, callback, startAt, maximum , getDesc
   var client = new elasticsearch.Client({
     host: config.search.host
   });
-  var queryDef = null;
-  var modifyQuery = { pattern : pattern , startAt : startAt , maximum : maximum , getDescription : getDescription , lookIn : lookIn  } ;
-  
-  if( config.events.parseQuery ) {
-      // Override the query parse behaviour - extract elements for the beforeQuery
-      config.events.parseQuery(modifyQuery);
-      pattern = modifyQuery.pattern;
-      if( modifyQuery.startAt ) {
-          startAt = modifyQuery.startAt;
-      }
-      if( modifyQuery.maximum ) {
-          maximum = modifyQuery.maximum;
-      }
-      if( modifyQuery.getDescription ) {
-          getDescription = modifyQuery.getDescription;
-      }
-      if( modifyQuery.lookIn ) {
-          lookIn = modifyQuery.lookIn;
-      }
-  }
-  
+  var queryDef = null;  
   if( lookIn && lookIn !== '' ) {
      if( lookIn !== "title" )
         lookIn = "all";
   } else {
       lookIn = "all";  
   }
+  var originalPattern = pattern;
   var titlePattern = pattern;
   if( config.events.indexTitle ) {
       titlePattern = config.events.indexTitle(pattern);
@@ -41,7 +22,7 @@ module.exports = function (config, pattern, callback, startAt, maximum , getDesc
           bool: {
             should: [
               { match: { title: { query: titlePattern, operator: "and", boost: 4 } } },
-              { match: { title: { query: pattern, boost: 2 } } },
+              { match: { title: { query: pattern, boost: 2 } } }
             ]
           }
         };
@@ -88,33 +69,29 @@ module.exports = function (config, pattern, callback, startAt, maximum , getDesc
   var columnSelection = null;
   if( getDescription ) {
       columnSelection = ["title", "path", "description" , "metadata" , "toc" ]
-  } else if( lookIn == "title" ) {
+  } else if( lookIn === "title" ) {
      columnSelection = ["title", "path"];
   } else {
       columnSelection = ["title", "path", "metadata" , "toc" ]
   }
-  var queryBody = {
-     from: startAt,
-     size: maximum,
-     query: queryDef,
-     _source: columnSelection
-  };
-  if( config.events.beforeQuery ) {
-      config.events.beforeQuery(queryBody,modifyQuery);
-  }
   client.search({
     index: helpSystemIndex,
-    body: queryBody
+    body: {
+      from: startAt,
+      size: maximum,
+      query: queryDef,
+      _source: columnSelection
+    }
   }, function (error, response) {
       if (error) {
-        console.log('Query:'+error);
+        console.log(' Query At '+(new Date())+' Search For : '+originalPattern+'\nError:'+error);
         callback(error, null);
       } else {
         var results = [], srcArray = response.hits.hits;
         var i;
         var patterns = null;
         var matchTitle = null;
-        if( lookIn == "title" && maximum >= 1000 ) {
+        if( lookIn === "title" && maximum >= 1000 ) {
            patterns = pattern.toLowerCase().split('|');
            for( var i = 0 ; i < patterns.length ; ++i ) {
               patterns[i] = patterns[i].split(" ");
@@ -130,7 +107,7 @@ module.exports = function (config, pattern, callback, startAt, maximum , getDesc
                         ++score;
                     }
                   }
-                  if( score == andPatterns.length ) {
+                  if( score === andPatterns.length ) {
                     return true;
                   }
                 }

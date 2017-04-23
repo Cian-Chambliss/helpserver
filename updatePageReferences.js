@@ -27,9 +27,9 @@ module.exports = function (config, data, pageProc) {
                     var targetAttrib = "";
                     if( targetPos >= 0 ) {
                         targetAttrib = tagAttribs.substring(targetPos+7).trim();
-                        if( targetAttrib.substring(0,1) == '"' ) {
+                        if( targetAttrib.substring(0,1) === '"' ) {
                             targetAttrib = ' target="'+ targetAttrib.split('"')[1]+'"';
-                        } else if( targetAttrib.substring(0,1) == "'" ) {
+                        } else if( targetAttrib.substring(0,1) === "'" ) {
                             targetAttrib = ' target="'+targetAttrib.split("'")[1]+'"';
                         } else {
                             targetAttrib = "";
@@ -39,8 +39,8 @@ module.exports = function (config, data, pageProc) {
                         var hrefPos = tagAttribs.indexOf("href=");
                         if( hrefPos >= 0 ) {
                             var replaceAttrib = tagAttribs.substring(hrefPos+5).trim();
-                            if( replaceAttrib.substring(0,1) == '"' || replaceAttrib.substring(0,1) == "'" ) {
-                                if( replaceAttrib.substring(1,2) == '/' ) {
+                            if( replaceAttrib.substring(0,1) === '"' || replaceAttrib.substring(0,1) === "'" ) {
+                                if( replaceAttrib.substring(1,2) === '/' ) {
                                     if( replaceAttrib.indexOf("/index?search=") < 0 ) {
                                         tagAttribs = tagAttribs.substring(0,hrefPos+6) + pageProc.basepath + replaceAttrib.substring(1);
                                     }
@@ -61,9 +61,9 @@ module.exports = function (config, data, pageProc) {
                     var searchTag = "["+content+"]";
                     if( extn > 0 ) {
                         extn = tagAttribs.substring(extn+1).split('"')[0].toLowerCase();
-                        if( extn == 'jpg' || extn == 'png' || extn == 'bmp' || extn == 'gif' || extn == 'jpeg') {
+                        if( extn === 'jpg' || extn === 'png' || extn === 'bmp' || extn === 'gif' || extn === 'jpeg') {
                             content = "<img src="+tagAttribs.substring(6)+"/>";
-                            console.log(content);
+                            //console.log(content);
                         } else {
                             tagAttribs += " class=\"embedded-link;\"";
                         }
@@ -81,30 +81,30 @@ module.exports = function (config, data, pageProc) {
     var parser = new htmlparser.Parser({
         onopentag: function (name, attribs) {
             if (attribs.href) {
-                if (attribs.href.substring(0, 1) == '/' && attribs.href.indexOf('/index?search=') < 0 ) {
+                if (attribs.href.substring(0, 1) === '/' && attribs.href.indexOf('/index?search=') < 0 ) {
                     replacePaths.push('"' + attribs.href + '"');
                     replacePaths.push("'" + attribs.href + "'");
                 }
             }
-            if( name == "title" && !pageProc.pageTitle ) { 
+            if( name === "title" && !pageProc.pageTitle ) { 
                 inTitle = true;
-            } else if( name == "p" ) {
+            } else if( name === "p" ) {
                 inPara = getPlainText;
                 if( attribs.name ) {
                     pendingName = attribs.name;
                     pendingText = "";
                 }
-            } else if( name == "meta" ) {
+            } else if( name === "meta" ) {
                  if (attribs.name && attribs.content ) {
-                     if( attribs.name == "description") {
+                     if( attribs.name === "description") {
                          pageProc.pageDescription = attribs.content;
                      }
                  }
             } else if( attribs.name ) {
                 pendingName = attribs.name;
                 pendingText = "";
-            } else if( name == "script" ) {
-                 if( attribs.id == "definePageLinks" || attribs.type=="text/xmldata" ) {                      
+            } else if( name === "script" ) {
+                 if( attribs.id === "definePageLinks" || attribs.type === "text/xmldata" ) {
                       getLinks = true;
                  }
             }
@@ -127,14 +127,14 @@ module.exports = function (config, data, pageProc) {
             }
         },
         onclosetag: function (name) {
-            if( name == "title" ) {
+            if( name === "title" ) {
                 inTitle = false;
-            } else if( name == "p" ) {                
+            } else if( name === "p" ) {                
                 inPara = false;
-            } else if( name == "script" ) {
+            } else if( name === "script" ) {
                 if( getLinks ) {
                     getLinks = false;
-                    if( linksDefinition != "" ) {
+                    if( linksDefinition !== "" ) {
                         processEmbeddedLinks(linksDefinition);
                     }
                 }                
