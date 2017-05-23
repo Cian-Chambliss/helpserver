@@ -1,42 +1,42 @@
 {
-  "name": "helpserver",
-  "version": "1.1.4",
-  "description": "Help system serving and  for static html and markdown files.",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Cian-Chambliss/helpserver.git"
-  },
-  "keywords": [
-    "help",
-    "search"
-  ],
-  "author": {
-    "name": "Cian Chambliss",
-    "email": "cian@alphasoftware.com"
-  },
-  "dependencies": {
-    "async": ">=0.0.0",
-    "elasticsearch": ">=0.0.0",
-    "htmlparser2": ">=0.0.0",
-    "string": ">=0.0.0",
-    "progress": ">=0.0.0",
-    "marked": ">=0.0.0",
-    "nodegit": ">=0.0.0",
-    "github-webhook-handler": ">=0.0.0",
-    "http": ">=0.0.0"
-  },
-  "license": "MIT",
-  "readmeFilename": "README.md",
-  "gitHead": "702320afb383319b4c137fe44280cc83a270679c",
-  "bugs": {
-    "url": "https://github.com/Cian-Chambliss/helpserver/issues"
-  },
-  "homepage": "https://github.com/Cian-Chambliss/helpserver#readme",
-  "_id": "helpserver@1.0.50",
-  "_shasum": "01dedb8fd3c3083b757ab16e5192e89228532d74",
-  "_from": "helpserver@1.0.50"
+    "name": "helpserver",
+    "version": "1.1.5",
+    "description": "Help system serving and  for static html and markdown files.",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Cian-Chambliss/helpserver.git"
+    },
+    "keywords": [
+        "help",
+        "search"
+    ],
+    "author": {
+        "name": "Cian Chambliss",
+        "email": "cian@alphasoftware.com"
+    },
+    "dependencies": {
+        "async": ">=0.0.0",
+        "elasticsearch": ">=0.0.0",
+        "htmlparser2": ">=0.0.0",
+        "string": ">=0.0.0",
+        "progress": ">=0.0.0",
+        "marked": ">=0.0.0",
+        "nodegit": ">=0.0.0",
+        "github-webhook-handler": ">=0.0.0",
+        "http": ">=0.0.0"
+    },
+    "license": "MIT",
+    "readmeFilename": "README.md",
+    "gitHead": "702320afb383319b4c137fe44280cc83a270679c",
+    "bugs": {
+        "url": "https://github.com/Cian-Chambliss/helpserver/issues"
+    },
+    "homepage": "https://github.com/Cian-Chambliss/helpserver#readme",
+    "_id": "helpserver@1.0.50",
+    "_shasum": "01dedb8fd3c3083b757ab16e5192e89228532d74",
+    "_from": "helpserver@1.0.50"
 }
