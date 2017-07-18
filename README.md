@@ -404,6 +404,7 @@ help.status(function (stats) {
 
 ## Release History
 
+* 1.1.6  Changed to explicitly add .html, .xml, and .md files to local links.
 * 1.0.99 Added 'library' option.
 * 1.0.92 Completed reverse proxy path logic. 
 * 1.0.86 Added html5 appcache support for the 'pages' endpoint - this caches large TOC entries. 

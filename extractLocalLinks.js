@@ -56,10 +56,9 @@ module.exports = function ( data , parentAbsolutePath ) {
                     if( extnPos > 0 ) {
                         extn = pendingHRef.substring(extnPos+1).trim().toLowerCase();
                     } 
-                    if( extn === "gif" || extn === "png" || extn === "jpg" || extn === "jpeg" )
-                        ;
-                    else
-                        localLinks.push({ href : pendingHRef , text : anchorContents });                    
+                    if(extn === "xml" || extn === "html" || extn === "md") {
+                        localLinks.push({ href : pendingHRef , text : anchorContents });
+                    }
                     pendingHRef = null;
                 }                
             }
