@@ -2,59 +2,59 @@
  * Process page data (i.e. read in the old)
  */
 module.exports = function(config, data, page, callbackPage) {
-    var replaceAll = function(str, find, replace) {
-        while (str.indexOf(find) >= 0)
-            str = str.replace(find, replace);
-        return str;
-    };
-    var haveConfigData = false;
-    var ofn = replaceAll(replaceAll(page.path, '/', '_'), '\\', '_');
-    var extensionStart = ofn.lastIndexOf('.');
-    var extension = ofn.substring(extensionStart).toLowerCase();
-    var manifestFile = config.generated + "manifest/" + ofn.substring(0, extensionStart) + ".json";
-    var overrideTitle = null;
-    var extractedDescription = null;
-    var normalizeREF = function(srcName, ref) {
-        if (ref.substr(0, 1) !== '/' && ref.substr(0, 5) !== 'http:' && ref.substr(0, 6) !== 'https:' && ref.substr(0, 11) !== 'javascript:') {
-            var parts = srcName.split('/');
-            var removeTail = 1;
-            while (ref.substr(0, 3) === '../') {
-                ref = ref.substr(3);
-                ++removeTail;
+    var complete = function(config, data, page, callbackPage) {
+        var replaceAll = function(str, find, replace) {
+            while (str.indexOf(find) >= 0)
+                str = str.replace(find, replace);
+            return str;
+        };
+        var haveConfigData = false;
+        var ofn = replaceAll(replaceAll(page.path, '/', '_'), '\\', '_');
+        var extensionStart = ofn.lastIndexOf('.');
+        var extension = ofn.substring(extensionStart).toLowerCase();
+        var manifestFile = config.generated + "manifest/" + ofn.substring(0, extensionStart) + ".json";
+        var overrideTitle = null;
+        var extractedDescription = null;
+        var normalizeREF = function(srcName, ref) {
+            if (ref.substr(0, 1) !== '/' && ref.substr(0, 5) !== 'http:' && ref.substr(0, 6) !== 'https:' && ref.substr(0, 11) !== 'javascript:') {
+                var parts = srcName.split('/');
+                var removeTail = 1;
+                while (ref.substr(0, 3) === '../') {
+                    ref = ref.substr(3);
+                    ++removeTail;
+                }
+                parts.splice(parts.length - removeTail, removeTail);
+                ref = parts.join('/') + '/' + ref;
             }
-            parts.splice(parts.length - removeTail, removeTail);
-            ref = parts.join('/') + '/' + ref;
-        }
-        return ref;
-    };
+            return ref;
+        };
 
-    if (extension === '.md') {
-        // Convert to html first
-        var marked = require('marked');
-        var textData = data;
-        if (!textData.indexOf)
-            textData = textData.toString('utf8');
-        data = marked(textData);
-    } else if (extension === '.xml') {
-        // use XSLT (if defined)
-        if (config.events.extractTitle) {
+        if (extension === '.md') {
+            // Convert to html first
+            var marked = require('marked');
             var textData = data;
-            if (!textData.indexOf || !textData.substring)
+            if (!textData.indexOf)
                 textData = textData.toString('utf8');
-            overrideTitle = config.events.extractTitle(textData);
-            if (overrideTitle) {
-                page.title = overrideTitle;
-                page.metadata = { title: overrideTitle };
-            }
-            if (config.events.extractDescription) {
-                extractedDescription = config.events.extractDescription(textData);
-                if (extractedDescription) {
-                    page.description = extractedDescription;
+            data = marked(textData);
+        } else if (extension === '.xml') {
+            // use XSLT (if defined)
+            if (config.events.extractTitle) {
+                var textData = data;
+                if (!textData.indexOf || !textData.substring)
+                    textData = textData.toString('utf8');
+                overrideTitle = config.events.extractTitle(textData);
+                if (overrideTitle) {
+                    page.title = overrideTitle;
+                    page.metadata = { title: overrideTitle };
+                }
+                if (config.events.extractDescription) {
+                    extractedDescription = config.events.extractDescription(textData);
+                    if (extractedDescription) {
+                        page.description = extractedDescription;
+                    }
                 }
             }
         }
-    }
-    var complete = function(config, data, page, callbackPage) {
         if (config.metadata) {
             var textData = data;
             if (!textData.indexOf || !textData.substr)
@@ -397,6 +397,7 @@ module.exports = function(config, data, page, callbackPage) {
             callbackPage(null, "");
         }
     };
+
     if (config.events.processForIndex) {
         config.events.processForIndex(config, data, page, callbackPage, complete);
     } else {
