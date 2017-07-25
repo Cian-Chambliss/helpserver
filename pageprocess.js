@@ -54,7 +54,7 @@ module.exports = function(config, data, page, callbackPage) {
             }
         }
     }
-    var complete = function(data) {
+    var complete = function(config, data, page, callbackPage) {
         if (config.metadata) {
             var textData = data;
             if (!textData.indexOf || !textData.substr)
@@ -398,8 +398,8 @@ module.exports = function(config, data, page, callbackPage) {
         }
     };
     if (config.events.processForIndex) {
-        config.events.processForIndex(data, page, complete);
+        config.events.processForIndex(config, data, page, callbackPage, complete);
     } else {
-        complete(data);
+        complete(config, data, page, callbackPage);
     }
 };
