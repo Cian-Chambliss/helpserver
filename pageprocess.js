@@ -2,6 +2,9 @@
  * Process page data (i.e. read in the old)
  */
 module.exports = function(config, data, page, callbackPage) {
+    var textData = data;
+    if (!textData.indexOf || !textData.substring)
+        data = textData.toString('utf8');
     var complete = function(config, data, page, callbackPage) {
         var replaceAll = function(str, find, replace) {
             while (str.indexOf(find) >= 0)
@@ -32,16 +35,11 @@ module.exports = function(config, data, page, callbackPage) {
         if (extension === '.md') {
             // Convert to html first
             var marked = require('marked');
-            var textData = data;
-            if (!textData.indexOf)
-                textData = textData.toString('utf8');
-            data = marked(textData);
+            data = marked(data);
         } else if (extension === '.xml') {
             // use XSLT (if defined)
             if (config.events.extractTitle) {
                 var textData = data;
-                if (!textData.indexOf || !textData.substring)
-                    textData = textData.toString('utf8');
                 overrideTitle = config.events.extractTitle(textData);
                 if (overrideTitle) {
                     page.title = overrideTitle;
@@ -57,8 +55,6 @@ module.exports = function(config, data, page, callbackPage) {
         }
         if (config.metadata) {
             var textData = data;
-            if (!textData.indexOf || !textData.substr)
-                textData = textData.toString('utf8');
             var metadataAt = textData.indexOf('<!---HELPMETADATA:');
             if (metadataAt > -1) {
                 if (textData.substr) {

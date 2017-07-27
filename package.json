@@ -1,6 +1,6 @@
 {
     "name": "helpserver",
-    "version": "1.1.9",
+    "version": "1.2.2",
     "description": "Help system serving and  for static html and markdown files.",
     "main": "index.js",
     "scripts": {
