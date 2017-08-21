@@ -1250,7 +1250,7 @@ module.exports = function(config) {
                         var fullPage = safeReplace(standardSearchTemplate, [
                             { search: "<!--body-->", replace: searchResults },
                             { search: "<!--search--->", replace: absolutePath + "pages/search" },
-                            { search: "<!--searchpattern--->", replace: req.query.pattern },
+                            { search: "<!--searchpattern--->", replace: req.query.pattern.replace(/(")/g,'&quot;') },
                             { search: "<!--searchoptionfields-->", replace: searchOptionFields },
                             { search: "<!--library--->", replace: GenerateLibrary(config.library) },
                             { search: "<!--searcherror-->", replace: searchErrorClass }
@@ -1304,7 +1304,7 @@ module.exports = function(config) {
                             var fullPage = safeReplace(standardSearchTemplate, [
                                 { search: "<!--body-->", replace: searchResults },
                                 { search: "<!--search--->", replace: absolutePath + "pages/search" },
-                                { search: "<!--searchpattern--->", replace: req.query.pattern },
+                                { search: "<!--searchpattern--->", replace: req.query.pattern.replace(/(")/g,'&quot;') },
                                 { search: "<!--searchoptionfields-->", replace: searchOptionFields },
                                 { search: "<!--library--->", replace: GenerateLibrary(config.library) },
                                 { search: "<!--searcherror-->", replace: searchErrorClass }
@@ -1323,7 +1323,7 @@ module.exports = function(config) {
                     var fullPage = safeReplace(standardSearchTemplate, [
                         { search: "<!--body-->", replace: searchResults },
                         { search: "<!--search--->", replace: absolutePath + "pages/search" },
-                        { search: "<!--searchpattern--->", replace: req.query.pattern },
+                        { search: "<!--searchpattern--->", replace: req.query.pattern.replace(/(")/g,'&quot;') },
                         { search: "<!--searchoptionfields-->", replace: searchOptionFields },
                         { search: "<!--library--->", replace: GenerateLibrary(config.library) },
                         { search: "<!--searcherror-->", replace: searchErrorClass }
@@ -1340,7 +1340,7 @@ module.exports = function(config) {
             if (searchForPattern.lastIndexOf(".") > 0) {
                 searchForPattern = searchForPattern.substring(0, searchForPattern.lastIndexOf("."));
             }
-            content = content.replace("<!--searchpattern--->", searchForPattern).replace("<!--search--->", absolutePath + "pages/search");
+            content = content.replace("<!--searchpattern--->", searchForPattern.replace(/(")/g,'&quot;')).replace("<!--search--->", absolutePath + "pages/search");
             content = content.replace("<!--body-->", "Unknown Reference '" + req.query.page + "'");
             callback(null, content, "html");
         } else if (page === "/ambiguous_reference" && req.query.page) {
@@ -1352,7 +1352,7 @@ module.exports = function(config) {
             if (searchForPattern.lastIndexOf(".") > 0) {
                 searchForPattern = searchForPattern.substring(0, searchForPattern.lastIndexOf("."));
             }
-            content = content.replace("<!--searchpattern--->", searchForPattern).replace("<!--search--->", absolutePath + "pages/search");
+            content = content.replace("<!--searchpattern--->", searchForPattern.replace(/(")/g,'&quot;')).replace("<!--search--->", absolutePath + "pages/search");
             content = content.replace("<!--body-->", "Ambiguous Reference '" + req.query.page + "'");
             callback(null, content, "html");
         } else {
