@@ -2,6 +2,11 @@
  * Entry point to helpserver utilities 
  */
 module.exports = function(config) {
+    var breadCrumbsTag = function(url) {
+        var bookName = "";
+        return bookName;
+    };
+
     var replaceAll = function(str, find, replace) {
         while (str.indexOf(find) >= 0)
             str = str.replace(find, replace);
@@ -77,6 +82,9 @@ module.exports = function(config) {
         }
         if (config.events.lookupLink) {
             _lookupLink = config.events.lookupLink;
+        }
+        if (config.events.breadCrumbsTag) {
+            breadCrumbsTag = config.events.breadCrumbsTag;
         }
     }
 
