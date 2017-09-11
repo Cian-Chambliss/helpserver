@@ -348,7 +348,7 @@ module.exports = function(config) {
         "<body onload=\"initialize()\" >",
         "<div id=\"main\" onclick=\"document.body.classList.remove('showTOC');\">",
         "<div id=\"help\" name=\"help\">",
-        "<ul id=\"breadcrumbs\" class=\"crumbs\"><!--breadcrumbs--></ul>",
+        "<ul id=\"breadcrumbs\" class=\"crumbs <!--breadcrumbsClass-->\"><!--breadcrumbs--></ul>",
         "<div id=\"relatedTopics\"><!--related--></div>",
         "<!--body-->",
         "</div></div>",
@@ -516,9 +516,9 @@ module.exports = function(config) {
                     kidsLevel = tree.children;
                 }
                 if (page === topmostPage && !currentBook && config.library) {
-                    breadcrumbs += "<li>";
-                    breadcrumbs += "Main";
-                    breadcrumbs += "</li>";
+                    //breadcrumbs += "<li>";
+                    //breadcrumbs += "Main";
+                    //breadcrumbs += "</li>";
                     if (config.library) {
                         kidsLevel = null;
                     }
@@ -526,13 +526,13 @@ module.exports = function(config) {
                     //breadcrumbs = "<ul>";
                     //breadcrumb
                     if (currentBook) {
-                        breadcrumbs += "<li>";
-                        if (topmostPage.length > 1) {
-                            breadcrumbs += "<a href=\"" + pathPages + topmostPage.substring(1) + "\">Main</a>";
-                        } else {
-                            breadcrumbs += "Main";
-                        }
-                        breadcrumbs += "</li>";
+                        //breadcrumbs += "<li>";
+                        //if (topmostPage.length > 1) {
+                        //    breadcrumbs += "<a href=\"" + pathPages + topmostPage.substring(1) + "\">Main</a>";
+                        //} else {
+                        //    breadcrumbs += "Main";
+                        //}
+                        //breadcrumbs += "</li>";
                     }
                     if (tree.path) {
                         breadcrumbs += "<li>";
@@ -567,13 +567,13 @@ module.exports = function(config) {
                     }
                     //breadcrumbs += "</ul>";
                 } else if (topmostPage.length > 1 && getRelations) {
-                    breadcrumbs += "<li>";
-                    if (topmostPage.length > 1) {
-                        breadcrumbs += "<a href=\"" + pathPages + topmostPage.substring(1) + "\">Main</a>";
-                    } else {
-                        breadcrumbs += "Main";
-                    }
-                    breadcrumbs += "</li>";
+                    //breadcrumbs += "<li>";
+                    //if (topmostPage.length > 1) {
+                    //    breadcrumbs += "<a href=\"" + pathPages + topmostPage.substring(1) + "\">Main</a>";
+                    //} else {
+                    //    breadcrumbs += "Main";
+                    //}
+                    //breadcrumbs += "</li>";
                 }
                 var fixupRelativeHref = function(href) {
                     if (page.indexOf("/index.") >= 0 && href.substring(0, 1) !== '/') {
@@ -876,6 +876,7 @@ module.exports = function(config) {
                     { search: "<!--tocloader-->", replace: tocLoader },
                     { search: "<!--related-->", replace: navigationText.related },
                     { search: "<!--breadcrumbs-->", replace: navigationText.breadcrumbs },
+                    { search: "<!--breadcrumbsClass-->",replace: breadCrumbsTag(pageSourceComment)},
                     { search: "<!--body-->", replace: htmlText },
                     { search: "<!--localtoc-->", replace: localToc },
                     { search: "<!--flatten-->", replace: flattenValue },
