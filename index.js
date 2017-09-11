@@ -1251,7 +1251,7 @@ module.exports = function(config) {
                         var fullPage = safeReplace(standardSearchTemplate, [
                             { search: "<!--body-->", replace: searchResults },
                             { search: "<!--search--->", replace: absolutePath + "pages/search" },
-                            { search: "<!--searchpattern--->", replace: req.query.pattern.replace(/(")/g,'&quot;') },
+                            { search: "<!--searchpattern--->", replace: (req.query.pattern||"").replace(/(")/g,'&quot;') },
                             { search: "<!--searchoptionfields-->", replace: searchOptionFields },
                             { search: "<!--library--->", replace: GenerateLibrary(config.library) },
                             { search: "<!--searcherror-->", replace: searchErrorClass }
@@ -1305,7 +1305,7 @@ module.exports = function(config) {
                             var fullPage = safeReplace(standardSearchTemplate, [
                                 { search: "<!--body-->", replace: searchResults },
                                 { search: "<!--search--->", replace: absolutePath + "pages/search" },
-                                { search: "<!--searchpattern--->", replace: req.query.pattern.replace(/(")/g,'&quot;') },
+                                { search: "<!--searchpattern--->", replace: (req.query.pattern||"").replace(/(")/g,'&quot;') },
                                 { search: "<!--searchoptionfields-->", replace: searchOptionFields },
                                 { search: "<!--library--->", replace: GenerateLibrary(config.library) },
                                 { search: "<!--searcherror-->", replace: searchErrorClass }
@@ -1324,7 +1324,7 @@ module.exports = function(config) {
                     var fullPage = safeReplace(standardSearchTemplate, [
                         { search: "<!--body-->", replace: searchResults },
                         { search: "<!--search--->", replace: absolutePath + "pages/search" },
-                        { search: "<!--searchpattern--->", replace: req.query.pattern.replace(/(")/g,'&quot;') },
+                        { search: "<!--searchpattern--->", replace: (req.query.pattern||"").replace(/(")/g,'&quot;') },
                         { search: "<!--searchoptionfields-->", replace: searchOptionFields },
                         { search: "<!--library--->", replace: GenerateLibrary(config.library) },
                         { search: "<!--searcherror-->", replace: searchErrorClass }
