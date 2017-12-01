@@ -1175,31 +1175,35 @@ module.exports = function(config) {
         } else if (page === "/search") {
             var offset = 0;
             var limit = 10;
+            var searchpattern = (req.query.pattern||"").replace(/(")/g,'&quot;');
+            var searchlimit = "";
+            var searchtitles = "";
+            var searchdisplay = "";
             var lookIn = null;
-            var searchOptionFields = "";
             var searchErrorClass = "user-search";
             if (req.query.error) {
                 searchErrorClass = "error-search-" + req.query.error;
             }
             if (req.query.limit) {
                 limit = parseInt(req.query.limit);
-                if (limit < 0) {
+                if (limit < 0 || limit > 1000) {
                     // A reasonable MAX
                     limit = 1000;
-                } else if (limit > 1000) {
-                    limit = 1000;
                 }
-                searchOptionFields += "<input type=\"hidden\" value=\"" + req.query.limit + "\" name=\"limit\" />";
+                searchlimit = limit;
             }
             if (req.query.offset) {
                 offset = parseInt(req.query.offset);
             }
             if (req.query.search) {
                 lookIn = req.query.search;
-                searchOptionFields += "<input type=\"hidden\" value=\"" + req.query.search + "\" name=\"search\" />";
+                searchtitles = req.query.search;
+                if (searchtitles == "title") {
+                    searchpattern = searchpattern + " in:title";
+            }
             }
             if (req.query.display) {
-                searchOptionFields += "<input type=\"hidden\" value=\"" + req.query.display + "\" name=\"display\" />";
+                searchdisplay = req.query.display;
             }
             hlp.search(req.query.pattern, function(err, data) {
                 if (err) {
@@ -1259,8 +1263,10 @@ module.exports = function(config) {
                         var fullPage = safeReplace(standardSearchTemplate, [
                             { search: "<!--body-->", replace: searchResults },
                             { search: "<!--search--->", replace: absolutePath + "pages/search" },
-                            { search: "<!--searchpattern--->", replace: (req.query.pattern||"").replace(/(")/g,'&quot;') },
-                            { search: "<!--searchoptionfields-->", replace: searchOptionFields },
+                            { search: "<!--searchpattern--->", replace: searchpattern },
+                            { search: "<!--searchtitles-->", replace: searchtitles},
+                            { search: "<!--searchlimit-->", replace: searchlimit},
+                            { search: "<!--searchdisplay-->", replace: searchdisplay },
                             { search: "<!--library--->", replace: GenerateLibrary(config.library) },
                             { search: "<!--searcherror-->", replace: searchErrorClass }
                         ]);
@@ -1313,8 +1319,10 @@ module.exports = function(config) {
                             var fullPage = safeReplace(standardSearchTemplate, [
                                 { search: "<!--body-->", replace: searchResults },
                                 { search: "<!--search--->", replace: absolutePath + "pages/search" },
-                                { search: "<!--searchpattern--->", replace: (req.query.pattern||"").replace(/(")/g,'&quot;') },
-                                { search: "<!--searchoptionfields-->", replace: searchOptionFields },
+                                { search: "<!--searchpattern--->", replace: searchpattern },
+                                { search: "<!--searchtitles-->", replace: searchtitles},
+                                { search: "<!--searchlimit-->", replace: searchlimit},
+                                { search: "<!--searchdisplay-->", replace: searchdisplay },
                                 { search: "<!--library--->", replace: GenerateLibrary(config.library) },
                                 { search: "<!--searcherror-->", replace: searchErrorClass }
                             ]);
@@ -1332,8 +1340,10 @@ module.exports = function(config) {
                     var fullPage = safeReplace(standardSearchTemplate, [
                         { search: "<!--body-->", replace: searchResults },
                         { search: "<!--search--->", replace: absolutePath + "pages/search" },
-                        { search: "<!--searchpattern--->", replace: (req.query.pattern||"").replace(/(")/g,'&quot;') },
-                        { search: "<!--searchoptionfields-->", replace: searchOptionFields },
+                        { search: "<!--searchpattern--->", replace: searchpattern },
+                        { search: "<!--searchtitles-->", replace: searchtitles},
+                        { search: "<!--searchlimit-->", replace: searchlimit},
+                        { search: "<!--searchdisplay-->", replace: searchdisplay },
                         { search: "<!--library--->", replace: GenerateLibrary(config.library) },
                         { search: "<!--searcherror-->", replace: searchErrorClass }
                     ]);
