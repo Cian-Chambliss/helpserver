@@ -1169,6 +1169,8 @@ module.exports = function (config) {
                                                     }
                                                 } else if (partPath.substring(0, 1) === '/') {
                                                     fullPath += partPath;
+                                                } else if (partPath.substring(0,1) === '^') {
+                                                    fullPath = partPath.substring(1);
                                                 } else {
                                                     fullPath += "/" + partPath;
                                                 }
