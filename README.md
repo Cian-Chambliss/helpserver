@@ -403,6 +403,7 @@ help.status(function (stats) {
 ```
 
 ## Release History
+* 1.2.9  Fixed potential cross-site scripting vulnerability in error parameter and enforced limit min of 10.
 * 1.2.8  Fixed cross-site scripting vulnerability
 * 1.1.6  Changed to explicitly add .html, .xml, and .md files to local links.
 * 1.0.99 Added 'library' option.

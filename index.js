@@ -1197,18 +1197,30 @@ module.exports = function(config) {
             var lookIn = null;
             var searchErrorClass = "user-search";
             if (req.query.error) {
-                searchErrorClass = "error-search-" + req.query.error;
+                var queryError = parseInt(req.query.error);
+                if (Number.isInteger(queryError)) {
+                    searchErrorClass = "error-search-" + queryError;
+                }
             }
             if (req.query.limit) {
                 limit = parseInt(req.query.limit);
-                if (limit < 0 || limit > 1000) {
+                if (!Number.isInteger(limit)) {
+                    limit = 10
+                }
+                if (limit > 1000) {
                     // A reasonable MAX
                     limit = 1000;
+                } else if (limit < 10) {
+                    // A resonable MIN
+                    limit = 10;
                 }
                 searchlimit = limit;
             }
             if (req.query.offset) {
                 offset = parseInt(req.query.offset);
+                if (!Number.isInteger(offset)) {
+                    offset = 0;
+                }
             }
             if (req.query.search) {
                 lookIn = req.query.search;
