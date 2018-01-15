@@ -403,7 +403,7 @@ help.status(function (stats) {
 ```
 
 ## Release History
-* 1.2.7  Fixed cross-site scripting vulnerability
+* 1.2.8  Fixed cross-site scripting vulnerability
 * 1.1.6  Changed to explicitly add .html, .xml, and .md files to local links.
 * 1.0.99 Added 'library' option.
 * 1.0.92 Completed reverse proxy path logic. 
