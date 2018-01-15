@@ -1393,7 +1393,7 @@ module.exports = function(config) {
                 searchForPattern = searchForPattern.substring(0, searchForPattern.lastIndexOf("."));
             }
             content = content.replace("<!--searchpattern--->", searchForPattern.replace(/(")/g,'&quot;')).replace("<!--search--->", absolutePath + "pages/search");
-            content = content.replace("<!--body-->", "Unknown Reference '" + req.query.page + "'");
+            content = content.replace("<!--body-->", "Unknown Reference '" + sanitize(req.query.page) + "'");
             callback(null, content, "html");
         } else if (page === "/ambiguous_reference" && req.query.page) {
             var content = standardSearchTemplate;
@@ -1405,7 +1405,7 @@ module.exports = function(config) {
                 searchForPattern = searchForPattern.substring(0, searchForPattern.lastIndexOf("."));
             }
             content = content.replace("<!--searchpattern--->", searchForPattern.replace(/(")/g,'&quot;')).replace("<!--search--->", absolutePath + "pages/search");
-            content = content.replace("<!--body-->", "Ambiguous Reference '" + req.query.page + "'");
+            content = content.replace("<!--body-->", "Ambiguous Reference '" + sanitize(req.query.page) + "'");
             callback(null, content, "html");
         } else {
             // ...Else assume its a resource (i.e. JPEG/PNG etc...)
@@ -2198,7 +2198,8 @@ module.exports = function(config) {
                 } else if (raw) {
                     // TBD - show the 'not-found' page with results...
                     help.onSendExpress(res);
-                    res.send("");
+                    res.statusCode = 404;
+                    res.send("Page not found.");
                 } else {
                     res.redirect('/pages/search?topic=' + req.query.topic);
                 }
@@ -2437,8 +2438,12 @@ module.exports = function(config) {
             var getDescription = false;
             if (req.query.limit)
                 limit = parseInt(req.query.limit);
+            if (!Number.isInteger(limit))
+                limit = 10;
             if (req.query.offset)
                 offset = parseInt(req.query.offset);
+            if (!Number.isInteger(offset))
+                offset = 0;
             if (req.query.description)
                 getDescription = true;
             hlp.search(req.query.pattern, function(err, data) {
