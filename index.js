@@ -20,6 +20,14 @@ module.exports = function(config) {
         }
         return text;
     };
+    var sanitize = function(text) {
+        text = text.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&apos;");
+        return text;
+    };
+    var soil = function(text) {
+        text = text.replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,"\"").replace(/&apos;/g,"'").replace(/&amp;/g,"&");
+        return text;
+    };
     var fs = require('fs');
     var path = require('path');
     var appDir = replaceAll(path.dirname(require.main.filename), "\\", "/") + '/';
@@ -85,6 +93,12 @@ module.exports = function(config) {
         }
         if (config.events.breadCrumbsTag) {
             breadCrumbsTag = config.events.breadCrumbsTag;
+        }
+        if (config.events.sanitize) {
+            sanitize = config.events.sanitize;
+        }
+        if (config.events.soil) {
+            soil = config.events.soil;
         }
     }
 
@@ -1175,7 +1189,8 @@ module.exports = function(config) {
         } else if (page === "/search") {
             var offset = 0;
             var limit = 10;
-            var searchpattern = (req.query.pattern||"").replace(/(")/g,'&quot;');
+            var queryPattern = sanitize(req.query.pattern||"");
+            var searchpattern = queryPattern.replace(/(")/g,'&quot;');
             var searchlimit = "";
             var searchtitles = "";
             var searchdisplay = "";
@@ -1200,12 +1215,18 @@ module.exports = function(config) {
                 searchtitles = req.query.search;
                 if (searchtitles == "title") {
                     searchpattern = searchpattern + " in:title";
-            }
+                } else {
+                    searchtitles = "";
+                    lookIn = "";
+                }
             }
             if (req.query.display) {
                 searchdisplay = req.query.display;
+                if (searchdisplay !== 'titles-only') {
+                    searchdisplay = "";
+                }
             }
-            hlp.search(req.query.pattern, function(err, data) {
+            hlp.search(soil(queryPattern), function(err, data) {
                 if (err) {
                     data = [];
                 }
@@ -1228,19 +1249,19 @@ module.exports = function(config) {
                     if (moreResults > 0 || offset > 0) {
                         searchMoreDiv += "<div class=\"search-more\">";
                         if (offset > 0) {
-                            searchMoreDiv += "<a href=\"" + absolutePath + "pages/search?pattern=" + req.query.pattern + "\">Page 1</a>";
+                            searchMoreDiv += "<a href=\"" + absolutePath + "pages/search?pattern=" + queryPattern + "\">Page 1</a>";
                             if (offset > limit) {
                                 var startOffset = limit;
                                 var searchPageNumber = 2;
                                 while (offset > startOffset) {
-                                    searchMoreDiv += "<a href=\"" + absolutePath + "pages/search?pattern=" + req.query.pattern + "&offset=" + startOffset + "\">Page " + searchPageNumber + "</a>";
+                                    searchMoreDiv += "<a href=\"" + absolutePath + "pages/search?pattern=" + queryPattern + "&offset=" + startOffset + "\">Page " + searchPageNumber + "</a>";
                                     searchPageNumber += 1;
                                     startOffset += limit;
                                 }
                             }
                         }
                         if (moreResults > 0) {
-                            searchMoreDiv += "<a href=\"" + absolutePath + "pages/search?pattern=" + req.query.pattern + "&offset=" + moreResults + "\">More...</a>";
+                            searchMoreDiv += "<a href=\"" + absolutePath + "pages/search?pattern=" + queryPattern + "&offset=" + moreResults + "\">More...</a>";
                         }
                         searchMoreDiv += "</div>";
                     }
@@ -1333,7 +1354,7 @@ module.exports = function(config) {
                     // <div id="no-search-results">&nbsp;</div>
                     searchResults = "<div id=\"no-search-results\">No Results Found</div>";
                     if (config.events.noSearchResults) {
-                        searchResults = config.events.noSearchResults(req.query.pattern);
+                        searchResults = config.events.noSearchResults(queryPattern);
                     }
                     // Add a hook
                     searchResults += "</dl>";
