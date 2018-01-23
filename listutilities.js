@@ -7,6 +7,12 @@ module.exports = function (config) {
     function ListUtilities() {
     };
 
+    function logit (err) {
+        if (err) {
+            console.log(err);
+        }
+    };
+
     ListUtilities.prototype.fixPathCase = function (path, basePath, callbackWithPath) {
         var fs = require('fs');
         var valid = "";
@@ -1239,7 +1245,7 @@ module.exports = function (config) {
                                             }
                                             if (data && data.length > 0) {
                                                 data += "<!--basePath:" + path + "-->";
-                                                fs.writeFile(generatedTopic, data);
+                                                fs.writeFile(generatedTopic, data, logit);
                                             } else {
                                                 fs.unlink(generatedTopic);
                                                 err = "Page is Empty";
@@ -1262,7 +1268,7 @@ module.exports = function (config) {
                                             }
                                             if (data && data.length > 0) {
                                                 data += "<!--basePath:" + path + "-->";
-                                                fs.writeFile(generatedTopic, data);
+                                                fs.writeFile(generatedTopic, data, logit);
                                             } else {
                                                 fs.unlink(generatedTopic);
                                                 err = "Page is Empty";
@@ -1280,7 +1286,7 @@ module.exports = function (config) {
                                     }
                                     if (data && data.length > 0) {
                                         data += "<!--basePath:" + path + "-->";
-                                        fs.writeFile(generatedTopic, data);
+                                        fs.writeFile(generatedTopic, data, logit);
                                     } else {
                                         fs.unlink(generatedTopic);
                                         err = "Page is Empty";
