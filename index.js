@@ -21,11 +21,11 @@ module.exports = function(config) {
         return text;
     };
     var sanitize = function(text) {
-        text = text.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&apos;");
+        text = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
         return text;
     };
     var soil = function(text) {
-        text = text.replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,"\"").replace(/&apos;/g,"'").replace(/&amp;/g,"&");
+        text = text.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, "\"").replace(/&apos;/g, "'").replace(/&amp;/g, "&");
         return text;
     };
     var fs = require('fs');
@@ -898,7 +898,7 @@ module.exports = function(config) {
                     { search: "<!--tocloader-->", replace: tocLoader },
                     { search: "<!--related-->", replace: navigationText.related },
                     { search: "<!--breadcrumbs-->", replace: navigationText.breadcrumbs },
-                    { search: "<!--breadcrumbsClass-->",replace: breadCrumbsTag(pageSourceComment)},
+                    { search: "<!--breadcrumbsClass-->", replace: breadCrumbsTag(pageSourceComment) },
                     { search: "<!--body-->", replace: htmlText },
                     { search: "<!--localtoc-->", replace: localToc },
                     { search: "<!--flatten-->", replace: flattenValue },
@@ -1189,8 +1189,8 @@ module.exports = function(config) {
         } else if (page === "/search") {
             var offset = 0;
             var limit = 10;
-            var queryPattern = sanitize(req.query.pattern||"");
-            var searchpattern = queryPattern.replace(/(")/g,'&quot;');
+            var queryPattern = sanitize(req.query.pattern || "");
+            var searchpattern = queryPattern.replace(/(")/g, '&quot;');
             var searchlimit = "";
             var searchtitles = "";
             var searchdisplay = "";
@@ -1205,7 +1205,7 @@ module.exports = function(config) {
             if (req.query.limit) {
                 limit = parseInt(req.query.limit);
                 if (!Number.isInteger(limit)) {
-                    limit = 10
+                    limit = 10;
                 }
                 if (limit > 1000) {
                     // A reasonable MAX
@@ -1297,8 +1297,8 @@ module.exports = function(config) {
                             { search: "<!--body-->", replace: searchResults },
                             { search: "<!--search--->", replace: absolutePath + "pages/search" },
                             { search: "<!--searchpattern--->", replace: searchpattern },
-                            { search: "<!--searchtitles-->", replace: searchtitles},
-                            { search: "<!--searchlimit-->", replace: searchlimit},
+                            { search: "<!--searchtitles-->", replace: searchtitles },
+                            { search: "<!--searchlimit-->", replace: searchlimit },
                             { search: "<!--searchdisplay-->", replace: searchdisplay },
                             { search: "<!--library--->", replace: GenerateLibrary(config.library) },
                             { search: "<!--searcherror-->", replace: searchErrorClass }
@@ -1353,8 +1353,8 @@ module.exports = function(config) {
                                 { search: "<!--body-->", replace: searchResults },
                                 { search: "<!--search--->", replace: absolutePath + "pages/search" },
                                 { search: "<!--searchpattern--->", replace: searchpattern },
-                                { search: "<!--searchtitles-->", replace: searchtitles},
-                                { search: "<!--searchlimit-->", replace: searchlimit},
+                                { search: "<!--searchtitles-->", replace: searchtitles },
+                                { search: "<!--searchlimit-->", replace: searchlimit },
                                 { search: "<!--searchdisplay-->", replace: searchdisplay },
                                 { search: "<!--library--->", replace: GenerateLibrary(config.library) },
                                 { search: "<!--searcherror-->", replace: searchErrorClass }
@@ -1374,8 +1374,8 @@ module.exports = function(config) {
                         { search: "<!--body-->", replace: searchResults },
                         { search: "<!--search--->", replace: absolutePath + "pages/search" },
                         { search: "<!--searchpattern--->", replace: searchpattern },
-                        { search: "<!--searchtitles-->", replace: searchtitles},
-                        { search: "<!--searchlimit-->", replace: searchlimit},
+                        { search: "<!--searchtitles-->", replace: searchtitles },
+                        { search: "<!--searchlimit-->", replace: searchlimit },
                         { search: "<!--searchdisplay-->", replace: searchdisplay },
                         { search: "<!--library--->", replace: GenerateLibrary(config.library) },
                         { search: "<!--searcherror-->", replace: searchErrorClass }
@@ -1392,7 +1392,7 @@ module.exports = function(config) {
             if (searchForPattern.lastIndexOf(".") > 0) {
                 searchForPattern = searchForPattern.substring(0, searchForPattern.lastIndexOf("."));
             }
-            content = content.replace("<!--searchpattern--->", searchForPattern.replace(/(")/g,'&quot;')).replace("<!--search--->", absolutePath + "pages/search");
+            content = content.replace("<!--searchpattern--->", searchForPattern.replace(/(")/g, '&quot;')).replace("<!--search--->", absolutePath + "pages/search");
             content = content.replace("<!--body-->", "Unknown Reference '" + sanitize(req.query.page) + "'");
             callback(null, content, "html");
         } else if (page === "/ambiguous_reference" && req.query.page) {
@@ -1404,7 +1404,7 @@ module.exports = function(config) {
             if (searchForPattern.lastIndexOf(".") > 0) {
                 searchForPattern = searchForPattern.substring(0, searchForPattern.lastIndexOf("."));
             }
-            content = content.replace("<!--searchpattern--->", searchForPattern.replace(/(")/g,'&quot;')).replace("<!--search--->", absolutePath + "pages/search");
+            content = content.replace("<!--searchpattern--->", searchForPattern.replace(/(")/g, '&quot;')).replace("<!--search--->", absolutePath + "pages/search");
             content = content.replace("<!--body-->", "Ambiguous Reference '" + sanitize(req.query.page) + "'");
             callback(null, content, "html");
         } else {
@@ -1893,6 +1893,9 @@ module.exports = function(config) {
                     callback(err, null);
                 } else {
                     callback(null, { updated: true });
+                }
+                if (config.events.afterRefresh) {
+                    config.events.afterRefresh();
                 }
             };
             var buildlist = require('./buildlist');
