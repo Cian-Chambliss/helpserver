@@ -403,6 +403,7 @@ help.status(function (stats) {
 ```
 
 ## Release History
+* 1.3.3  Added missing 'path' handler...
 * 1.3.2  Added 'after' refresh event hook.
 * 1.3.1  Not supplying a callback to an async function is deprecated
 * 1.3.0  Clean up other potential cross-site scripting vulnerabilities

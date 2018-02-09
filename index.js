@@ -1415,6 +1415,8 @@ module.exports = function(config) {
                 fs.stat(config.source + relativePath, function(err, stats) {
                     if (!err && stats && stats.isDirectory()) {
                         hlp.getPage(page + "/index.xml", fromPath, req, callback);
+                    } else if (config.events.missingPathPage) {
+                        config.events.missingPathPage(page, fromPath, req, callback);
                     } else {
                         hlp.get(page, callback);
                     }
@@ -1986,7 +1988,6 @@ module.exports = function(config) {
     // Set metadata for am item
     HelpServerUtil.prototype.setmetadata = function(path, metadata, callback, batchMode) {
         var help = this;
-        debugger;
         try {
             if (path && path !== '/') {
                 var relativePath = unescape(path.substring(1));
@@ -2015,7 +2016,6 @@ module.exports = function(config) {
                             }
                         }
                         if (newData !== data) {
-                            debugger;
                             fs.writeFile(fn, newData, function() {
                                 if (err) {
                                     console.log('setmetadata write ' + err);
