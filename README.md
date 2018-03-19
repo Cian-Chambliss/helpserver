@@ -403,7 +403,7 @@ help.status(function (stats) {
 ```
 
 ## Release History
-* 1.3.4  Added support for "not" (eg, &lt;!--list:!*Method.xml--&gt;)
+* 1.3.5  Added support for "not" (eg, &lt;!--list:!*Method.xml--&gt;)
 * 1.3.3  Added missing 'path' handler...
 * 1.3.2  Added 'after' refresh event hook.
 * 1.3.1  Not supplying a callback to an async function is deprecated
