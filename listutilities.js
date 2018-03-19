@@ -890,7 +890,7 @@ module.exports = function (config) {
                                     return null;
                                 }
                             };
-                            var postFilterList = function(listPtr,filter) {
+                            var postFilterList = function(listPtr,filter,invert) {
                                 var newList = [];
                                 var i , j;
                                 var extensionPos = 0;
@@ -901,7 +901,8 @@ module.exports = function (config) {
                                     comparePath = true;
                                 }
 
-                                filter = filter.split('*');                                
+                                filter = filter.split('*');
+                                
                                 for (i = 0; i < listPtr.length; ++i) {
                                     var lowTitle = null;
                                     if( comparePath ) {
@@ -934,7 +935,7 @@ module.exports = function (config) {
                                             } 
                                         }
                                     }
-                                    if( matched ) {
+                                    if((matched && !invert) || (!matched && invert)) {
                                         newList.push( listPtr[i] );
                                     }
                                 }
@@ -949,7 +950,7 @@ module.exports = function (config) {
                                     var listPtr = findPageChildren(toc.children, lists[i].fullPath.toLowerCase() );
                                     if( lists[i].filterItems && listPtr ) {
                                         // Lets post filter the list...
-                                        listPtr = postFilterList(listPtr,lists[i].filterItems)
+                                        listPtr = postFilterList(listPtr,lists[i].filterItems,lists[i].invert)
                                     }
                                     lists[i].children = listPtr;
                                     if (listPtr) {
@@ -1128,7 +1129,7 @@ module.exports = function (config) {
                             } else {
                                 xmlTemplate = "<!--list:.-->";
                             }
-                            lists.push({ listDef: '.', fullPath: path, content: [] });
+                            lists.push({ listDef: '.', fullPath: path, invert: false, content: [] });
                         } else {
                             var embeddedLists = xmlData.split('<!--list:');
                             if (embeddedLists.length > 1) {
@@ -1157,6 +1158,14 @@ module.exports = function (config) {
                                         if (!listItem) {
                                             var fullPath = path;
                                             var filterItems = null;
+                                            var invert = false;
+                                            var origPath = relPath;
+                                            if (relPath.length > 1) {
+                                                if (relPath.substring(0,1) === "!") {
+                                                    relPath = relPath.substr(1);
+                                                    invert = true;
+                                                }
+                                            }
                                             if (relPath.length > 0) {
                                                 var partPath = relPath;
                                                 if( partPath.indexOf('*') >= 0 ) {
@@ -1181,7 +1190,7 @@ module.exports = function (config) {
                                                     fullPath += "/" + partPath;
                                                 }
                                             }
-                                            lists.push({ listDef: relPath, fullPath: fullPath, filterItems : filterItems , content: [] });
+                                            lists.push({ listDef: origPath, fullPath: fullPath, filterItems : filterItems , invert: invert , content: []});
                                         }
                                     }
                                 }
@@ -1198,7 +1207,7 @@ module.exports = function (config) {
                     } else {
                         xmlTemplate = "<!--list:.-->";
                     }
-                    lists.push({ listDef: '.', fullPath: path, filterItems : null , content: [] });
+                    lists.push({ listDef: '.', fullPath: path, filterItems : null , invert: false, content: [] });
                     generatePage();
                 }
             } else {
