@@ -1222,7 +1222,8 @@ module.exports = function (config) {
             }
         });
     };
-    ListUtilities.prototype.loadOrCreateTranslatedPage = function (config, path, flt, callback) {
+    ListUtilities.prototype.loadOrCreateTranslatedPage = function (config, path, flt, callback, absolutePath) {
+        absolutePath = absolutePath||"/documentation/";
         // Perform server side xslt transformation
         var lu = this;
         var generatedTopic = config.generated + "topics/" + this.replaceAll(path, "/", "_") + (config.filter_name ? config.filter_name : '_all');
@@ -1238,7 +1239,7 @@ module.exports = function (config) {
                     if (found && newPath !== path) {
                         //console.log("redirect " + path + " to " + newPath);
                         // if the case doesn't match -- lets redirect to the page with the proper case
-                        var url = "/documentation/pages" + newPath + "?at=" +  new Date().toISOString();
+                        var url = absolutePath+"pages" + newPath + "?at=" +  new Date().toISOString();
                         callback(null, '<html> <head> <meta http-equiv="refresh" content="0; url=' + url + '"/> </head> <body> <meta http-equiv="refresh" content="0; url=' + url + '"/>Redirecting to correct page... </body> </html>');
                     } else {
                         if (path.indexOf("/index.xml") > 0) {
@@ -1261,7 +1262,7 @@ module.exports = function (config) {
                                             }
                                         }
                                         callback(err, data, "html");
-                                    });
+                                    }, absolutePath);
                                 }
                             }, false);
                         } else if (path.indexOf("/index.flatten.xml") > 0) {
@@ -1284,7 +1285,7 @@ module.exports = function (config) {
                                             }
                                         }
                                         callback(err, data, "html");
-                                    });
+                                    }, absolutePath);
                                 }
                             }, true);
                         } else {
@@ -1302,7 +1303,7 @@ module.exports = function (config) {
                                     }
                                 }
                                 callback(err, data, "html");
-                            });
+                            }, absolutePath);
                         }
                     }
                 });
@@ -1322,7 +1323,7 @@ module.exports = function (config) {
                 if (actualPath !== path) {
                     //console.log("redirect " + path + " to " + actualPath);
                     // if the case doesn't match -- lets redirect to the page with the proper case
-                    var url = "/documentation/pages" + actualPath + "?at=" +  new Date().toISOString();
+                    var url = absolutePath+"pages" + actualPath + "?at=" +  new Date().toISOString();
                     callback(null, '<html> <head> <meta http-equiv="refresh" content="0; url=' + url + '"/> </head> <body> <meta http-equiv="refresh" content="0; url=' + url + '"/>Redirecting to correct page... </body> </html>');
                 } else {
                     callback(null, data, "html");

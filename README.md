@@ -403,6 +403,7 @@ help.status(function (stats) {
 ```
 
 ## Release History
+* 1.3.6  Removing hard-coded links to '/documentation/'
 * 1.3.5  Added support for "not" (eg, &lt;!--list:!*Method.xml--&gt;)
 * 1.3.3  Added missing 'path' handler...
 * 1.3.2  Added 'after' refresh event hook.

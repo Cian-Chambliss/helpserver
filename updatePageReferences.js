@@ -193,7 +193,7 @@ module.exports = function(config, data, pageProc) {
     pageProc.localNames = localNames;
     if (config.events) {
         if (config.events.postProcessContent) {
-            data = config.events.postProcessContent(data);
+            data = config.events.postProcessContent(data,pageProc.urlBasePath);
         }
     }
     return data;

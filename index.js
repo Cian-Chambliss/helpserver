@@ -66,7 +66,7 @@ module.exports = function(config) {
     var pathPages = absolutePath + "pages/";
     var indexLinks = null;
     var backLinks = null;
-    var loadIndex = function(callback) { callback({}); }
+    var loadIndex = function(callback, absolutePath) {    absolutePath = absolutePath||"/documentation/";    callback({}); }
     var calculateBackLinks = function(indexLinks) {
         // Map backlinks to the site
         backLinks = {};
@@ -791,7 +791,8 @@ module.exports = function(config) {
                     pageDescription: null,
                     localNames: [],
                     indexLinks: indexLinks,
-                    lookupLink: _lookupLink
+                    lookupLink: _lookupLink,
+                    urlBasePath: absolutePath
                 };
                 var pagesAt = fromPath.indexOf("/pages");
                 if (pagesAt > 0) {
@@ -834,7 +835,7 @@ module.exports = function(config) {
                 var title = navigationText.pageTitle;
                 var feedback = "?subject=Problem with page:" + title + " [" + page + "]" + "&body=Describe problem with the " + page + " documentation page:";
                 if (config.events.calculateFeedback) {
-                    feedback = config.events.calculateFeedback(title, page);
+                    feedback = config.events.calculateFeedback(title, page, absolutePath);
                 }
                 if (lastModified !== "") {
                     lastModified = "Page Last Checked on " + lastModified;
@@ -854,7 +855,7 @@ module.exports = function(config) {
                         pageSourceComment = config.events.addPageSourceComment(page, symName);
                     }
                     if (config.events.getSharableLink) {
-                        sharableLink = config.events.getSharableLink(page, symName);
+                        sharableLink = config.events.getSharableLink(page, symName, absolutePath);
                     }
                 }
                 var localToc = "";
@@ -903,6 +904,7 @@ module.exports = function(config) {
                     { search: "<!--localtoc-->", replace: localToc },
                     { search: "<!--flatten-->", replace: flattenValue },
                     { search: "<!--sharablelink-->", replace: sharableLink },
+                    { search: "((A5_BASE_PATH))", replace: absolutePath}
                 ]);
                 return fullPage;
             };
@@ -1060,7 +1062,7 @@ module.exports = function(config) {
                                         }
                                     }
                                     callback(null, processWebPage(data, treePtr, parentIndexData[parentIndexFile]), "html");
-                                });
+                                }, absolutePath);
                             } else {
                                 parentIndexPtr = parentIndexData[parentIndexFile];
                                 callback(null, processWebPage(data, treePtr, parentIndexPtr), "html");
@@ -1089,7 +1091,7 @@ module.exports = function(config) {
                         indexLinks = result;
                         calculateBackLinks(indexLinks);
                         afterLinksLoaded();
-                    });
+                    }, absolutePath);
                 } else {
                     afterLinksLoaded();
                 }
@@ -1108,7 +1110,7 @@ module.exports = function(config) {
                     }
                     path = name;
                 }
-                var url = "/documentation/pages/search?error=404&pattern=" + path;
+                var url = absolutePath+"pages/search?error=404&pattern=" + path;
                 callback(null, '<html> <head> <meta http-equiv="refresh" content="0; url=' + url + '"/> </head> <body> <meta http-equiv="refresh" content="0; url=' + url + '"/>Redirecting to search... </body> </html>');
             };
 
@@ -1138,7 +1140,7 @@ module.exports = function(config) {
                     } else {
                         processPageAndCallback(data);
                     }
-                });
+                },absolutePath);
             } else if (extension === "md") {
                 fs.readFile(config.source + relativePath, "utf8", function(err, data) {
                     if (err) {
@@ -1301,7 +1303,8 @@ module.exports = function(config) {
                             { search: "<!--searchlimit-->", replace: searchlimit },
                             { search: "<!--searchdisplay-->", replace: searchdisplay },
                             { search: "<!--library--->", replace: GenerateLibrary(config.library) },
-                            { search: "<!--searcherror-->", replace: searchErrorClass }
+                            { search: "<!--searcherror-->", replace: searchErrorClass },
+                            { search: "((A5_BASE_PATH))", replace: absolutePath}
                         ]);
                         callback(null, fullPage, "html");
                     } else {
@@ -1357,7 +1360,8 @@ module.exports = function(config) {
                                 { search: "<!--searchlimit-->", replace: searchlimit },
                                 { search: "<!--searchdisplay-->", replace: searchdisplay },
                                 { search: "<!--library--->", replace: GenerateLibrary(config.library) },
-                                { search: "<!--searcherror-->", replace: searchErrorClass }
+                                { search: "<!--searcherror-->", replace: searchErrorClass },
+                                { search: "((A5_BASE_PATH))", replace: absolutePath}
                             ]);
                             callback(null, fullPage, "html");
                         });
@@ -1378,7 +1382,8 @@ module.exports = function(config) {
                         { search: "<!--searchlimit-->", replace: searchlimit },
                         { search: "<!--searchdisplay-->", replace: searchdisplay },
                         { search: "<!--library--->", replace: GenerateLibrary(config.library) },
-                        { search: "<!--searcherror-->", replace: searchErrorClass }
+                        { search: "<!--searcherror-->", replace: searchErrorClass },
+                        { search: "((A5_BASE_PATH))", replace: absolutePath}
                     ]);
                     callback(null, fullPage, "html");
                 }
@@ -1416,7 +1421,7 @@ module.exports = function(config) {
                     if (!err && stats && stats.isDirectory()) {
                         hlp.getPage(page + "/index.xml", fromPath, req, callback);
                     } else if (config.events.missingPathPage) {
-                        config.events.missingPathPage(page, fromPath, req, callback);
+                        config.events.missingPathPage(page, fromPath, req, callback, absolutePath);
                     } else {
                         hlp.get(page, callback);
                     }
@@ -1459,7 +1464,7 @@ module.exports = function(config) {
         } else if (extension === "xml_html" && config.events.translateXML) {
             var ListUtilities = require('./listutilities');
             var lu = new ListUtilities(config);
-            lu.loadOrCreateTranslatedPage(this.config, decodeURI(page), (this.config.filter_name ? this.config.filter_name : defaultFilter), callback);
+            lu.loadOrCreateTranslatedPage(this.config, decodeURI(page), (this.config.filter_name ? this.config.filter_name : defaultFilter), callback, absolutePath);
         } else if (extension === "html" || extension === "htm" || extension === "xml") {
             if (page.indexOf("/index.") > 0) {
                 if (page.indexOf("/index.xml") > 0 ||
@@ -2615,7 +2620,7 @@ module.exports = function(config) {
                     indexLinks = result;
                     calculateBackLinks(indexLinks);
                     loadPage();
-                });
+                }, absolutePath);
             }
         }
     };
@@ -2689,5 +2694,8 @@ module.exports = function(config) {
         configurationObjects[configName] = new HelpServerUtil(configurations[configName]);
     };
 
+    HelpServerUtil.prototype.getAbsolutePath = function () {
+        return absolutePath;
+    }
     return help;
 };
