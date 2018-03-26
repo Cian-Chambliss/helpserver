@@ -61,7 +61,7 @@ module.exports = function(config, data, pageProc) {
                     var searchTag = "[" + content + "]";
                     if (extn > 0) {
                         extn = tagAttribs.substring(extn + 1).split('"')[0].toLowerCase();
-                        if (extn === 'jpg' || extn === 'png' || extn === 'bmp' || extn === 'gif' || extn === 'jpeg') {
+                        if (extn === 'jpg' || extn === 'png' || extn === 'bmp' || extn === 'gif' || extn === 'jpeg' || extn === 'svg') {
                             content = "<img src=" + tagAttribs.substring(6) + "/>";
                             //console.log(content);
                         } else {
