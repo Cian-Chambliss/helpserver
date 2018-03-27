@@ -403,6 +403,7 @@ help.status(function (stats) {
 ```
 
 ## Release History
+* 1.3.8  Removeing clipboard library - no longer supported
 * 1.3.7  Added support for svg
 * 1.3.6  Removing hard-coded links to '/documentation/'
 * 1.3.5  Added support for "not" (eg, &lt;!--list:!*Method.xml--&gt;)
