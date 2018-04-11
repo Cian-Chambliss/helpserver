@@ -525,6 +525,9 @@ module.exports = function(config) {
                     return null;
                 };
                 var branches = recurseNavTree(tree.children);
+                if (!parentOfNode && branches) {
+                    parentOfNode = tree;
+                }
                 var booksBranches = [];
                 var currentBook = harvestBreadcrumbs(config.library, booksBranches, deepestAltToc);
                 if (booksBranches.length < 2) {

@@ -403,7 +403,8 @@ help.status(function (stats) {
 ```
 
 ## Release History
-* 1.3.8  Removeing clipboard library - no longer supported
+* 1.3.9  Fixing issue where "Parent" link missing for top-level children
+* 1.3.8  Removing clipboard library - no longer supported
 * 1.3.7  Added support for svg
 * 1.3.6  Removing hard-coded links to '/documentation/'
 * 1.3.5  Added support for "not" (eg, &lt;!--list:!*Method.xml--&gt;)
@@ -417,7 +418,7 @@ help.status(function (stats) {
 * 1.0.99 Added 'library' option.
 * 1.0.92 Completed reverse proxy path logic. 
 * 1.0.86 Added html5 appcache support for the 'pages' endpoint - this caches large TOC entries. 
-* 1.0.82 Don't emply redirect for default page.  This change added to allow for support for reverse proxy server. 
+* 1.0.82 Don't employ redirect for default page.  This change added to allow for support for reverse proxy server. 
 * 1.0.81 Added revision.txt to generated to keep a persistent revision count (count the # of git pulls). 
 * 1.0.80 Added tracking of changes to hash to browser history (so that the back button works!).
 * 1.0.78 First cut at a reactive design for the main.html (and associated) help pages.
@@ -432,7 +433,7 @@ help.status(function (stats) {
 * 1.0.65 Fixed race conditions in the client side TOC and XML XSLT processing code.  
 * 1.0.63 Added support for altToc and folder level default metadata (in the config) 
 * 1.0.60 Added support for XSLT - source pages that are XML get remapped using the config.xslt file (stored in assets) 
-* 1.0.59 Added structuring to the search for entries inside a page (avoids repitition on multiple hits in a page) 
+* 1.0.59 Added structuring to the search for entries inside a page (avoids repetition on multiple hits in a page) 
 * 1.0.58 Added logic to prune empty child lists. 
 * 1.0.57 Pages with 'SubTOC' now get individual elastic search records for each 'section'.  
 * 1.0.56 Cosmetic fixes  + pages with local TOC get local breadcrumbs 
@@ -440,17 +441,17 @@ help.status(function (stats) {
 * 1.0.53 Added a server health endpoint called 'diag' (determine if updates are received and if busy processing updates).
 * 1.0.52 Added filtering of index.html, which is assumed to represent the 'parent' (i.e. folder) node.
 * 1.0.51 Added support for both gzip & deflate (microsoft edge doesn't appear to work with deflate even though it has the accept header) 
-* 1.0.50 Changed helperserver_flatten to propogate the deepest 'singleton' title - this removes unused 'general' titles. 
+* 1.0.50 Changed helperserver_flatten to propagate the deepest 'singleton' title - this removes unused 'general' titles. 
 * 1.0.49 Added support for new helperserver_flatten function, don't cache the metadata for the top level page (always re-read).
 * 1.0.48 Added setting for top level 'overview' of table of contents. 
-* 1.0.47 Cleanup of handling for copy entries to root (elimiate levels of tree) 
+* 1.0.47 Cleanup of handling for copy entries to root (eliminate levels of tree) 
 * 1.0.46 CSS style sheet changes to cause helperserver_toc to be hidden.
 * 1.0.45 Added slight indent to TOC style + fixed breadcrumb display for subtoc 
 * 1.0.44 Fixed embedded TOC in help pages to work with the single page DIV loading
 * 1.0.43 Added pruning of empty branches after branches are moved + merge '/' folder at root into the root.
-* 1.0.42 Fixed dupplicate name merge bug in virtual 'move' of toc entries.
+* 1.0.42 Fixed duplicate name merge bug in virtual 'move' of toc entries.
 * 1.0.41 Added support for breadcrumbs - and generated TOC pages for folders that don't have an associated page. 
-* 1.0.40 Added replacePath option to allow basepath to be remapped (useful for crosssite access where path may come in with prefix other than filter)
+* 1.0.40 Added replacePath option to allow basepath to be remapped (useful for cross-site access where path may come in with prefix other than filter)
 * 1.0.39 Added ability to override the prefix on search (so that we don't redirect page on search on cross-domain) - also, added default filter spec when using a service. 
 * 1.0.38 Added ability to override the host. 
 * 1.0.37 Fixed CSS style for TOC so that it is isolated from the page content (ul/li in main page was getting messed up).
@@ -466,10 +467,10 @@ help.status(function (stats) {
 * 1.0.27 Fixes to 'move nodes' logic when re-organizing table of contents after population. 
 * 1.0.26 Added limit and offset parameters to search - default search to 50 (instead of elastic search default of 10). 
 * 1.0.25 Added editTOC to postprocess TOC (remove or move paths)- but keeping pages. Added notes to edit.
-* 1.0.24 Added page table of contents (so that a branch of the toc can have multiple entries for a page). added support for customization of response through reponseHeader property.  
+* 1.0.24 Added page table of contents (so that a branch of the toc can have multiple entries for a page). added support for customization of response through responseHeader property.  
 * 1.0.23 Added post-process of titles to remove _###_ (where # is a digit)  so that titles don't always have to show up alphabetically.
 * 1.0.22 Added post-process recursive sorting of the table of contents so that groups don't alter the sort order. Changed metadata functions + added patch. 
-* 1.0.21 Changed 'saved file times' to use the path instead of the title - path is guarrenteed unique, and is used as the key.  Added tracking of 'deletions' to the udpateindex.js script. 
+* 1.0.21 Changed 'saved file times' to use the path instead of the title - path is guaranteed unique, and is used as the key.  Added tracking of 'deletions' to the updateindex.js script. 
 * 1.0.20 module path is now relative to the startup path (main) so that service will load resources from the correct location.
 * 1.0.19 fixed problems in error handling, addressed double page load when navigating from inside the help iframe. 
 * 1.0.18 through 1.0.16 - fixes for deployment 
@@ -483,7 +484,7 @@ help.status(function (stats) {
 * 1.0.9 Added optional git update integration (requires adding a dependency). 
 * 1.0.8 Merged the search and table of contents together + improved styling.  Added support for 'group' metadata to change add or remove structure.
 * 1.0.7 Added support for .md files.
-* 1.0.6 Created a single top level 'expressuse' method to encasulate all the routing.
+* 1.0.6 Created a single top level 'expressuse' method to encapsulate all the routing.
 * 1.0.5 Added support for page metadata, filters & a refresh post method.
 * 1.0.4 Added get/gettree/gettreejson to api
 * 1.0.3 Added stats
