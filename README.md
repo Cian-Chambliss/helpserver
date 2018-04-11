@@ -403,6 +403,7 @@ help.status(function (stats) {
 ```
 
 ## Release History
+* 1.4.0  Fixed issue with many reorder-children
 * 1.3.9  Fixing issue where "Parent" link missing for top-level children
 * 1.3.8  Removing clipboard library - no longer supported
 * 1.3.7  Added support for svg

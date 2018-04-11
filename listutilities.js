@@ -1075,7 +1075,9 @@ module.exports = function (config) {
                                             }
                                             if (reorderChildren) {
                                                 if (genereratedExtension === ".xml") {
-                                                    htmlText = htmlText.replace("<page", "<page reorder-children=\"true\"");
+                                                    if (htmlText.indexOf("reorder-children=\"true\"") !== -1) {
+                                                        htmlText = htmlText.replace("<page", "<page reorder-children=\"true\"");
+                                                    }
                                                 } else {
                                                     htmlText = htmlText.replace(">", "><!--orderchildren-->");
                                                 }
