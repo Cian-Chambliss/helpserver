@@ -403,6 +403,7 @@ help.status(function (stats) {
 ```
 
 ## Release History
+* 1.4.3  Removed 'http' dependency Issue #1
 * 1.4.2  Removed dependency on 'string'
 * 1.4.1  Fixed issue with many reorder-children for reals
 * 1.4.0  Fixed issue with many reorder-children
