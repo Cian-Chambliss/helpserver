@@ -403,6 +403,7 @@ help.status(function (stats) {
 ```
 
 ## Release History
+* 1.4.2  Removed dependency on 'string'
 * 1.4.1  Fixed issue with many reorder-children for reals
 * 1.4.0  Fixed issue with many reorder-children
 * 1.3.9  Fixing issue where "Parent" link missing for top-level children
