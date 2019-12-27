@@ -1821,10 +1821,10 @@ module.exports = function(config) {
                             console.log("Error reading " + manifestFile);
                         if (!err && data && data !== "")
                             cfg.topPageMetadata = JSON.parse(data);
-                        elasticquery(cfg, '', handleQueryResults, 0, 100000);
+                        elasticquery(cfg, '', handleQueryResults, 0, 10000);
                     });
                 } else if (cfg.search) {
-                    elasticquery(cfg, '', handleQueryResults, 0, 100000);
+                    elasticquery(cfg, '', handleQueryResults, 0, 10000);
                 } else {
                     // Return ALL records...
                     //      columnSelection = ["title", "path", "metadata" , "toc" ]

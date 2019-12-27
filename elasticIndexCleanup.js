@@ -8,7 +8,7 @@ module.exports = function (settings, basePath) {
 		index: (settings.index || 'helpserver'),
 		body: {
 			from: 0,
-			size: 100000,
+			size: 10000,
 			query: queryDef,
 			_source: ["title", "path"]
 		}
