@@ -1259,7 +1259,9 @@ module.exports = function (config) {
                                                 data += "<!--basePath:" + path + "-->";
                                                 fs.writeFile(generatedTopic, data, logit);
                                             } else {
-                                                fs.unlink(generatedTopic);
+                                                fs.unlink(generatedTopic, function (err) {
+                                                    if (err) console.log("Error deleting " + generatedTopic);
+                                                });
                                                 err = "Page is Empty";
                                             }
                                         }
@@ -1282,7 +1284,9 @@ module.exports = function (config) {
                                                 data += "<!--basePath:" + path + "-->";
                                                 fs.writeFile(generatedTopic, data, logit);
                                             } else {
-                                                fs.unlink(generatedTopic);
+                                                fs.unlink(generatedTopic, function (err) {
+                                                    if (err) console.log("Error deleting " + generatedTopic);
+                                                });
                                                 err = "Page is Empty";
                                             }
                                         }
@@ -1300,7 +1304,9 @@ module.exports = function (config) {
                                         data += "<!--basePath:" + path + "-->";
                                         fs.writeFile(generatedTopic, data, logit);
                                     } else {
-                                        fs.unlink(generatedTopic);
+                                        fs.unlink(generatedTopic, function (err) {
+                                            if (err) console.log("Error deleting " + generatedTopic);
+                                        });
                                         err = "Page is Empty";
                                     }
                                 }
