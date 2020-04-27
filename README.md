@@ -403,6 +403,7 @@ help.status(function (stats) {
 ```
 
 ## Release History
+* 1.4.8  removeing elasticsearch dependency for tree building
 * 1.4.6  fs.unlink() callback required
 * 1.4.5  Updated required package dependency for nodegit
 * 1.4.4  Changed elasticquery size from 100000 to 10000

@@ -1814,44 +1814,31 @@ module.exports = function(config) {
                         });
                     });
                 };
-                if (cfg.topPage) {
-                    var manifestFile = config.generated + "manifest/_" + replaceAll(unescape(cfg.topPage), '/', '_').replace(".html", ".json");
-                    fs.readFile(manifestFile, function(err, data) {
-                        if (err)
-                            console.log("Error reading " + manifestFile);
-                        if (!err && data && data !== "")
-                            cfg.topPageMetadata = JSON.parse(data);
-                        elasticquery(cfg, '', handleQueryResults, 0, 10000);
-                    });
-                } else if (cfg.search) {
-                    elasticquery(cfg, '', handleQueryResults, 0, 10000);
-                } else {
-                    // Return ALL records...
-                    //      columnSelection = ["title", "path", "metadata" , "toc" ]
-                    var leadPath = path.resolve(cfg.source).toLowerCase();
-                    leadPath = replaceAll(leadPath, '\\', '/');
-                    fs.readFile(cfg.generated + cfg.flatfile, "utf8", function(err, flatList) {
-                        var data = [],
-                            rawData = null;
-                        if (!err) {
-                            try {
-                                rawData = JSON.parse(flatList);
-                                var i;
-                                for (i = 0; i < rawData.length; ++i) {
-                                    var pathName = rawData[i].file;
-                                    pathName = replaceAll(pathName, '\\', '/');
-                                    if (pathName.toLowerCase().substring(0, leadPath.length) === leadPath) {
-                                        pathName = pathName.substring(leadPath.length);
-                                    }
-                                    data.push({ title: rawData[i].title, path: pathName });
+                // Return ALL records...
+                //      columnSelection = ["title", "path", "metadata" , "toc" ]
+                var leadPath = path.resolve(cfg.source).toLowerCase();
+                leadPath = replaceAll(leadPath, '\\', '/');
+                fs.readFile(cfg.generated + cfg.flatfile, "utf8", function(err, flatList) {
+                    var data = [],
+                        rawData = null;
+                    if (!err) {
+                        try {
+                            rawData = JSON.parse(flatList);
+                            var i;
+                            for (i = 0; i < rawData.length; ++i) {
+                                var pathName = rawData[i].file;
+                                pathName = replaceAll(pathName, '\\', '/');
+                                if (pathName.toLowerCase().substring(0, leadPath.length) === leadPath) {
+                                    pathName = pathName.substring(leadPath.length);
                                 }
-                            } catch (err) {
-
+                                data.push({ title: rawData[i].title, path: pathName });
                             }
+                        } catch (err) {
+
                         }
-                        handleQueryResults(err, data);
-                    });
-                }
+                    }
+                    handleQueryResults(err, data);
+                });
             }, function() {
                 if (rememberErr)
                     callback(rememberErr, null);
