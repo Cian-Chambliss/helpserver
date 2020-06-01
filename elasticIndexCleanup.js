@@ -2,7 +2,9 @@ module.exports = function (settings, basePath) {
 	var fs = require('fs');
 	var async = require('async');
 	var elasticsearch = require('elasticsearch');
-	var client = new elasticsearch.Client({ host: (settings.host || 'localhost:9200') });
+	var client = new elasticsearch.Client({ 
+		host: (settings.host || 'localhost:9200'),
+		apiVersion: '6.8' });
 	var queryDef = { "match_all": {} };
 	client.search({
 		index: (settings.index || 'helpserver'),

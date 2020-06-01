@@ -2,7 +2,8 @@ module.exports = function (config, pattern, callback, startAt, maximum , getDesc
   var helpSystemIndex = config.search.index;
   var elasticsearch = require('elasticsearch');
   var client = new elasticsearch.Client({
-    host: config.search.host
+    host: config.search.host,
+    apiVersion: '6.8'
   });
   var queryDef = null;  
   if( lookIn && lookIn !== '' ) {

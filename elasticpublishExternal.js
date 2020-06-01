@@ -7,7 +7,8 @@ module.exports = function (config, file , records , callback ) {
   var async = require('async');
   var elasticsearch = require('elasticsearch');
   var client = new elasticsearch.Client({
-      host: config.search.host
+      host: config.search.host,
+      apiVersion: '6.8'
   });
   console.log("Publish externals for file "+file);
   async.eachSeries(records, function (record, callbackLoop) {

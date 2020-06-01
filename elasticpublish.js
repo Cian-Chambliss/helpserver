@@ -22,7 +22,8 @@ module.exports = function (config, callback ) {
     if (list.length > 0) {
       var elasticsearch = require('elasticsearch');
       var client = new elasticsearch.Client({
-        host: config.search.host
+        host: config.search.host,
+				apiVersion: '6.8'
       });
       var bar = new ProgressBar('  publishing ' + list.length + ' elastic search records [:bar] :percent :etas', {
         complete: '=',

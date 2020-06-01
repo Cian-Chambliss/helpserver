@@ -314,7 +314,10 @@ module.exports = function(config) {
                 }, function() {
                     if (config.search) {
                         var elasticsearch = require('elasticsearch');
-                        var client = new elasticsearch.Client({ host: config.search.host });
+                        var client = new elasticsearch.Client({ 
+                            host: config.search.host,
+                            apiVersion: '6.8'
+                         });
                         client.ping({ requestTimeout: 10000 }, function(error) {
                             if (!error) {
                                 stats.indexServiceRunning = true;

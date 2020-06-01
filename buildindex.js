@@ -27,7 +27,8 @@ module.exports = function (config, callback) {
 		var publishIndexDriver = function () {
 		    var elasticsearch = require('elasticsearch');
 		    var client = new elasticsearch.Client({
-		        host: config.search.host
+		        host: config.search.host,
+				apiVersion: '6.8'
 		    });
 			client.indices.delete({ index : config.search.index } , function(err) { 
 				var elasticpublish = require("./elasticpublish");
