@@ -831,9 +831,10 @@ module.exports = function(config) {
                 if (printed) {
                     fullPage = ["<html>",
                         "<head>",
+                        "<meta name=\"robots\" content=\"noindex,nofollow\"/>",
                         "<link href=\"/assets/theme.css\" rel=\"stylesheet\"/>",
                         "<link href=\"/assets/print.css\" rel=\"stylesheet\"/>",
-                        "<body onload=\"window.print()\" >",
+                        "</head>",
                         "<!--body-->",
                         "</body></html>"
                     ].join("\n");

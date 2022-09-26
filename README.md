@@ -403,6 +403,7 @@ help.status(function (stats) {
 ```
 
 ## Release History
+* 1.5.1  noindex,nofollow added for /print/*
 * 1.5.0  Adding api version. again. for the third time.
 * 1.4.8  removeing elasticsearch dependency for tree building
 * 1.4.6  fs.unlink() callback required
