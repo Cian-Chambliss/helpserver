@@ -835,6 +835,7 @@ module.exports = function(config) {
                         "<link href=\"/assets/theme.css\" rel=\"stylesheet\"/>",
                         "<link href=\"/assets/print.css\" rel=\"stylesheet\"/>",
                         "</head>",
+                        "<body onload=\"window.print()\" >",
                         "<!--body-->",
                         "</body></html>"
                     ].join("\n");
