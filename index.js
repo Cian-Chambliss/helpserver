@@ -860,7 +860,7 @@ module.exports = function(config) {
                         symName = backLinks[page.toLowerCase().replace(".xml_html", ".xml")];
                     }
                     if (config.events.addPageSourceComment) {
-                        pageSourceComment = config.events.addPageSourceComment(page, symName);
+                        pageSourceComment = config.events.addPageSourceComment(page, symName, absolutePath);
                     }
                     if (config.events.getSharableLink) {
                         sharableLink = config.events.getSharableLink(page, symName, absolutePath);
