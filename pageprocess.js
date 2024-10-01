@@ -35,7 +35,7 @@ module.exports = function(config, data, page, callbackPage) {
         if (extension === '.md') {
             // Convert to html first
             var marked = require('marked');
-            data = marked(data);
+            data = marked.marked(data);
         } else if (extension === '.xml') {
             // use XSLT (if defined)
             if (config.events.extractTitle) {
