@@ -2,9 +2,9 @@
  * Incrementally update the search index (plain text) for the help system
  */
 module.exports = function (config, callback) {
-   var async = require('async');
+   const simpleGit = require('simple-git');
    var reposList = null;
-   var gitSucceeded = false;
+   var gitSucceeded = true;
 
    if( config.repoSource ) {
        if( Array.isArray(config.repoSource) ) {
@@ -15,40 +15,28 @@ module.exports = function (config, callback) {
    } else {
        reposList = [config.source ];
    }
-   async.eachSeries(reposList, function (repoName, callbackLoop) {
-        var nodegit = require('nodegit');
-        var repository;
-        console.log("git pull "+repoName);
-        nodegit.Repository.open(repoName )
-            .then(function (repo) {
-            repository = repo;
-            return repository.fetchAll({
-                credentials: function (url, userName) {
-                    return nodegit.Cred.sshKeyFromAgent(userName);
-                },
-                certificateCheck: function () {
-                    return 1;
-                }
-            });
-        })
-            .then(function () {
-            return repository.mergeBranches("master", "origin/master");
-        })
-            .catch(function (err) {
-                console.log("Error on pull "+err);
-            if( callbackLoop ) {
-                callbackLoop();
-                callbackLoop = null;      
-            }
-        })
-            .done(function () {
-                gitSucceeded = true;
-            if( callbackLoop ) {
-                callbackLoop();
-                callbackLoop = null;      
-            }
-    });
-   },function() {
-       callback(null,gitSucceeded);
-   });
+   var countDown = reposList.length;
+   var i = 0;
+
+
+   async function pullDownSource(path) {
+        try {
+            const git = simpleGit({baseDir:path, binary: 'git'});
+            await git.pull();
+            --countDown;
+        } catch(e) {
+            gitSucceeded = false;
+            --countDown;
+        }
+        if( countDown < 1 ) {
+            callback(null,gitSucceeded);
+        }
+   }
+   if( reposList.length > 0 ) {
+        for( i = 0 ; i < reposList.length ; ++i ) {
+            pullDownSource(reposList[i]);
+        }
+    } else {
+        callback(null,false);
+    }
 }

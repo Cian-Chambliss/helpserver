@@ -24,7 +24,7 @@
         "htmlparser2": ">=0.0.0",
         "progress": ">=0.0.0",
         "marked": ">=0.0.0",
-        "nodegit": ">=0.0.0",
+        "simple-git": ">=0.0.0",
         "github-webhook-handler": ">=0.0.0"
     },
     "license": "MIT",
