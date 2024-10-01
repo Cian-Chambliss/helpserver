@@ -23,7 +23,7 @@
         "elasticsearch": ">=0.0.0",
         "htmlparser2": ">=0.0.0",
         "progress": ">=0.0.0",
-        "marked": ">=0.0.0",
+        "marked": "4.2.5",
         "simple-git": ">=0.0.0",
         "github-webhook-handler": ">=0.0.0"
     },
