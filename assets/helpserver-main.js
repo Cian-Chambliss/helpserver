@@ -19,6 +19,104 @@ var helpServer = {
   lastSearchSelected: null,
   pageHasLocalTOC: false,
   xslt: null,
+  mermaidInitialized: false,
+  mermaidLoading: false,
+  mermaidCallbacks: [],
+  getMermaidScript: function () {
+    if (helpServer.config && helpServer.config.mermaidScript) {
+      return helpServer.config.mermaidScript;
+    }
+    return "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js";
+  },
+  ensureMermaid: function (callback) {
+    if (window.mermaid) {
+      callback(true);
+      return;
+    }
+    helpServer.mermaidCallbacks.push(callback);
+    if (helpServer.mermaidLoading) {
+      return;
+    }
+    helpServer.mermaidLoading = true;
+    var script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.src = helpServer.getMermaidScript();
+    script.onload = function () {
+      helpServer.mermaidLoading = false;
+      var callbacks = helpServer.mermaidCallbacks;
+      helpServer.mermaidCallbacks = [];
+      var i;
+      for (i = 0; i < callbacks.length; ++i) {
+        callbacks[i](true);
+      }
+    };
+    script.onerror = function () {
+      helpServer.mermaidLoading = false;
+      var callbacks = helpServer.mermaidCallbacks;
+      helpServer.mermaidCallbacks = [];
+      var i;
+      for (i = 0; i < callbacks.length; ++i) {
+        callbacks[i](false);
+      }
+      if (window.console && console.error) {
+        console.error('Unable to load Mermaid script from ' + script.src);
+      }
+    };
+    document.getElementsByTagName('head')[0].appendChild(script);
+  },
+  renderMermaid: function () {
+    var helpEle = document.getElementById('help');
+    if (!helpEle || helpEle.tagName.toLowerCase() === 'iframe') {
+      return;
+    }
+    var blocks = helpEle.querySelectorAll('pre code.language-mermaid, pre code.lang-mermaid, pre code[class*="language-mermaid"]');
+    if (!blocks || blocks.length === 0) {
+      return;
+    }
+    var i;
+    for (i = 0; i < blocks.length; ++i) {
+      var codeBlock = blocks[i];
+      var preTag = codeBlock.parentNode;
+      if (!preTag || preTag.tagName.toLowerCase() !== 'pre') {
+        continue;
+      }
+      if (preTag.getAttribute('data-mermaid-processed') === 'true') {
+        continue;
+      }
+      preTag.setAttribute('data-mermaid-processed', 'true');
+      var diagram = document.createElement('div');
+      diagram.className = 'mermaid';
+      diagram.textContent = codeBlock.textContent;
+      preTag.parentNode.replaceChild(diagram, preTag);
+    }
+    helpServer.ensureMermaid(function (loaded) {
+      if (!loaded || !window.mermaid) {
+        return;
+      }
+      if (!helpServer.mermaidInitialized) {
+        helpServer.mermaidInitialized = true;
+        var config = { startOnLoad: false, securityLevel: 'strict' };
+        if (helpServer.config && helpServer.config.mermaidConfig) {
+          config = helpServer.config.mermaidConfig;
+          if (config.startOnLoad === undefined) {
+            config.startOnLoad = false;
+          }
+        }
+        if (window.mermaid.initialize) {
+          window.mermaid.initialize(config);
+        }
+      }
+      var nodes = helpEle.querySelectorAll('.mermaid');
+      if (!nodes || nodes.length === 0) {
+        return;
+      }
+      if (window.mermaid.run) {
+        window.mermaid.run({ nodes: nodes });
+      } else if (window.mermaid.init) {
+        window.mermaid.init(undefined, nodes);
+      }
+    });
+  },
   findMetadata: function (el) {
     for (var i = 0; i < el.childNodes.length; i++) {
       var node = el.childNodes[i];
@@ -462,6 +560,7 @@ var helpServer = {
       }
       tocPtr.setSearchCount(index);
     }
+    helpServer.renderMermaid();
   },
   ItemToggle: function (id) {
     if (this.onItemToggle) {
