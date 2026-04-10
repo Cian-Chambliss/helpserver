@@ -22,6 +22,8 @@ module.exports = function (config, pattern, callback, startAt, maximum , getDesc
         queryDef = {
           bool: {
             should: [
+              { match_phrase: { title: { query: titlePattern, boost: 12 } } },
+              { match: { "metadata.pagename": { query: pattern, operator: "and", boost: 8 } } },
               { match: { title: { query: titlePattern, operator: "and", boost: 4 } } },
               { match: { title: { query: pattern, boost: 2 } } }
             ]
@@ -31,6 +33,9 @@ module.exports = function (config, pattern, callback, startAt, maximum , getDesc
         queryDef = {
           bool: {
             should: [
+              { match_phrase: { title: { query: titlePattern, boost: 12 } } },
+              { match_phrase: { content: { query: pattern, boost: 6 } } },
+              { match: { "metadata.pagename": { query: pattern, operator: "and", boost: 8 } } },
               { match: { title: { query: titlePattern, operator: "and", boost: 4 } } },
               { match: { content: { query: pattern, operator: "and", boost: 3 } } },
               { match: { title: { query: titlePattern, boost: 2 } } },
