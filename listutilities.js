@@ -561,7 +561,7 @@ module.exports = function (config) {
                 }
             }
             // Lets skip index.html - these should be brought to the parent node...
-            if (item.path.indexOf("/index.html") > 0 || item.path.indexOf("/index.xml") > 0) {
+            if (item.path.indexOf("/index.html") > 0 || item.path.indexOf("/index.xml") > 0 || item.path.indexOf("/index.md") > 0) {
                 if (currentBranch) {
                     if (!currentBranch.path) {
                         currentBranch.path = item.path;
@@ -870,7 +870,8 @@ module.exports = function (config) {
                                                     if (testPath.substring(0, lPath.length) === lPath) {
                                                         if ((children[i].path.indexOf("/index.xml") === lPath.length
                                                             || children[i].path.indexOf("/index.html") === lPath.length
-                                                        )
+                                                            || children[i].path.indexOf("/index.md") === lPath.length
+                                                         )
                                                             && children[i].children
                                                         ) {
                                                             return children[i].children;
