@@ -2,6 +2,19 @@
  * Process page data (i.e. read in the old)
  */
 module.exports = function(config, data, page, callbackPage) {
+    var markedModule = require('marked');
+    var renderMarkdown = function(markdownText) {
+        if (typeof markedModule === 'function') {
+            return markedModule(markdownText);
+        }
+        if (markedModule && typeof markedModule.parse === 'function') {
+            return markedModule.parse(markdownText);
+        }
+        if (markedModule && typeof markedModule.marked === 'function') {
+            return markedModule.marked(markdownText);
+        }
+        throw new Error('Marked parser is not available');
+    };
     var textData = data;
     if (!textData.indexOf || !textData.substring)
         data = textData.toString('utf8');
@@ -34,8 +47,7 @@ module.exports = function(config, data, page, callbackPage) {
 
         if (extension === '.md') {
             // Convert to html first
-            var marked = require('marked');
-            data = marked.marked(data);
+            data = renderMarkdown(data);
         } else if (extension === '.xml') {
             // use XSLT (if defined)
             if (config.events.extractTitle) {

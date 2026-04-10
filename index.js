@@ -30,6 +30,19 @@ module.exports = function(config) {
     };
     var fs = require('fs');
     var path = require('path');
+    var markedModule = require('marked');
+    var renderMarkdown = function(markdownText) {
+        if (typeof markedModule === 'function') {
+            return markedModule(markdownText);
+        }
+        if (markedModule && typeof markedModule.parse === 'function') {
+            return markedModule.parse(markdownText);
+        }
+        if (markedModule && typeof markedModule.marked === 'function') {
+            return markedModule.marked(markdownText);
+        }
+        throw new Error('Marked parser is not available');
+    };
     var appDir = replaceAll(path.dirname(require.main.filename), "\\", "/") + '/';
     var modulePath = appDir + 'node_modules/helpserver/';
     var configurations = {}; // Child configurations (filters & permissions added to views)
@@ -1160,8 +1173,7 @@ module.exports = function(config) {
                             }
                         });
                     } else {
-                        var marked = require('marked');
-                        processPageAndCallback(marked(data));
+                        processPageAndCallback(renderMarkdown(data));
                     }
                 });
             } else if (page.indexOf("/index.html") > 0) {
@@ -1532,8 +1544,7 @@ module.exports = function(config) {
                 if (err) {
                     callback(err, null);
                 } else {
-                    var marked = require('marked');
-                    callback(null, marked(data), "html");
+                    callback(null, renderMarkdown(data), "html");
                 }
             });
         } else if (extension === "css" || extension === "svg") {
