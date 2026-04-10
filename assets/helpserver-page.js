@@ -1,5 +1,87 @@
 // Set up standard page elements...
 var helpServer = {
+    mermaidInitialized: false,
+    mermaidLoading: false,
+    mermaidCallbacks: [],
+    mermaidScript: "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js",
+    ensureMermaid: function (callback) {
+        if (window.mermaid) {
+            callback(true);
+            return;
+        }
+        helpServer.mermaidCallbacks.push(callback);
+        if (helpServer.mermaidLoading) {
+            return;
+        }
+        helpServer.mermaidLoading = true;
+        var script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.src = helpServer.mermaidScript;
+        script.onload = function () {
+            helpServer.mermaidLoading = false;
+            var callbacks = helpServer.mermaidCallbacks;
+            helpServer.mermaidCallbacks = [];
+            var i;
+            for (i = 0; i < callbacks.length; ++i) {
+                callbacks[i](true);
+            }
+        };
+        script.onerror = function () {
+            helpServer.mermaidLoading = false;
+            var callbacks = helpServer.mermaidCallbacks;
+            helpServer.mermaidCallbacks = [];
+            var i;
+            for (i = 0; i < callbacks.length; ++i) {
+                callbacks[i](false);
+            }
+            if (window.console && console.error) {
+                console.error('Unable to load Mermaid script from ' + script.src);
+            }
+        };
+        document.getElementsByTagName('head')[0].appendChild(script);
+    },
+    renderMermaid: function () {
+        var blocks = document.querySelectorAll('pre code.language-mermaid, pre code.lang-mermaid, pre code[class*="language-mermaid"]');
+        if (!blocks || blocks.length === 0) {
+            return;
+        }
+        var i;
+        for (i = 0; i < blocks.length; ++i) {
+            var codeBlock = blocks[i];
+            var preTag = codeBlock.parentNode;
+            if (!preTag || preTag.tagName.toLowerCase() !== 'pre') {
+                continue;
+            }
+            if (preTag.getAttribute('data-mermaid-processed') === 'true') {
+                continue;
+            }
+            preTag.setAttribute('data-mermaid-processed', 'true');
+            var diagram = document.createElement('div');
+            diagram.className = 'mermaid';
+            diagram.textContent = codeBlock.textContent;
+            preTag.parentNode.replaceChild(diagram, preTag);
+        }
+        helpServer.ensureMermaid(function (loaded) {
+            if (!loaded || !window.mermaid) {
+                return;
+            }
+            if (!helpServer.mermaidInitialized) {
+                helpServer.mermaidInitialized = true;
+                if (window.mermaid.initialize) {
+                    window.mermaid.initialize({ startOnLoad: false, securityLevel: 'strict' });
+                }
+            }
+            var nodes = document.querySelectorAll('.mermaid');
+            if (!nodes || nodes.length === 0) {
+                return;
+            }
+            if (window.mermaid.run) {
+                window.mermaid.run({ nodes: nodes });
+            } else if (window.mermaid.init) {
+                window.mermaid.init(undefined, nodes);
+            }
+        });
+    },
     navigateClosestTopic: function (topic) {
         var hint = "";
         //------------------ Special case
@@ -355,6 +437,7 @@ function initialize() {
     var searchEle = document.getElementById("search");
     searchEle.innerHTML = searchContent;
     tableOfContents.loaded();
+    helpServer.renderMermaid();
 }
 
 function localToClickHandler(e) {
