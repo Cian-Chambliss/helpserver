@@ -1,24 +1,34 @@
 // Set up standard page elements...
 var helpServer = {
+    mermaidDebug: false,
+    logMermaid: function (message) {
+        if (helpServer.mermaidDebug && window.console && console.log) {
+            console.log('[helpserver:mermaid] ' + message);
+        }
+    },
     mermaidInitialized: false,
     mermaidLoading: false,
     mermaidCallbacks: [],
     mermaidScript: "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js",
     ensureMermaid: function (callback) {
         if (window.mermaid) {
+            helpServer.logMermaid('Mermaid already loaded');
             callback(true);
             return;
         }
         helpServer.mermaidCallbacks.push(callback);
         if (helpServer.mermaidLoading) {
+            helpServer.logMermaid('Mermaid load already in progress');
             return;
         }
         helpServer.mermaidLoading = true;
+        helpServer.logMermaid('Loading Mermaid from ' + helpServer.mermaidScript);
         var script = document.createElement('script');
         script.type = 'text/javascript';
         script.src = helpServer.mermaidScript;
         script.onload = function () {
             helpServer.mermaidLoading = false;
+            helpServer.logMermaid('Mermaid script loaded');
             var callbacks = helpServer.mermaidCallbacks;
             helpServer.mermaidCallbacks = [];
             var i;
@@ -28,6 +38,7 @@ var helpServer = {
         };
         script.onerror = function () {
             helpServer.mermaidLoading = false;
+            helpServer.logMermaid('Mermaid script failed to load');
             var callbacks = helpServer.mermaidCallbacks;
             helpServer.mermaidCallbacks = [];
             var i;
@@ -42,6 +53,7 @@ var helpServer = {
     },
     renderMermaid: function () {
         var blocks = document.querySelectorAll('pre code.language-mermaid, pre code.lang-mermaid, pre code[class*="language-mermaid"]');
+        helpServer.logMermaid('Found mermaid code blocks: ' + blocks.length);
         if (!blocks || blocks.length === 0) {
             return;
         }
@@ -61,23 +73,29 @@ var helpServer = {
             diagram.textContent = codeBlock.textContent;
             preTag.parentNode.replaceChild(diagram, preTag);
         }
+        helpServer.logMermaid('Converted code blocks to .mermaid nodes');
         helpServer.ensureMermaid(function (loaded) {
             if (!loaded || !window.mermaid) {
+                helpServer.logMermaid('Mermaid unavailable after load attempt');
                 return;
             }
             if (!helpServer.mermaidInitialized) {
                 helpServer.mermaidInitialized = true;
                 if (window.mermaid.initialize) {
+                    helpServer.logMermaid('Initializing Mermaid runtime');
                     window.mermaid.initialize({ startOnLoad: false, securityLevel: 'strict' });
                 }
             }
             var nodes = document.querySelectorAll('.mermaid');
+            helpServer.logMermaid('Renderable .mermaid nodes: ' + nodes.length);
             if (!nodes || nodes.length === 0) {
                 return;
             }
             if (window.mermaid.run) {
+                helpServer.logMermaid('Rendering via mermaid.run');
                 window.mermaid.run({ nodes: nodes });
             } else if (window.mermaid.init) {
+                helpServer.logMermaid('Rendering via mermaid.init');
                 window.mermaid.init(undefined, nodes);
             }
         });
@@ -348,6 +366,10 @@ function loaded() {
 
 
 function initialize() {
+    var query = window.location.search || '';
+    if (query.indexOf('mermaidDebug=1') >= 0) {
+        helpServer.mermaidDebug = true;
+    }
     var toolbarContent = ["	<button id=\"toolbarTOCButton\" onclick=\"document.body.classList.toggle('showTOC',!document.body.classList.contains('showTOC'));\" style=\"position: absolute; left: 18px;\">",
         "		<svg width=\"44\" height=\"44\" xmlns=\"http://www.w3.org/2000/svg\">",
         "			<defs>",
@@ -437,7 +459,13 @@ function initialize() {
     var searchEle = document.getElementById("search");
     searchEle.innerHTML = searchContent;
     tableOfContents.loaded();
-    helpServer.renderMermaid();
+    try {
+        helpServer.renderMermaid();
+    } catch (e) {
+        if (window.console && console.error) {
+            console.error('[helpserver:mermaid] render failure', e);
+        }
+    }
 }
 
 function localToClickHandler(e) {
